@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from todo import router as todo_router
 from otp import router as otp_router
 from db import init_db
-from models import Base
+from todo import Base
 load_dotenv()
 
 app = FastAPI()
