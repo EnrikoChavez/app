@@ -5,3 +5,4 @@ python-dotenv
 retell-sdk
 redis
 twilio
+pyjwt
