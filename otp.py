@@ -6,10 +6,9 @@ import jwt
 import time
 from twilio.rest import Client
 from dotenv import load_dotenv
-load_dotenv()
+load_dotenv(override=True)
 
 REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
-
 # Connect to Redis using the dynamic host
 r = redis.Redis(
     host=REDIS_HOST,
