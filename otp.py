@@ -13,9 +13,8 @@ REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 router = APIRouter(prefix="/otp", tags=["otp"])
 
 # Connect to Redis using the dynamic host
-r = redis.Redis(
-    host=REDIS_HOST,
-    port=6379,
+r = redis.from_url(
+    REDIS_HOST,
     db=0,
     decode_responses=True
 )
