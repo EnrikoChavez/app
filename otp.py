@@ -9,6 +9,9 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+
+router = APIRouter(prefix="/otp", tags=["otp"])
+
 # Connect to Redis using the dynamic host
 r = redis.Redis(
     host=REDIS_HOST,
@@ -16,11 +19,6 @@ r = redis.Redis(
     db=0,
     decode_responses=True
 )
-
-router = APIRouter(prefix="/otp", tags=["otp"])
-
-# Connect to Redis (Docker: redis:latest, or local)
-r = redis.Redis(host="localhost", port=6379, db=0, decode_responses=True)
 
 RATE_LIMIT = 3          # per hour per phone
 SECRET_KEY = os.getenv("SECRET_KEY", "supersecret")
