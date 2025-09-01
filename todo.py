@@ -87,6 +87,7 @@ def delete_todo(todo_id: int, db: Session = Depends(get_db), phone: str = Depend
 
     db.delete(todo)
     db.commit()
+    
     return {
         "message": f"Removed '{todo.task}'",
         "todos": [{"id": t.id, "task": t.task, "phone": t.phone} for t in db.query(Todo).filter(Todo.phone == phone)],
