@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+SQLAlchemy>=2
+python-dotenv
+retell-sdk
+redis
+twilio
+pyjwt
