@@ -1,0 +1,1112 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		594F48AB2E543E8000BCCB62 /* DeviceActivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 594F488E2E51744400BCCB62 /* DeviceActivity.framework */; };
+		594F48F92E56F5C000BCCB62 /* UsageMonitorExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 594F48AA2E543E8000BCCB62 /* UsageMonitorExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		59D283082F21BE3B003D1157 /* ManagedSettings.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 59D283072F21BE3B003D1157 /* ManagedSettings.framework */; };
+		59D283102F21BE3B003D1157 /* ShieldActionExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 59D283062F21BE3B003D1157 /* ShieldActionExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		59D2831A2F21BF8D003D1157 /* ManagedSettings.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 59D283072F21BE3B003D1157 /* ManagedSettings.framework */; };
+		59D2831C2F21BF8D003D1157 /* ManagedSettingsUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 59D2831B2F21BF8D003D1157 /* ManagedSettingsUI.framework */; };
+		59D283242F21BF8D003D1157 /* ShieldConfigurationExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 59D283192F21BF8D003D1157 /* ShieldConfigurationExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		59D283422F2D7071003D1157 /* Products.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 59D283412F2D7071003D1157 /* Products.storekit */; };
+		59D283432F2D7071003D1157 /* Products.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 59D283412F2D7071003D1157 /* Products.storekit */; };
+		59D283442F2D7071003D1157 /* Products.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 59D283412F2D7071003D1157 /* Products.storekit */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		594F486C2E51664500BCCB62 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 594F48552E51664400BCCB62 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 594F485C2E51664400BCCB62;
+			remoteInfo = ai_anti_doomscroll;
+		};
+		594F48762E51664500BCCB62 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 594F48552E51664400BCCB62 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 594F485C2E51664400BCCB62;
+			remoteInfo = ai_anti_doomscroll;
+		};
+		594F48F72E56F5B600BCCB62 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 594F48552E51664400BCCB62 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 594F48A92E543E8000BCCB62;
+			remoteInfo = UsageMonitorExtension;
+		};
+		59D2830E2F21BE3B003D1157 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 594F48552E51664400BCCB62 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 59D283052F21BE3B003D1157;
+			remoteInfo = ShieldActionExtension;
+		};
+		59D283222F21BF8D003D1157 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 594F48552E51664400BCCB62 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 59D283182F21BF8D003D1157;
+			remoteInfo = ShieldConfigurationExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		594F48FC2E56F5C000BCCB62 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				594F48F92E56F5C000BCCB62 /* UsageMonitorExtension.appex in Embed Foundation Extensions */,
+				59D283242F21BF8D003D1157 /* ShieldConfigurationExtension.appex in Embed Foundation Extensions */,
+				59D283102F21BE3B003D1157 /* ShieldActionExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		594F485D2E51664400BCCB62 /* ai_anti_doomscroll.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ai_anti_doomscroll.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		594F486B2E51664500BCCB62 /* ai_anti_doomscrollTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ai_anti_doomscrollTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		594F48752E51664500BCCB62 /* ai_anti_doomscrollUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ai_anti_doomscrollUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		594F488E2E51744400BCCB62 /* DeviceActivity.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DeviceActivity.framework; path = System/Library/Frameworks/DeviceActivity.framework; sourceTree = SDKROOT; };
+		594F48AA2E543E8000BCCB62 /* UsageMonitorExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = UsageMonitorExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		59D283062F21BE3B003D1157 /* ShieldActionExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShieldActionExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		59D283072F21BE3B003D1157 /* ManagedSettings.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ManagedSettings.framework; path = System/Library/Frameworks/ManagedSettings.framework; sourceTree = SDKROOT; };
+		59D283192F21BF8D003D1157 /* ShieldConfigurationExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShieldConfigurationExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		59D2831B2F21BF8D003D1157 /* ManagedSettingsUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ManagedSettingsUI.framework; path = System/Library/Frameworks/ManagedSettingsUI.framework; sourceTree = SDKROOT; };
+		59D283412F2D7071003D1157 /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Products.storekit; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		594F48B42E543E8000BCCB62 /* Exceptions for "UsageMonitorExtension" folder in "UsageMonitorExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 594F48A92E543E8000BCCB62 /* UsageMonitorExtension */;
+		};
+		59D283112F21BE3B003D1157 /* Exceptions for "ShieldActionExtension" folder in "ShieldActionExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 59D283052F21BE3B003D1157 /* ShieldActionExtension */;
+		};
+		59D283252F21BF8D003D1157 /* Exceptions for "ShieldConfigurationExtension" folder in "ShieldConfigurationExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 59D283182F21BF8D003D1157 /* ShieldConfigurationExtension */;
+		};
+		59D2832E2F21C3BC003D1157 /* Exceptions for "ai_anti_doomscroll" folder in "ShieldConfigurationExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Shared.swift,
+			);
+			target = 59D283182F21BF8D003D1157 /* ShieldConfigurationExtension */;
+		};
+		59D283302F21C3C5003D1157 /* Exceptions for "ai_anti_doomscroll" folder in "ShieldActionExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Shared.swift,
+			);
+			target = 59D283052F21BE3B003D1157 /* ShieldActionExtension */;
+		};
+		59D283322F21C3CB003D1157 /* Exceptions for "ai_anti_doomscroll" folder in "UsageMonitorExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Shared.swift,
+			);
+			target = 594F48A92E543E8000BCCB62 /* UsageMonitorExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		594F485F2E51664400BCCB62 /* ai_anti_doomscroll */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				59D283322F21C3CB003D1157 /* Exceptions for "ai_anti_doomscroll" folder in "UsageMonitorExtension" target */,
+				59D283302F21C3C5003D1157 /* Exceptions for "ai_anti_doomscroll" folder in "ShieldActionExtension" target */,
+				59D2832E2F21C3BC003D1157 /* Exceptions for "ai_anti_doomscroll" folder in "ShieldConfigurationExtension" target */,
+			);
+			path = ai_anti_doomscroll;
+			sourceTree = "<group>";
+		};
+		594F486E2E51664500BCCB62 /* ai_anti_doomscrollTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ai_anti_doomscrollTests;
+			sourceTree = "<group>";
+		};
+		594F48782E51664500BCCB62 /* ai_anti_doomscrollUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ai_anti_doomscrollUITests;
+			sourceTree = "<group>";
+		};
+		594F48AC2E543E8000BCCB62 /* UsageMonitorExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				594F48B42E543E8000BCCB62 /* Exceptions for "UsageMonitorExtension" folder in "UsageMonitorExtension" target */,
+			);
+			path = UsageMonitorExtension;
+			sourceTree = "<group>";
+		};
+		59D283092F21BE3B003D1157 /* ShieldActionExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				59D283112F21BE3B003D1157 /* Exceptions for "ShieldActionExtension" folder in "ShieldActionExtension" target */,
+			);
+			path = ShieldActionExtension;
+			sourceTree = "<group>";
+		};
+		59D2831D2F21BF8D003D1157 /* ShieldConfigurationExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				59D283252F21BF8D003D1157 /* Exceptions for "ShieldConfigurationExtension" folder in "ShieldConfigurationExtension" target */,
+			);
+			path = ShieldConfigurationExtension;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		594F485A2E51664400BCCB62 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		594F48682E51664500BCCB62 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		594F48722E51664500BCCB62 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		594F48A72E543E8000BCCB62 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				594F48AB2E543E8000BCCB62 /* DeviceActivity.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		59D283032F21BE3B003D1157 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				59D283082F21BE3B003D1157 /* ManagedSettings.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		59D283162F21BF8D003D1157 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				59D2831A2F21BF8D003D1157 /* ManagedSettings.framework in Frameworks */,
+				59D2831C2F21BF8D003D1157 /* ManagedSettingsUI.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		594F48542E51664400BCCB62 = {
+			isa = PBXGroup;
+			children = (
+				59D283412F2D7071003D1157 /* Products.storekit */,
+				594F485F2E51664400BCCB62 /* ai_anti_doomscroll */,
+				594F486E2E51664500BCCB62 /* ai_anti_doomscrollTests */,
+				594F48782E51664500BCCB62 /* ai_anti_doomscrollUITests */,
+				594F48AC2E543E8000BCCB62 /* UsageMonitorExtension */,
+				59D283092F21BE3B003D1157 /* ShieldActionExtension */,
+				59D2831D2F21BF8D003D1157 /* ShieldConfigurationExtension */,
+				594F488D2E51744400BCCB62 /* Frameworks */,
+				594F485E2E51664400BCCB62 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		594F485E2E51664400BCCB62 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				594F485D2E51664400BCCB62 /* ai_anti_doomscroll.app */,
+				594F486B2E51664500BCCB62 /* ai_anti_doomscrollTests.xctest */,
+				594F48752E51664500BCCB62 /* ai_anti_doomscrollUITests.xctest */,
+				594F48AA2E543E8000BCCB62 /* UsageMonitorExtension.appex */,
+				59D283062F21BE3B003D1157 /* ShieldActionExtension.appex */,
+				59D283192F21BF8D003D1157 /* ShieldConfigurationExtension.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		594F488D2E51744400BCCB62 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				594F488E2E51744400BCCB62 /* DeviceActivity.framework */,
+				59D283072F21BE3B003D1157 /* ManagedSettings.framework */,
+				59D2831B2F21BF8D003D1157 /* ManagedSettingsUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		594F485C2E51664400BCCB62 /* ai_anti_doomscroll */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 594F487F2E51664500BCCB62 /* Build configuration list for PBXNativeTarget "ai_anti_doomscroll" */;
+			buildPhases = (
+				594F48592E51664400BCCB62 /* Sources */,
+				594F485A2E51664400BCCB62 /* Frameworks */,
+				594F485B2E51664400BCCB62 /* Resources */,
+				594F48FC2E56F5C000BCCB62 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				594F48F82E56F5B600BCCB62 /* PBXTargetDependency */,
+				59D2830F2F21BE3B003D1157 /* PBXTargetDependency */,
+				59D283232F21BF8D003D1157 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				594F485F2E51664400BCCB62 /* ai_anti_doomscroll */,
+			);
+			name = ai_anti_doomscroll;
+			packageProductDependencies = (
+			);
+			productName = ai_anti_doomscroll;
+			productReference = 594F485D2E51664400BCCB62 /* ai_anti_doomscroll.app */;
+			productType = "com.apple.product-type.application";
+		};
+		594F486A2E51664500BCCB62 /* ai_anti_doomscrollTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 594F48822E51664500BCCB62 /* Build configuration list for PBXNativeTarget "ai_anti_doomscrollTests" */;
+			buildPhases = (
+				594F48672E51664500BCCB62 /* Sources */,
+				594F48682E51664500BCCB62 /* Frameworks */,
+				594F48692E51664500BCCB62 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				594F486D2E51664500BCCB62 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				594F486E2E51664500BCCB62 /* ai_anti_doomscrollTests */,
+			);
+			name = ai_anti_doomscrollTests;
+			packageProductDependencies = (
+			);
+			productName = ai_anti_doomscrollTests;
+			productReference = 594F486B2E51664500BCCB62 /* ai_anti_doomscrollTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		594F48742E51664500BCCB62 /* ai_anti_doomscrollUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 594F48852E51664500BCCB62 /* Build configuration list for PBXNativeTarget "ai_anti_doomscrollUITests" */;
+			buildPhases = (
+				594F48712E51664500BCCB62 /* Sources */,
+				594F48722E51664500BCCB62 /* Frameworks */,
+				594F48732E51664500BCCB62 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				594F48772E51664500BCCB62 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				594F48782E51664500BCCB62 /* ai_anti_doomscrollUITests */,
+			);
+			name = ai_anti_doomscrollUITests;
+			packageProductDependencies = (
+			);
+			productName = ai_anti_doomscrollUITests;
+			productReference = 594F48752E51664500BCCB62 /* ai_anti_doomscrollUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		594F48A92E543E8000BCCB62 /* UsageMonitorExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 594F48B52E543E8000BCCB62 /* Build configuration list for PBXNativeTarget "UsageMonitorExtension" */;
+			buildPhases = (
+				594F48A62E543E8000BCCB62 /* Sources */,
+				594F48A72E543E8000BCCB62 /* Frameworks */,
+				594F48A82E543E8000BCCB62 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				594F48AC2E543E8000BCCB62 /* UsageMonitorExtension */,
+			);
+			name = UsageMonitorExtension;
+			packageProductDependencies = (
+			);
+			productName = UsageMonitorExtension;
+			productReference = 594F48AA2E543E8000BCCB62 /* UsageMonitorExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		59D283052F21BE3B003D1157 /* ShieldActionExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 59D283122F21BE3B003D1157 /* Build configuration list for PBXNativeTarget "ShieldActionExtension" */;
+			buildPhases = (
+				59D283022F21BE3B003D1157 /* Sources */,
+				59D283032F21BE3B003D1157 /* Frameworks */,
+				59D283042F21BE3B003D1157 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				59D283092F21BE3B003D1157 /* ShieldActionExtension */,
+			);
+			name = ShieldActionExtension;
+			packageProductDependencies = (
+			);
+			productName = ShieldActionExtension;
+			productReference = 59D283062F21BE3B003D1157 /* ShieldActionExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		59D283182F21BF8D003D1157 /* ShieldConfigurationExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 59D283262F21BF8D003D1157 /* Build configuration list for PBXNativeTarget "ShieldConfigurationExtension" */;
+			buildPhases = (
+				59D283152F21BF8D003D1157 /* Sources */,
+				59D283162F21BF8D003D1157 /* Frameworks */,
+				59D283172F21BF8D003D1157 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				59D2831D2F21BF8D003D1157 /* ShieldConfigurationExtension */,
+			);
+			name = ShieldConfigurationExtension;
+			packageProductDependencies = (
+			);
+			productName = ShieldConfigurationExtension;
+			productReference = 59D283192F21BF8D003D1157 /* ShieldConfigurationExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		594F48552E51664400BCCB62 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2620;
+				LastUpgradeCheck = 1640;
+				TargetAttributes = {
+					594F485C2E51664400BCCB62 = {
+						CreatedOnToolsVersion = 16.4;
+					};
+					594F486A2E51664500BCCB62 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 594F485C2E51664400BCCB62;
+					};
+					594F48742E51664500BCCB62 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 594F485C2E51664400BCCB62;
+					};
+					594F48A92E543E8000BCCB62 = {
+						CreatedOnToolsVersion = 16.4;
+					};
+					59D283052F21BE3B003D1157 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					59D283182F21BF8D003D1157 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+				};
+			};
+			buildConfigurationList = 594F48582E51664400BCCB62 /* Build configuration list for PBXProject "ai_anti_doomscroll" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 594F48542E51664400BCCB62;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 594F485E2E51664400BCCB62 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				594F485C2E51664400BCCB62 /* ai_anti_doomscroll */,
+				594F486A2E51664500BCCB62 /* ai_anti_doomscrollTests */,
+				594F48742E51664500BCCB62 /* ai_anti_doomscrollUITests */,
+				594F48A92E543E8000BCCB62 /* UsageMonitorExtension */,
+				59D283052F21BE3B003D1157 /* ShieldActionExtension */,
+				59D283182F21BF8D003D1157 /* ShieldConfigurationExtension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		594F485B2E51664400BCCB62 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				59D283432F2D7071003D1157 /* Products.storekit in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		594F48692E51664500BCCB62 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				59D283422F2D7071003D1157 /* Products.storekit in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		594F48732E51664500BCCB62 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				59D283442F2D7071003D1157 /* Products.storekit in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		594F48A82E543E8000BCCB62 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		59D283042F21BE3B003D1157 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		59D283172F21BF8D003D1157 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		594F48592E51664400BCCB62 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		594F48672E51664500BCCB62 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		594F48712E51664500BCCB62 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		594F48A62E543E8000BCCB62 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		59D283022F21BE3B003D1157 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		59D283152F21BF8D003D1157 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		594F486D2E51664500BCCB62 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 594F485C2E51664400BCCB62 /* ai_anti_doomscroll */;
+			targetProxy = 594F486C2E51664500BCCB62 /* PBXContainerItemProxy */;
+		};
+		594F48772E51664500BCCB62 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 594F485C2E51664400BCCB62 /* ai_anti_doomscroll */;
+			targetProxy = 594F48762E51664500BCCB62 /* PBXContainerItemProxy */;
+		};
+		594F48F82E56F5B600BCCB62 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 594F48A92E543E8000BCCB62 /* UsageMonitorExtension */;
+			targetProxy = 594F48F72E56F5B600BCCB62 /* PBXContainerItemProxy */;
+		};
+		59D2830F2F21BE3B003D1157 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 59D283052F21BE3B003D1157 /* ShieldActionExtension */;
+			targetProxy = 59D2830E2F21BE3B003D1157 /* PBXContainerItemProxy */;
+		};
+		59D283232F21BF8D003D1157 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 59D283182F21BF8D003D1157 /* ShieldConfigurationExtension */;
+			targetProxy = 59D283222F21BF8D003D1157 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		594F487D2E51664500BCCB62 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.5;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		594F487E2E51664500BCCB62 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.5;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		594F48802E51664500BCCB62 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				CODE_SIGN_ENTITLEMENTS = ai_anti_doomscroll/ai_anti_doomscroll.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = C2B6M65B2Q;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "ai-anti-doomscroll-Info.plist";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "OrgIdentifier.ai-anti-doomscroll";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		594F48812E51664500BCCB62 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				CODE_SIGN_ENTITLEMENTS = ai_anti_doomscroll/ai_anti_doomscroll.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = C2B6M65B2Q;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "ai-anti-doomscroll-Info.plist";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "OrgIdentifier.ai-anti-doomscroll";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		594F48832E51664500BCCB62 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "OrgIdentifier.ai-anti-doomscrollTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ai_anti_doomscroll.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ai_anti_doomscroll";
+			};
+			name = Debug;
+		};
+		594F48842E51664500BCCB62 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "OrgIdentifier.ai-anti-doomscrollTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ai_anti_doomscroll.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ai_anti_doomscroll";
+			};
+			name = Release;
+		};
+		594F48862E51664500BCCB62 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "OrgIdentifier.ai-anti-doomscrollUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = ai_anti_doomscroll;
+			};
+			name = Debug;
+		};
+		594F48872E51664500BCCB62 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "OrgIdentifier.ai-anti-doomscrollUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = ai_anti_doomscroll;
+			};
+			name = Release;
+		};
+		594F48B62E543E8000BCCB62 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = UsageMonitorExtension/UsageMonitorExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = C2B6M65B2Q;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = UsageMonitorExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = UsageMonitorExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MACH_O_TYPE = mh_execute;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "OrgIdentifier.ai-anti-doomscroll.UsageMonitorExtension";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		594F48B72E543E8000BCCB62 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = UsageMonitorExtension/UsageMonitorExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = C2B6M65B2Q;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = UsageMonitorExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = UsageMonitorExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MACH_O_TYPE = mh_execute;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "OrgIdentifier.ai-anti-doomscroll.UsageMonitorExtension";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		59D283132F21BE3B003D1157 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = ShieldActionExtension/ShieldActionExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = C2B6M65B2Q;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ShieldActionExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShieldActionExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "OrgIdentifier.ai-anti-doomscroll.ShieldActionExtension";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		59D283142F21BE3B003D1157 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = ShieldActionExtension/ShieldActionExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = C2B6M65B2Q;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ShieldActionExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShieldActionExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "OrgIdentifier.ai-anti-doomscroll.ShieldActionExtension";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		59D283272F21BF8D003D1157 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ShieldConfigurationExtension/ShieldConfigurationExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = C2B6M65B2Q;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ShieldConfigurationExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShieldConfigurationExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "OrgIdentifier.ai-anti-doomscroll.ShieldConfigurationExtension";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		59D283282F21BF8D003D1157 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ShieldConfigurationExtension/ShieldConfigurationExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = C2B6M65B2Q;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ShieldConfigurationExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShieldConfigurationExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "OrgIdentifier.ai-anti-doomscroll.ShieldConfigurationExtension";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		594F48582E51664400BCCB62 /* Build configuration list for PBXProject "ai_anti_doomscroll" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				594F487D2E51664500BCCB62 /* Debug */,
+				594F487E2E51664500BCCB62 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		594F487F2E51664500BCCB62 /* Build configuration list for PBXNativeTarget "ai_anti_doomscroll" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				594F48802E51664500BCCB62 /* Debug */,
+				594F48812E51664500BCCB62 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		594F48822E51664500BCCB62 /* Build configuration list for PBXNativeTarget "ai_anti_doomscrollTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				594F48832E51664500BCCB62 /* Debug */,
+				594F48842E51664500BCCB62 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		594F48852E51664500BCCB62 /* Build configuration list for PBXNativeTarget "ai_anti_doomscrollUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				594F48862E51664500BCCB62 /* Debug */,
+				594F48872E51664500BCCB62 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		594F48B52E543E8000BCCB62 /* Build configuration list for PBXNativeTarget "UsageMonitorExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				594F48B62E543E8000BCCB62 /* Debug */,
+				594F48B72E543E8000BCCB62 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		59D283122F21BE3B003D1157 /* Build configuration list for PBXNativeTarget "ShieldActionExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				59D283132F21BE3B003D1157 /* Debug */,
+				59D283142F21BE3B003D1157 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		59D283262F21BF8D003D1157 /* Build configuration list for PBXNativeTarget "ShieldConfigurationExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				59D283272F21BF8D003D1157 /* Debug */,
+				59D283282F21BF8D003D1157 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 594F48552E51664400BCCB62 /* Project object */;
+}
