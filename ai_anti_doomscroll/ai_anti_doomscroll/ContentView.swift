@@ -150,25 +150,12 @@ struct ContentView: View {
                 HStack(spacing: 8) {
                     Text("Anti-Doomscroll")
                         .font(.system(size: 28, weight: .black, design: .rounded))
-                    if subscriptionManager.isPremium {
-                        Image(systemName: "crown.fill")
-                            .foregroundColor(.yellow)
-                            .font(.caption)
-                    }
                 }
                 Text("Stay focused, stay free.")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
             Spacer()
-            
-            // Premium Status Badge (only shown when premium)
-            if subscriptionManager.isPremium {
-                ZStack {
-                    Circle().fill(Color.yellow.opacity(0.1)).frame(width: 40, height: 40)
-                    Image(systemName: "crown.fill").foregroundColor(.yellow)
-                }
-            }
         }
         .padding(.top, 20)
     }

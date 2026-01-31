@@ -20,10 +20,6 @@ struct PaywallView: View {
                 VStack(spacing: 0) {
                     // Header
                     VStack(spacing: 12) {
-                        Image(systemName: "crown.fill")
-                            .font(.system(size: 60))
-                            .foregroundColor(.yellow)
-                        
                         Text("Unlock Premium")
                             .font(.system(size: 32, weight: .bold, design: .rounded))
                         

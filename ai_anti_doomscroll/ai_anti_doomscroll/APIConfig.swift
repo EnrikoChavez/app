@@ -19,6 +19,3 @@ enum APIConfig {
         return URL(string: "\(base)\(p)")
     }
 }
-
-
-
