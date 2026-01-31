@@ -13,18 +13,20 @@ REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 
 router = APIRouter(prefix="/otp", tags=["otp"])
 
-# Connect to Redis
+# db=0 is standard, but try increasing the timeout to 5 seconds
 try:
     r = redis.from_url(
         REDIS_HOST,
-        db=0,
         decode_responses=True,
-        socket_connect_timeout=1
+        socket_connect_timeout=5,  # Increased for cloud stability
+        socket_keepalive=True,
+        retry_on_timeout=True
     )
     r.ping()
-    print(f"✅ Connected to Redis ({'Local' if IS_LOCAL else 'Cloud'})")
+    print(f"✅ Connected to Redis/Valkey at {REDIS_HOST}")
 except Exception as e:
-    print(f"⚠️ Redis not available ({REDIS_HOST}). Skipping rate limits.")
+    # This will print the EXACT error (e.g., Connection Refused, Timeout, etc.)
+    print(f"⚠️ Redis connection failed: {str(e)}")
     r = None
 
 RATE_LIMIT = 3          # per hour per phone
