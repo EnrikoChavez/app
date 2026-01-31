@@ -1,11 +1,11 @@
 # profile.py - Handles user profiles and premium status
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Body
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from fastapi import Header
 from db import get_db
 from models import Profile
-from datetime import datetime
+from datetime import datetime, timezone
 
 router = APIRouter(prefix="/profile", tags=["profile"])
 
@@ -14,6 +14,10 @@ class PremiumStatusResponse(BaseModel):
     phone: str
     is_premium: bool
     last_active: str
+
+
+class SyncPremiumRequest(BaseModel):
+    is_premium: bool
 
 
 # Helper: get phone number from header
@@ -42,7 +46,7 @@ def get_premium_status(db: Session = Depends(get_db), phone: str = Depends(get_p
 
 @router.post("/sync-premium")
 def sync_premium_status(
-    is_premium: bool,
+    request: SyncPremiumRequest,
     db: Session = Depends(get_db),
     phone: str = Depends(get_phone)
 ):
@@ -50,11 +54,11 @@ def sync_premium_status(
     profile = db.query(Profile).filter(Profile.phone == phone).first()
     
     if not profile:
-        profile = Profile(phone=phone, is_premium=is_premium)
+        profile = Profile(phone=phone, is_premium=request.is_premium)
         db.add(profile)
     else:
-        profile.is_premium = is_premium
-        profile.last_active = datetime.utcnow()
+        profile.is_premium = request.is_premium
+        profile.last_active = datetime.now(timezone.utc)
     
     db.commit()
     db.refresh(profile)
