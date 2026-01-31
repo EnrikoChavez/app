@@ -6,19 +6,29 @@
 //
 
 import SwiftUI
+import SwiftData
+
 @main
 struct ai_anti_doomscrollApp: App {
     @AppStorage("isLoggedIn") private var isLoggedIn = false
-
+    
+    // SwiftData container for local storage
+    let container: ModelContainer
+    
     init() {
-        // 1. Handle login state from Keychain
+        // 1. Set up SwiftData container
+        let schema = Schema([LocalTodo.self])
+        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        container = try! ModelContainer(for: schema, configurations: [config])
+        
+        // 2. Handle login state from Keychain
         if let token = KeychainHelper.getToken(), !token.isEmpty {
             isLoggedIn = true
         } else {
             isLoggedIn = false
         }
 
-        // 2. Set up a default base URL if nothing is saved yet
+        // 3. Set up a default base URL if nothing is saved yet
         if Shared.defaults.string(forKey: Shared.baseURLKey) == nil {
             Shared.defaults.set(
                 "http://MacBook-Pro-80.local:8000",   // fallback dev URL
@@ -31,8 +41,10 @@ struct ai_anti_doomscrollApp: App {
         WindowGroup {
             if isLoggedIn {
                 ContentView()
+                    .modelContainer(container)
             } else {
                 LoginView()
+                    .modelContainer(container)
             }
         }
     }

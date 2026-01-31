@@ -81,6 +81,9 @@ class SubscriptionManager: ObservableObject {
                     currentSubscription = product
                     isPremium = true
                     print("✅ Active subscription: \(product.displayName)")
+                    
+                    // Sync premium status to Postgres
+                    await syncPremiumStatusToBackend(isPremium: true)
                     return
                 }
             } catch {
@@ -91,6 +94,9 @@ class SubscriptionManager: ObservableObject {
         // No active subscription found
         isPremium = false
         currentSubscription = nil
+        
+        // Sync premium status to Postgres
+        await syncPremiumStatusToBackend(isPremium: false)
     }
     
     private func listenForTransactions() -> Task<Void, Error> {
@@ -129,9 +135,24 @@ class SubscriptionManager: ObservableObject {
                 currentSubscription = product
                 isPremium = true
                 print("✅ Subscription activated: \(product.displayName)")
+                
+                // Sync premium status to Postgres
+                await syncPremiumStatusToBackend(isPremium: true)
             }
         } catch {
             print("❌ Failed to look up product: \(error)")
+        }
+    }
+    
+    private func syncPremiumStatusToBackend(isPremium: Bool) async {
+        let networkManager = NetworkManager()
+        networkManager.syncPremiumStatus(isPremium: isPremium) { result in
+            switch result {
+            case .success:
+                print("✅ Premium status synced to backend: \(isPremium)")
+            case .failure(let error):
+                print("⚠️ Failed to sync premium status: \(error.localizedDescription)")
+            }
         }
     }
     

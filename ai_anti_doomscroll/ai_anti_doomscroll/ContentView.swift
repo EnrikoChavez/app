@@ -13,14 +13,13 @@ import DeviceActivity
 import ManagedSettings
 #endif
 
-struct Todo: Identifiable, Codable {
-    let id: Int
-    var task: String
-}
+// Todo model moved to TodoModel.swift
 
 struct ContentView: View {
+    @Environment(\.modelContext) private var modelContext
+    @StateObject private var todoRepository = TodoRepository()
+    
     @State private var serverResponse: String = "Idle"
-    @State private var todos: [Todo] = []
     @State private var newTask = ""
     @AppStorage("isLoggedIn") private var isLoggedIn = false
     @State private var phone = UserDefaults.standard.string(forKey: "userPhone") ?? "123"
@@ -87,7 +86,10 @@ struct ContentView: View {
                             
                             // 3. Today's Tasks
                             TodoSection(
-                                todos: $todos,
+                                todos: Binding(
+                                    get: { todoRepository.todos },
+                                    set: { _ in }
+                                ),
                                 newTask: $newTask,
                                 phone: phone,
                                 addTodo: addTodo,
@@ -248,10 +250,16 @@ struct ContentView: View {
     func onAppAppear() {
         Shared.defaults.set(APIConfig.baseURL, forKey: Shared.baseURLKey)
         Shared.defaults.set(phone, forKey: Shared.phoneKey)
+        
+        // Initialize repository with model context
+        todoRepository.setModelContext(modelContext)
+        
         #if canImport(FamilyControls)
         Task { await updateAuthStatus() }
         #endif
-        fetchTodos()
+        
+        // Sync todos from cloud (repository loads local first)
+        todoRepository.syncToCloud()
         checkBlockStatus()
         
         NotificationCenter.default.addObserver(
@@ -260,29 +268,22 @@ struct ContentView: View {
             queue: .main
         ) { _ in
             self.checkBlockStatus()
-        }
-    }
-    
-    func fetchTodos() {
-        networkManager.fetchTodos { items in
-            DispatchQueue.main.async {
-                self.todos = items
-                if let defaults = UserDefaults(suiteName: Shared.appGroupId),
-                   let data = try? JSONEncoder().encode(items) {
-                    defaults.set(data, forKey: Shared.todosKey)
-                }
-            }
+            self.todoRepository.syncToCloud()
         }
     }
     
     func addTodo() {
         guard !newTask.isEmpty else { return }
-        networkManager.addTodo(newTask) { _ in self.fetchTodos() }
+        // Get Apple ID (from StoreKit or UserDefaults)
+        let appleId = UserDefaults.standard.string(forKey: "appleId") ?? nil
+        todoRepository.addTodo(newTask, phone: phone, appleId: appleId)
         newTask = ""
     }
     
     func deleteTodo(id: Int) {
-        networkManager.deleteTodo(id: id) { _ in self.fetchTodos() }
+        if let todo = todoRepository.todos.first(where: { $0.id == id }) {
+            todoRepository.deleteTodo(todo)
+        }
     }
     
     func logout() { isLoggedIn = false }
@@ -322,7 +323,7 @@ struct ContentView: View {
 
     func startVoiceCall() {
         isStartingCall = true
-        networkManager.createHumeSession(todos: todos, minutes: Int(minutesText) ?? 15) { result in
+        networkManager.createHumeSession(todos: todoRepository.todos, minutes: Int(minutesText) ?? 15) { result in
             DispatchQueue.main.async {
                 self.isStartingCall = false
                 switch result {

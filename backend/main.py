@@ -8,13 +8,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from todo import router as todo_router
 from otp import router as otp_router
+from profile import router as profile_router
 from db import init_db
-from todo import Base
+from models import Base
 
 # ==========================================
 # 🚀 DEPLOYMENT SWITCH
 # ==========================================
-IS_LOCAL = True  # Set to False when deploying to Render
+# Note: This is now handled in db.py
+# Set IS_LOCAL = False in db.py when deploying to cloud
 # ==========================================
 
 load_dotenv()
@@ -29,6 +31,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.include_router(todo_router)
 app.include_router(otp_router)
+app.include_router(profile_router)
 
 app.add_middleware(
     CORSMiddleware,

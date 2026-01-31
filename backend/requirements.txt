@@ -6,3 +6,6 @@ retell-sdk
 redis
 twilio
 pyjwt
+psycopg2-binary
+asyncpg
+httpx

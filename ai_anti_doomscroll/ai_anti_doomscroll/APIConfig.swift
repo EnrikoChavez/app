@@ -7,11 +7,21 @@
 import Foundation
 
 enum APIConfig {
+    // ==========================================
+    // 🚀 DEPLOYMENT SWITCH
+    // ==========================================
+    static let IS_LOCAL = true  // Set to true for local development
+    // ==========================================
+    
     static var baseURL: String {
-       Shared.defaults.set("https://ds-sqxf.onrender.com", forKey: Shared.baseURLKey)
-        // Shared.defaults.set("http://192.168.1.159:8000", forKey: Shared.baseURLKey)
-        return Shared.defaults.string(forKey: Shared.baseURLKey)
-        ?? "IMPOSSIBLE"
+        if IS_LOCAL {
+            // Local development - update IP to your Mac's local IP
+            Shared.defaults.set("http://192.168.1.159:8000", forKey: Shared.baseURLKey)
+        } else {
+            // Production (cloud)
+            Shared.defaults.set("https://ds-sqxf.onrender.com", forKey: Shared.baseURLKey)
+        }
+        return Shared.defaults.string(forKey: Shared.baseURLKey) ?? "IMPOSSIBLE"
     }
     static func url(_ path: String) -> URL? {
         let base = baseURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))

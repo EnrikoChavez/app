@@ -1,37 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from sqlalchemy import Column, Integer, String, create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import Session
 from fastapi import Header
 from db import get_db
-
-# -----------------------------------
-# Database setup
-# -----------------------------------
-DATABASE_URL = "sqlite:///./todos.db"
-
-engine = create_engine(
-    DATABASE_URL, connect_args={"check_same_thread": False}
-)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
-
-
-# -----------------------------------
-# SQLAlchemy model
-# -----------------------------------
-class Todo(Base):
-    __tablename__ = "todos"
-
-    id = Column(Integer, primary_key=True, index=True)
-    task = Column(String, index=True)
-    phone = Column(String, index=True)  # 🔑 link each todo to a phone
-
-
-# Create the table if not exists
-Base.metadata.create_all(bind=engine)
-
+from models import Todo, Profile
 
 # -----------------------------------
 # FastAPI router
@@ -41,7 +13,13 @@ router = APIRouter(prefix="/todos", tags=["todos"])
 
 class TodoItem(BaseModel):
     task: str
+    apple_id: str | None = None
 
+
+class TodoResponse(BaseModel):
+    id: int
+    task: str
+    phone: str
 
 
 # Helper: get phone number from header (simple auth mechanism)
@@ -51,44 +29,90 @@ def get_phone(x_phone: str = Header(...)):
 
 @router.get("")
 def get_todos(db: Session = Depends(get_db), phone: str = Depends(get_phone)):
-    todos = db.query(Todo).filter(Todo.phone == phone).all()
-    return {"todos": [{"id": t.id, "task": t.task, "phone": t.phone} for t in todos]}
+    """Get all todos for a user. Syncs from Postgres."""
+    todos = db.query(Todo).filter(Todo.phone == phone).order_by(Todo.created_at.desc()).all()
+    return {
+        "todos": [
+            {
+                "id": t.id,
+                "task": t.task,
+                "phone": t.phone,
+                "appleId": t.apple_id,
+                "syncedAt": t.synced_at.isoformat() if t.synced_at else None
+            }
+            for t in todos
+        ]
+    }
 
 
 @router.post("")
 def add_todo(item: TodoItem, db: Session = Depends(get_db), phone: str = Depends(get_phone)):
-    todo = Todo(task=item.task, phone=phone)
+    """Add a todo. Saves to Postgres immediately."""
+    todo = Todo(task=item.task, phone=phone, apple_id=item.apple_id)
     db.add(todo)
     db.commit()
     db.refresh(todo)
+    
+    # Update user's last_active timestamp
+    profile = db.query(Profile).filter(Profile.phone == phone).first()
+    if profile:
+        from datetime import datetime
+        profile.last_active = datetime.utcnow()
+        db.commit()
+    else:
+        # Create profile if it doesn't exist
+        profile = Profile(phone=phone, is_premium=False)
+        db.add(profile)
+        db.commit()
+    
     return {
         "message": "Todo added",
-        "todos": [{"id": t.id, "task": t.task, "phone": t.phone} for t in db.query(Todo).filter(Todo.phone == phone)],
+        "todo": {
+            "id": todo.id,
+            "task": todo.task,
+            "phone": todo.phone,
+            "appleId": todo.apple_id,
+            "syncedAt": todo.synced_at.isoformat() if todo.synced_at else None
+        },
     }
 
 
 @router.put("/{todo_id}")
 def update_todo(todo_id: int, item: TodoItem, db: Session = Depends(get_db), phone: str = Depends(get_phone)):
+    """Update a todo. Syncs to Postgres."""
     todo = db.query(Todo).filter(Todo.id == todo_id, Todo.phone == phone).first()
     if not todo:
         raise HTTPException(status_code=404, detail="Invalid id")
 
     todo.task = item.task
+    if item.apple_id is not None:
+        todo.apple_id = item.apple_id
     db.commit()
     db.refresh(todo)
-    return {"message": f"Updated todo {todo_id}", "todo": {"id": todo.id, "task": todo.task, "phone": todo.phone}}
+    return {
+        "message": f"Updated todo {todo_id}",
+        "todo": {
+            "id": todo.id,
+            "task": todo.task,
+            "phone": todo.phone,
+            "appleId": todo.apple_id,
+            "syncedAt": todo.synced_at.isoformat() if todo.synced_at else None
+        }
+    }
 
 
 @router.delete("/{todo_id}")
 def delete_todo(todo_id: int, db: Session = Depends(get_db), phone: str = Depends(get_phone)):
+    """Delete a todo. Syncs to Postgres."""
     todo = db.query(Todo).filter(Todo.id == todo_id, Todo.phone == phone).first()
     if not todo:
         raise HTTPException(status_code=404, detail="Invalid id")
 
+    task_text = todo.task
     db.delete(todo)
     db.commit()
     
     return {
-        "message": f"Removed '{todo.task}'",
-        "todos": [{"id": t.id, "task": t.task, "phone": t.phone} for t in db.query(Todo).filter(Todo.phone == phone)],
+        "message": f"Removed '{task_text}'",
+        "todos": [{"id": t.id, "task": t.task, "phone": t.phone} for t in db.query(Todo).filter(Todo.phone == phone).all()],
     }
