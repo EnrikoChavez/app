@@ -12,12 +12,7 @@ from profile import router as profile_router
 from db import init_db
 from models import Base
 
-# ==========================================
-# 🚀 DEPLOYMENT SWITCH
-# ==========================================
-# Note: This is now handled in db.py
-# Set IS_LOCAL = False in db.py when deploying to cloud
-# ==========================================
+
 
 load_dotenv()
 

@@ -7,19 +7,9 @@ import time
 from twilio.rest import Client
 from dotenv import load_dotenv
 
-# Import the switch from main (or define locally)
-try:
-    from main import IS_LOCAL
-except ImportError:
-    IS_LOCAL = True
-
 load_dotenv(override=True)
 
-# Determine Redis Host based on Switch
-if IS_LOCAL:
-    REDIS_HOST = "redis://localhost:6379"
-else:
-    REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 
 router = APIRouter(prefix="/otp", tags=["otp"])
 
