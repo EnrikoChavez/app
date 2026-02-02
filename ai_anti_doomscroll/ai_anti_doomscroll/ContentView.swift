@@ -515,7 +515,7 @@ struct ContentView: View {
     func unblockApps() {
         // Check limit before unblocking
         guard let limitInfo = manualUnblockLimitInfo, limitInfo.canUnblock else {
-            activeAlert = .error(message: "You've reached your daily limit of 10 manual unblocks. Please use AI voice call or text chat to unblock.")
+            activeAlert = .error(message: "You've reached your daily limit of 3 manual unblocks. Please use AI voice call or text chat to unblock.")
             return
         }
         
@@ -555,7 +555,7 @@ struct ContentView: View {
                 case .failure(let error):
                     print("❌ Failed to check manual unblock limit: \(error.localizedDescription)")
                     // On error, allow unblock (fail open)
-                    self.manualUnblockLimitInfo = ManualUnblockLimitInfo(canUnblock: true, remainingCount: 10, usedCount: 0, limitCount: 3)
+                    self.manualUnblockLimitInfo = ManualUnblockLimitInfo(canUnblock: true, remainingCount: 3, usedCount: 0, limitCount: 3)
                 }
             }
         }
