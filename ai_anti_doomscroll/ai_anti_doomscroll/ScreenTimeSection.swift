@@ -194,7 +194,7 @@ struct ScreenTimeSection: View {
         Shared.defaults.set(baseMinutes, forKey: Shared.minutesKey)
 
         var events: [DeviceActivityEvent.Name: DeviceActivityEvent] = [:]
-        let multiples = [1, 2, 3, 4]
+        let multiples = Array(1...1000)
         for m in multiples {
             let mins = m * baseMinutes
             let name = DeviceActivityEvent.Name("usageThreshold_\(mins)")
