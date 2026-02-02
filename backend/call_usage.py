@@ -10,7 +10,7 @@ from datetime import datetime, date, timezone
 router = APIRouter(prefix="/call-usage", tags=["call-usage"])
 
 # Daily limit: 60 seconds (1 minute)
-DAILY_LIMIT_SECONDS = 60.0
+DAILY_LIMIT_SECONDS = 600.0
 
 
 # Helper: get phone number from header
