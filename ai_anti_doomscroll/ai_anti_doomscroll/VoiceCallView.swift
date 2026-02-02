@@ -45,6 +45,14 @@ struct VoiceCallView: View {
                     .font(.title2).bold()
                 Text(callManager.callStatus)
                     .foregroundColor(.secondary)
+                
+                // Show remaining time if call is active
+                if callManager.isCalling && callManager.remainingTime > 0 {
+                    Text("\(Int(callManager.remainingTime))s remaining")
+                        .font(.caption)
+                        .foregroundColor(callManager.remainingTime <= 10 ? .orange : .secondary)
+                        .padding(.top, 4)
+                }
             }
             
             // Real-time Transcript
@@ -75,6 +83,9 @@ struct VoiceCallView: View {
                 }
                 
                 Button(action: {
+                    // Get call duration BEFORE stopCall() resets it
+                    let duration = callManager.callDuration
+                    print("📱 VoiceCallView: Call duration before stop: \(duration)s")
                     callManager.stopCall()
                     onHangUp()
                 }) {

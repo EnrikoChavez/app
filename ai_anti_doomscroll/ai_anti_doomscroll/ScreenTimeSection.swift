@@ -168,7 +168,7 @@ struct ScreenTimeSection: View {
             #endif
         }
         .padding()
-        .background(Color(.secondarySystemBackground).opacity(0.5))
+        .background(Color(.systemBackground))
         .cornerRadius(16)
     }
     

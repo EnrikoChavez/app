@@ -10,7 +10,7 @@ enum APIConfig {
     // ==========================================
     // 🚀 DEPLOYMENT SWITCH
     // ==========================================
-    static let IS_LOCAL = true  // Set to true for local development
+    static let IS_LOCAL = false  // Set to true for local development
     // ==========================================
     
     static var baseURL: String {

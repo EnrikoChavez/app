@@ -42,9 +42,11 @@ struct ai_anti_doomscrollApp: App {
             if isLoggedIn {
                 ContentView()
                     .modelContainer(container)
+                    .preferredColorScheme(.light) // Force light mode only
             } else {
                 LoginView()
                     .modelContainer(container)
+                    .preferredColorScheme(.light) // Force light mode only
             }
         }
     }

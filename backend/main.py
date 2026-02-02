@@ -9,6 +9,10 @@ from dotenv import load_dotenv
 from todo import router as todo_router
 from otp import router as otp_router
 from profile import router as profile_router
+from call_usage import router as call_usage_router
+from chat import router as chat_router
+from account import router as account_router
+from manual_unblock import router as manual_unblock_router
 from db import init_db
 from models import Base
 
@@ -27,6 +31,10 @@ app = FastAPI(lifespan=lifespan)
 app.include_router(todo_router)
 app.include_router(otp_router)
 app.include_router(profile_router)
+app.include_router(call_usage_router)
+app.include_router(chat_router)
+app.include_router(account_router)
+app.include_router(manual_unblock_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -169,11 +177,32 @@ async def get_hume_access_token():
 # @app.post("/trigger-call") - DEPRECATED
 
 @app.post("/hume/create-session")
-async def create_hume_session(payload: dict):
+async def create_hume_session(payload: dict, request: Request):
     """
     Generate WebSocket connection details for Hume AI EVI.
+    Checks daily call limit before creating session.
     """
     print("📥 Received request for /hume/create-session")
+    
+    # Check call limit before proceeding
+    phone = request.headers.get("x-phone")
+    if phone:
+        from call_usage import check_call_limit
+        from db import get_db
+        
+        # Get database session
+        db = next(get_db())
+        try:
+            limit_info = check_call_limit(db=db, phone=phone)
+            if not limit_info.can_call:
+                raise HTTPException(
+                    status_code=429,
+                    detail=f"Daily call limit reached. You've used {limit_info.used_seconds:.1f}s of {limit_info.limit_seconds:.0f}s today."
+                )
+            print(f"✅ Call limit check passed: {limit_info.remaining_seconds:.1f}s remaining")
+        finally:
+            db.close()
+    
     try:
         # 1. Get a secure temporary access token
         print("🔑 Fetching Hume access token...")

@@ -227,4 +227,239 @@ final class NetworkManager {
             completion(.success(isPremium))
         }.resume()
     }
+    
+    // Call limit checking and recording
+    func checkCallLimit(completion: @escaping (Result<CallLimitInfo, Error>) -> Void) {
+        guard let req = makeRequest(path: "/call-usage/check-limit") else {
+            completion(.failure(NSError(domain: "NetworkManager", code: 400, userInfo: [NSLocalizedDescriptionKey: "Request build failed"])))
+            return
+        }
+        session.dataTask(with: req) { data, response, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            guard let data = data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                completion(.failure(NSError(domain: "NetworkManager", code: 500, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])))
+                return
+            }
+            
+            let canCall = json["can_call"] as? Bool ?? false
+            let remaining = json["remaining_seconds"] as? Double ?? 0.0
+            let used = json["used_seconds"] as? Double ?? 0.0
+            let limit = json["limit_seconds"] as? Double ?? 60.0
+            
+            completion(.success(CallLimitInfo(canCall: canCall, remainingSeconds: remaining, usedSeconds: used, limitSeconds: limit)))
+        }.resume()
+    }
+    
+    func recordCallDuration(durationSeconds: Double, completion: @escaping (Result<Void, Error>) -> Void) {
+        guard let req = makeRequest(path: "/call-usage/record-duration", method: "POST", jsonBody: ["duration_seconds": durationSeconds]) else {
+            completion(.failure(NSError(domain: "NetworkManager", code: 400, userInfo: [NSLocalizedDescriptionKey: "Request build failed"])))
+            return
+        }
+        session.dataTask(with: req) { data, _, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            completion(.success(()))
+        }.resume()
+    }
+    
+    // Manual unblock limit checking and recording
+    func checkManualUnblockLimit(completion: @escaping (Result<ManualUnblockLimitInfo, Error>) -> Void) {
+        guard let req = makeRequest(path: "/manual-unblock/check-limit") else {
+            completion(.failure(NSError(domain: "NetworkManager", code: 400, userInfo: [NSLocalizedDescriptionKey: "Request build failed"])))
+            return
+        }
+        session.dataTask(with: req) { data, response, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            guard let data = data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                completion(.failure(NSError(domain: "NetworkManager", code: 500, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])))
+                return
+            }
+            
+            let canUnblock = json["can_unblock"] as? Bool ?? false
+            let remaining = json["remaining_count"] as? Int ?? 0
+            let used = json["used_count"] as? Int ?? 0
+            let limit = json["limit_count"] as? Int ?? 10
+            
+            completion(.success(ManualUnblockLimitInfo(canUnblock: canUnblock, remainingCount: remaining, usedCount: used, limitCount: limit)))
+        }.resume()
+    }
+    
+    func recordManualUnblock(completion: @escaping (Result<Void, Error>) -> Void) {
+        guard let req = makeRequest(path: "/manual-unblock/record", method: "POST") else {
+            completion(.failure(NSError(domain: "NetworkManager", code: 400, userInfo: [NSLocalizedDescriptionKey: "Request build failed"])))
+            return
+        }
+        session.dataTask(with: req) { data, _, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            completion(.success(()))
+        }.resume()
+    }
+    
+    // Chat methods
+    func sendChatMessage(message: String, todos: [String], isNewConversation: Bool, completion: @escaping (Result<ChatResponse, Error>) -> Void) {
+        guard let req = makeRequest(path: "/chat/message", method: "POST", jsonBody: [
+            "message": message,
+            "todos": todos,
+            "is_new_conversation": isNewConversation
+        ]) else {
+            completion(.failure(NSError(domain: "NetworkManager", code: 400, userInfo: [NSLocalizedDescriptionKey: "Request build failed"])))
+            return
+        }
+        
+        session.dataTask(with: req) { data, response, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            
+            guard let data = data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                completion(.failure(NSError(domain: "NetworkManager", code: 500, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])))
+                return
+            }
+            
+            guard let responseText = json["response"] as? String else {
+                completion(.failure(NSError(domain: "NetworkManager", code: 500, userInfo: [NSLocalizedDescriptionKey: "No response text"])))
+                return
+            }
+            
+            let conversationEnded = json["conversation_ended"] as? Bool ?? false
+            
+            completion(.success(ChatResponse(response: responseText, conversationEnded: conversationEnded)))
+        }.resume()
+    }
+    
+    func endChatConversation(completion: @escaping (Result<String, Error>) -> Void) {
+        guard let req = makeRequest(path: "/chat/end", method: "POST") else {
+            completion(.failure(NSError(domain: "NetworkManager", code: 400, userInfo: [NSLocalizedDescriptionKey: "Request build failed"])))
+            return
+        }
+        
+        session.dataTask(with: req) { data, response, error in
+            if let error = error {
+                print("❌ iOS: endChatConversation network error: \(error.localizedDescription)")
+                completion(.failure(error))
+                return
+            }
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("❌ iOS: endChatConversation - invalid response type")
+                completion(.failure(NSError(domain: "NetworkManager", code: 500, userInfo: [NSLocalizedDescriptionKey: "Invalid response type"])))
+                return
+            }
+            
+            print("📱 iOS: endChatConversation status code: \(httpResponse.statusCode)")
+            
+            if httpResponse.statusCode == 404 {
+                print("⚠️ iOS: No active conversation found (404)")
+                completion(.failure(NSError(domain: "NetworkManager", code: 404, userInfo: [NSLocalizedDescriptionKey: "No active conversation found"])))
+                return
+            }
+            
+            guard httpResponse.statusCode == 200 else {
+                let responseBody = data.map { String(data: $0, encoding: .utf8) ?? "N/A" } ?? "N/A"
+                print("❌ iOS: endChatConversation server error (\(httpResponse.statusCode)): \(responseBody)")
+                completion(.failure(NSError(domain: "NetworkManager", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Server error: \(httpResponse.statusCode) - \(responseBody)"])))
+                return
+            }
+            
+            guard let data = data else {
+                print("❌ iOS: endChatConversation - no data in response")
+                completion(.failure(NSError(domain: "NetworkManager", code: 500, userInfo: [NSLocalizedDescriptionKey: "No data in response"])))
+                return
+            }
+            
+            let responseString = String(data: data, encoding: .utf8) ?? "N/A"
+            print("📱 iOS: endChatConversation response: \(responseString)")
+            
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                print("❌ iOS: endChatConversation - failed to parse JSON. Response: \(responseString)")
+                completion(.failure(NSError(domain: "NetworkManager", code: 500, userInfo: [NSLocalizedDescriptionKey: "Failed to parse JSON response: \(responseString)"])))
+                return
+            }
+            
+            guard let transcript = json["transcript"] as? String else {
+                print("❌ iOS: endChatConversation - no 'transcript' field in response. JSON: \(json)")
+                completion(.failure(NSError(domain: "NetworkManager", code: 500, userInfo: [NSLocalizedDescriptionKey: "No 'transcript' field in response. Response: \(json)"])))
+                return
+            }
+            
+            print("✅ iOS: endChatConversation success. Transcript length: \(transcript.count)")
+            completion(.success(transcript))
+        }.resume()
+    }
+    
+    func cancelChatConversation(completion: @escaping (Result<Void, Error>) -> Void) {
+        guard let req = makeRequest(path: "/chat/cancel", method: "DELETE") else {
+            completion(.failure(NSError(domain: "NetworkManager", code: 400, userInfo: [NSLocalizedDescriptionKey: "Request build failed"])))
+            return
+        }
+        
+        session.dataTask(with: req) { _, _, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            completion(.success(()))
+        }.resume()
+    }
+    
+    // Account management
+    func deleteAccount(completion: @escaping (Result<Void, Error>) -> Void) {
+        guard let req = makeRequest(path: "/account/delete", method: "DELETE") else {
+            completion(.failure(NSError(domain: "NetworkManager", code: 400, userInfo: [NSLocalizedDescriptionKey: "Request build failed"])))
+            return
+        }
+        
+        session.dataTask(with: req) { data, response, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                completion(.failure(NSError(domain: "NetworkManager", code: 500, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])))
+                return
+            }
+            
+            if httpResponse.statusCode == 200 || httpResponse.statusCode == 204 {
+                completion(.success(()))
+            } else {
+                let responseBody = data.map { String(data: $0, encoding: .utf8) ?? "N/A" } ?? "N/A"
+                completion(.failure(NSError(domain: "NetworkManager", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Server error: \(httpResponse.statusCode) - \(responseBody)"])))
+            }
+        }.resume()
+    }
+}
+
+struct CallLimitInfo {
+    let canCall: Bool
+    let remainingSeconds: Double
+    let usedSeconds: Double
+    let limitSeconds: Double
+}
+
+struct ManualUnblockLimitInfo {
+    let canUnblock: Bool
+    let remainingCount: Int
+    let usedCount: Int
+    let limitCount: Int
+}
+
+struct ChatResponse {
+    let response: String
+    let conversationEnded: Bool
 }

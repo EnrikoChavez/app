@@ -13,6 +13,9 @@ class HumeCallManager: NSObject, ObservableObject, URLSessionWebSocketDelegate {
     @Published var transcript = ""
     @Published var isMuted = false
     
+    // Callback for when call ends (used for automatic termination)
+    var onCallEnded: (() -> Void)?
+    
     private var webSocket: URLSessionWebSocketTask?
     private let audioEngine = AVAudioEngine()
     private let playerNode = AVAudioPlayerNode()
@@ -24,7 +27,28 @@ class HumeCallManager: NSObject, ObservableObject, URLSessionWebSocketDelegate {
     private var audioConverter: AVAudioConverter?
     private var initialVariables: [String: String]?
     
-    func startCall(websocketURL: String, initialVariables: [String: String]?) {
+    // Call duration tracking
+    private var callStartTime: Date?
+    private var lastRecordedDuration: TimeInterval = 0
+    private var maxCallDuration: TimeInterval = 0 // Maximum allowed call duration in seconds
+    private var callTimer: Timer?
+    
+    var callDuration: TimeInterval {
+        guard let startTime = callStartTime else {
+            // If startTime is nil, return the last recorded duration (in case stopCall was already called)
+            return lastRecordedDuration
+        }
+        let duration = Date().timeIntervalSince(startTime)
+        return duration
+    }
+    
+    var remainingTime: TimeInterval {
+        guard maxCallDuration > 0 else { return 0 }
+        let elapsed = callDuration
+        return max(0, maxCallDuration - elapsed)
+    }
+    
+    func startCall(websocketURL: String, initialVariables: [String: String]?, maxDurationSeconds: TimeInterval = 0) {
         guard let url = URL(string: websocketURL) else {
             print("❌ Invalid Hume WebSocket URL")
             return
@@ -35,6 +59,10 @@ class HumeCallManager: NSObject, ObservableObject, URLSessionWebSocketDelegate {
         self.isMuted = false
         self.transcript = ""
         self.callStatus = "Connecting..."
+        self.callStartTime = Date() // Track call start time
+        self.lastRecordedDuration = 0 // Reset last recorded duration
+        self.maxCallDuration = maxDurationSeconds // Set maximum call duration
+        print("📱 HumeCallManager: Call started at \(self.callStartTime?.description ?? "nil") with max duration: \(maxDurationSeconds)s")
         
         let request = URLRequest(url: url)
         let session = URLSession(configuration: .default, delegate: self, delegateQueue: .main)
@@ -43,6 +71,42 @@ class HumeCallManager: NSObject, ObservableObject, URLSessionWebSocketDelegate {
         webSocket?.resume()
         
         receiveMessage()
+        
+        // Start timer to monitor call duration and auto-end when limit reached
+        if maxDurationSeconds > 0 {
+            startCallTimer()
+        }
+    }
+    
+    private func startCallTimer() {
+        // Check every 0.5 seconds if we've reached the time limit
+        callTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            
+            if let startTime = self.callStartTime {
+                let elapsed = Date().timeIntervalSince(startTime)
+                let remaining = self.maxCallDuration - elapsed
+                
+                // If we've reached or exceeded the limit, end the call
+                if remaining <= 0 {
+                    print("⏰ Call time limit reached! Elapsed: \(elapsed)s, Limit: \(self.maxCallDuration)s")
+                    DispatchQueue.main.async {
+                        self.callStatus = "Time limit reached"
+                        // Give a brief moment for the status to update, then end call
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            self.stopCall()
+                            // Trigger callback if set
+                            self.onCallEnded?()
+                        }
+                    }
+                } else if remaining <= 5 {
+                    // Warn when 5 seconds remaining
+                    DispatchQueue.main.async {
+                        self.callStatus = "\(Int(remaining))s remaining"
+                    }
+                }
+            }
+        }
     }
     
     private func sendSessionSettings() {
@@ -184,11 +248,26 @@ class HumeCallManager: NSObject, ObservableObject, URLSessionWebSocketDelegate {
     }
     
     func stopCall() {
+        // Stop the timer first
+        callTimer?.invalidate()
+        callTimer = nil
+        
+        // Store duration before resetting startTime
+        if let startTime = callStartTime {
+            lastRecordedDuration = Date().timeIntervalSince(startTime)
+            print("📱 HumeCallManager: stopCall() called. Final duration: \(lastRecordedDuration)s")
+        } else {
+            print("⚠️ HumeCallManager: stopCall() called but callStartTime was already nil. Using last recorded: \(lastRecordedDuration)s")
+        }
+        
         audioEngine.stop()
         audioEngine.inputNode.removeTap(onBus: 0)
         webSocket?.cancel(with: .normalClosure, reason: nil)
         isCalling = false
         callStatus = "Disconnected"
+        callStartTime = nil // Reset call start time (but keep lastRecordedDuration)
+        maxCallDuration = 0 // Reset max duration
+        onCallEnded = nil // Clear callback
     }
     
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocol: String?) {
