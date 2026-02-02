@@ -288,7 +288,7 @@ final class NetworkManager {
             let canUnblock = json["can_unblock"] as? Bool ?? false
             let remaining = json["remaining_count"] as? Int ?? 0
             let used = json["used_count"] as? Int ?? 0
-            let limit = json["limit_count"] as? Int ?? 10
+            let limit = json["limit_count"] as? Int ?? 3
             
             completion(.success(ManualUnblockLimitInfo(canUnblock: canUnblock, remainingCount: remaining, usedCount: used, limitCount: limit)))
         }.resume()

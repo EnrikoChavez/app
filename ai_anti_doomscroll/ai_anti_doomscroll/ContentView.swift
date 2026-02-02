@@ -367,7 +367,7 @@ struct ContentView: View {
                             .scaleEffect(0.7)
                     }
                     if let limitInfo = manualUnblockLimitInfo {
-                        Text(isBlocked ? "Manual Unblock (\(limitInfo.remainingCount)/\(limitInfo.limitCount))" : "Reset Blocks")
+                        Text(isBlocked ? "Manual Unblocks (\(limitInfo.remainingCount)/\(limitInfo.limitCount))" : "Decrease Unblock Counter (\(limitInfo.remainingCount)/\(limitInfo.limitCount))")
                             .font(.caption2).bold()
                             .foregroundColor(limitInfo.canUnblock ? .secondary : .red)
                     } else {
@@ -555,7 +555,7 @@ struct ContentView: View {
                 case .failure(let error):
                     print("❌ Failed to check manual unblock limit: \(error.localizedDescription)")
                     // On error, allow unblock (fail open)
-                    self.manualUnblockLimitInfo = ManualUnblockLimitInfo(canUnblock: true, remainingCount: 10, usedCount: 0, limitCount: 10)
+                    self.manualUnblockLimitInfo = ManualUnblockLimitInfo(canUnblock: true, remainingCount: 10, usedCount: 0, limitCount: 3)
                 }
             }
         }

@@ -10,7 +10,7 @@ from datetime import datetime, date, timezone
 router = APIRouter(prefix="/manual-unblock", tags=["manual-unblock"])
 
 # Daily limit: 10 manual unblocks
-DAILY_LIMIT_COUNT = 10
+DAILY_LIMIT_COUNT = 3
 
 
 # Helper: get phone number from header
