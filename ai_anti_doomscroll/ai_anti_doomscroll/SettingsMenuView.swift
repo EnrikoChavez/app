@@ -211,48 +211,76 @@ struct PrivacyPolicyView: View {
                     
                     VStack(alignment: .leading, spacing: 16) {
                         SectionView(title: "1. Information We Collect", content: """
-                        We collect the following information:
-                        - Phone number (for account identification)
+                        We collect minimal information necessary for app functionality:
+                        - Phone number (for account identification and authentication)
                         - Apple ID (optional, for account linking)
-                        - Task lists and usage data
-                        - Screen time monitoring data (stored locally on your device)
-                        - Voice call transcripts (processed for evaluation purposes)
+                        - Voice call transcripts (temporarily processed for AI evaluation, then discarded)
+                        - Text chat messages (temporarily processed for AI evaluation, then discarded)
+                        
+                        We do NOT collect or store:
+                        - Your task lists (todos) - these are stored exclusively on your device
+                        - Personal notes or sensitive information
+                        - Screen time monitoring data - stored locally only
                         """)
                         
-                        SectionView(title: "2. How We Use Your Information", content: """
-                        We use your information to:
-                        - Provide and improve our services
-                        - Process your requests to unblock apps
-                        - Analyze app usage patterns
-                        - Communicate with you about your account
+                        SectionView(title: "2. Local Storage", content: """
+                        The following data is stored exclusively on your device and never sent to our servers:
+                        - Your task lists (todos) - stored using iOS SwiftData, accessible only on your device
+                        - Screen time monitoring settings and app selections
+                        - App blocking preferences
+                        
+                        This local data persists as long as the app is installed on your device and is included in your device backups. It is only deleted if you uninstall the app or manually clear app data.
                         """)
                         
-                        SectionView(title: "3. Data Storage", content: """
-                        Your data is stored securely on our servers. Screen time data is primarily stored locally on your device. We use industry-standard security measures to protect your information.
+                        SectionView(title: "3. How We Use Your Information", content: """
+                        We use your information solely to:
+                        - Authenticate your account (phone number)
+                        - Process AI voice calls and text chats for app unblocking
+                        - Evaluate conversations to determine if apps should be unblocked
+                        - Track usage limits (call duration, message count, manual unblocks) for daily limits
+                        
+                        We do NOT use your information for:
+                        - Advertising or marketing
+                        - Selling to third parties
+                        - Building user profiles
+                        - Any purpose other than providing the app's core functionality
                         """)
                         
-                        SectionView(title: "4. Third-Party Services", content: """
+                        SectionView(title: "4. Data Storage", content: """
+                        We store minimal data on our servers:
+                        - Phone number (for authentication)
+                        - Premium subscription status
+                        - Daily usage limits (call duration, message count, manual unblock count)
+                        
+                        All sensitive data (todos, task lists, screen time settings) is stored exclusively on your device using iOS SwiftData. We do not have access to this information.
+                        
+                        Voice call and text chat transcripts are processed temporarily for AI evaluation and are not permanently stored. We use industry-standard security measures to protect any data we do store.
+                        """)
+                        
+                        SectionView(title: "5. Third-Party Services", content: """
                         We use the following third-party services:
-                        - Hume AI (for voice interactions)
-                        - Google Gemini (for text chat and evaluation)
-                        - Apple StoreKit (for subscription management)
+                        - Hume AI (for voice interactions) - processes audio during calls only
+                        - Google Gemini (for text chat and evaluation) - processes messages temporarily for AI responses
+                        - Apple StoreKit (for subscription management) - handles payment processing
                         
-                        These services have their own privacy policies governing data use.
+                        These services have their own privacy policies governing data use. We only send data necessary for the service to function (e.g., audio for voice calls, messages for chat).
                         """)
                         
-                        SectionView(title: "5. Your Rights", content: """
+                        SectionView(title: "6. Your Rights", content: """
                         You have the right to:
-                        - Access your personal data
-                        - Request deletion of your account and data
-                        - Opt out of certain data collection
-                        - Export your data
+                        - Access your account data (phone number, subscription status)
+                        - Request deletion of your account and all server-stored data
+                        - Delete local data by uninstalling the app
+                        - Export your local data (todos are stored in iOS SwiftData, accessible through device backups)
+                        
+                        To delete your account, use the "Delete Account" option in Settings. This will remove all data stored on our servers. Local data (todos, settings) will remain on your device until you uninstall the app.
                         """)
                         
-                        SectionView(title: "6. Children's Privacy", content: """
+                        SectionView(title: "7. Children's Privacy", content: """
                         Our app is not intended for children under 13. We do not knowingly collect information from children.
                         """)
                         
-                        SectionView(title: "7. Contact Us", content: """
+                        SectionView(title: "8. Contact Us", content: """
                         If you have questions about this Privacy Policy, please contact us at: enriko.kurtz@gmail.com
                         """)
                     }
