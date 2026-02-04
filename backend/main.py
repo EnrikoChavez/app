@@ -252,16 +252,10 @@ async def hume_webhook(request: Request):
         transcript = event.get("transcript", "")
         
         # Store or summarize transcript for continuity
-        print("Hume Transcript:\n", transcript[:500])
-        save_last_summary(event.get("user_id", "unknown"), transcript[:200])
+        print("Hume Transcript:\n", transcript[:])
 
     return {"ok": True}
 
-
-# --- Helper stubs ---
-def save_last_summary(user_id: str, summary: str):
-    # Replace with DB storage
-    print(f"Saved summary for {user_id}: {summary[:100]}")
 
 @app.get("/")
 def homepage():

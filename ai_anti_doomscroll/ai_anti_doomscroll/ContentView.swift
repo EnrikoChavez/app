@@ -457,8 +457,6 @@ struct ContentView: View {
         Task { await updateAuthStatus() }
         #endif
         
-        // Sync todos from cloud (repository loads local first)
-        todoRepository.syncToCloud()
         checkBlockStatus()
         
         // Check call limit on load
@@ -471,7 +469,6 @@ struct ContentView: View {
             queue: .main
         ) { _ in
             self.checkBlockStatus()
-            self.todoRepository.syncToCloud()
         }
     }
     

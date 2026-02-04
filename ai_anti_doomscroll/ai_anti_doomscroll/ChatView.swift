@@ -172,7 +172,7 @@ struct ChatView: View {
         wasCancelled = false // Mark as properly ended, not cancelled
         chatManager.endConversation { result in
             switch result {
-            case .success(let transcript):
+            case .success(_):
                 // Transcript will be evaluated in ContentView's handleChatEnd
                 onEndChat()
             case .failure(let error):
