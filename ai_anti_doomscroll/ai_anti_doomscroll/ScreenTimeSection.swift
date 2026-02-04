@@ -95,6 +95,10 @@ struct ScreenTimeSection: View {
                                 .focused($isMinutesFocused)
                                 .textFieldStyle(PlainTextFieldStyle())
                                 .font(.body).bold()
+                                .padding(.vertical, 2)
+                                .padding(.horizontal, 4)
+                                .background(Color(red: 1.00, green: 0.96, blue: 0.96))
+                                .cornerRadius(6)
                             Text("min")
                                 .font(.body).bold()
                         }
@@ -140,11 +144,13 @@ struct ScreenTimeSection: View {
                     Button {
                         Task { await stopMonitoring() }
                     } label: {
-                        Image(systemName: "stop.fill")
-                            .font(.headline)
-                            .frame(width: 54, height: 50)
+                        Text("Stop Monitoring")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 12)
                             .background(Color(.systemGray5))
-                            .cornerRadius(12)
+                            .cornerRadius(8)
                     }
                     .disabled(starting || stopping)
                 }
