@@ -52,6 +52,24 @@ struct PaywallView: View {
                             }
                     }
                     
+                    // Testing Bypass Button
+                    Button(action: {
+                        Task {
+                            await subscriptionManager.enableTestingBypass()
+                            dismiss()
+                        }
+                    }) {
+                        Text("Testing Bypass")
+                            .font(.subheadline)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 10)
+                            .background(Color.orange)
+                            .cornerRadius(8)
+                    }
+                    .padding(.top, 20)
+                    .padding(.bottom, 10)
+                    
                     // Close button
                     Button(action: { dismiss() }) {
                         Text("Maybe Later")

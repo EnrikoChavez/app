@@ -19,10 +19,14 @@ struct ScreenTimeSection: View {
     @State private var statusMessage = ""
     @State private var isStatusError = false
     @State private var stopping = false
+    @State private var authorized = false
+    @State private var isMonitoringActive = false
+    @State private var activeMinutes = 0
     @ObservedObject var store: SelectionStore
     var updateAuthStatus: () async -> Void
-    @FocusState private var isMinutesFocused: Bool
-    
+
+    private var isAuthorized: Bool { authorized }
+
     private var isSelectionEmpty: Bool {
         #if canImport(FamilyControls)
         store.selection.applicationTokens.isEmpty
@@ -44,123 +48,150 @@ struct ScreenTimeSection: View {
                         .foregroundColor(.secondary)
                 }
                 Spacer()
-                
-                // Status indicator - subtle request access button
-                if !authStatus.contains("approved") {
-                    Button {
-                        #if canImport(FamilyControls)
-                        Task { await requestAuth() }
-                        #endif
-                    } label: {
-                        Text("Request Access")
-                            .font(.caption2)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(Color.secondary.opacity(0.15))
-                            .foregroundColor(.secondary)
-                            .cornerRadius(6)
-                    }
-                }
             }
 
             #if canImport(FamilyControls)
-            VStack(spacing: 16) {
-                // Config Grid
-                HStack(spacing: 12) {
-                    // App Selection
-                    Button(action: { showPicker = true }) {
-                        VStack(spacing: 8) {
-                            Image(systemName: "apps.iphone")
-                                .font(.title3)
-                            Text(isSelectionEmpty ? "Select Apps" : "\(store.selection.applicationTokens.count) Apps")
-                                .font(.caption).bold()
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Color.blue.opacity(0.1))
-                        .foregroundColor(.blue)
-                        .cornerRadius(12)
-                    }
-                    .familyActivityPicker(isPresented: $showPicker, selection: $store.selection)
+            if !isAuthorized {
+                // ── Access Not Granted ──────────────────────────────
+                VStack(spacing: 16) {
+                    Image(systemName: "lock.shield")
+                        .font(.system(size: 40))
+                        .foregroundColor(.blue.opacity(0.7))
 
-                    // Time Limit - directly editable with larger text
-                    VStack(spacing: 8) {
-                        Image(systemName: "timer")
-                            .font(.title3)
-                        HStack(spacing: 6) {
-                            TextField("15", text: $minutesText)
-                                .keyboardType(.numberPad)
-                                .multilineTextAlignment(.center)
-                                .frame(width: 30)
-                                .focused($isMinutesFocused)
-                                .textFieldStyle(PlainTextFieldStyle())
-                                .font(.body).bold()
-                                .padding(.vertical, 2)
-                                .padding(.horizontal, 4)
-                                .background(Color(red: 1.00, green: 0.96, blue: 0.96))
-                                .cornerRadius(6)
-                            Text("min")
-                                .font(.body).bold()
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(Color.pink.opacity(0.1))
-                    .foregroundColor(.pink)
-                    .cornerRadius(12)
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        isMinutesFocused = true
-                    }
-                    .toolbar {
-                        ToolbarItemGroup(placement: .keyboard) {
-                            Spacer()
-                            Button("Done") {
-                                isMinutesFocused = false
-                            }
-                            .foregroundColor(.blue)
-                        }
-                    }
-                }
-
-                // Control Buttons
-                HStack(spacing: 12) {
-                    Button {
-                        Task { await startMonitoring() }
-                    } label: {
-                        HStack {
-                            if starting { ProgressView().padding(.trailing, 4) }
-                            Text("Start Session")
-                                .bold()
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(isSelectionEmpty ? Color.gray.opacity(0.2) : Color.green)
-                        .foregroundColor(.white)
-                        .cornerRadius(12)
-                    }
-                    .disabled(starting || stopping || isSelectionEmpty)
-
-                    Button {
-                        Task { await stopMonitoring() }
-                    } label: {
-                        Text("Stop Monitoring")
+                    VStack(spacing: 6) {
+                        Text("Screen Time Access Required")
+                            .font(.headline)
+                        Text("Grant access once to start monitoring apps and setting time limits. You won't be asked again.")
                             .font(.caption)
                             .foregroundColor(.secondary)
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 12)
-                            .background(Color(.systemGray5))
-                            .cornerRadius(8)
+                            .multilineTextAlignment(.center)
                     }
-                    .disabled(starting || stopping)
+
+                    Button {
+                        Task { await requestAuth() }
+                    } label: {
+                        Text("Grant Access")
+                            .font(.body).bold()
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Color.blue)
+                            .cornerRadius(12)
+                    }
                 }
-                
-                if !statusMessage.isEmpty {
-                    Text(statusMessage)
-                        .font(.caption2)
-                        .foregroundColor(isStatusError ? .red : .green)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.vertical, 4)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 24)
+                .padding(.horizontal, 8)
+            } else {
+                VStack(spacing: 16) {
+                    // ── Monitoring Status Card ────────────────────────
+                    HStack(spacing: 12) {
+                        Image(systemName: isMonitoringActive ? "dot.radiowaves.left.and.right" : "slash.circle")
+                            .font(.title3)
+                            .foregroundColor(isMonitoringActive ? .green : .secondary)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(isMonitoringActive ? "Monitoring Active" : "No timer is set")
+                                .font(.subheadline).bold()
+                                .foregroundColor(isMonitoringActive ? .green : .secondary)
+                            if isMonitoringActive {
+                                Text("\(activeMinutes) min limit")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        Spacer()
+                    }
+                    .padding(14)
+                    .background(isMonitoringActive ? Color.green.opacity(0.07) : Color(.systemGray6))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(isMonitoringActive ? Color.green.opacity(0.25) : Color.clear, lineWidth: 1)
+                    )
+
+                    // Config Grid
+                    HStack(spacing: 12) {
+                        // App Selection
+                        Button(action: { showPicker = true }) {
+                            VStack(spacing: 8) {
+                                Image(systemName: "apps.iphone")
+                                    .font(.title3)
+                                Text(isSelectionEmpty ? "Select Apps" : "\(store.selection.applicationTokens.count) Apps")
+                                    .font(.caption).bold()
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(Color.blue.opacity(0.1))
+                            .foregroundColor(.blue)
+                            .cornerRadius(12)
+                        }
+                        .familyActivityPicker(isPresented: $showPicker, selection: $store.selection)
+
+                        // Time Limit
+                        Menu {
+                            ForEach(Array(stride(from: 3, through: 120, by: 1)), id: \.self) { mins in
+                                Button("\(mins) min") { minutesText = "\(mins)" }
+                            }
+                        } label: {
+                            VStack(spacing: 8) {
+                                Image(systemName: "timer")
+                                    .font(.title3)
+                                HStack(spacing: 4) {
+                                    Text(minutesText.isEmpty ? "15" : minutesText)
+                                        .font(.body).bold()
+                                    Text("min")
+                                        .font(.body).bold()
+                                    Image(systemName: "chevron.up.chevron.down")
+                                        .font(.caption2)
+                                }
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(Color.pink.opacity(0.1))
+                            .foregroundColor(.pink)
+                            .cornerRadius(12)
+                        }
+                    }
+
+                    // Control Buttons
+                    HStack(spacing: 12) {
+                        Button {
+                            Task { await startMonitoring() }
+                        } label: {
+                            HStack {
+                                if starting { ProgressView().padding(.trailing, 4) }
+                                Text("Start Session").bold()
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(isSelectionEmpty ? Color.gray.opacity(0.2) : Color.green)
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                        }
+                        .disabled(starting || stopping || isSelectionEmpty)
+
+                        Button {
+                            Task { await stopMonitoring() }
+                        } label: {
+                            Text("Stop Monitoring")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 12)
+                                .background(Color(.systemGray5))
+                                .cornerRadius(8)
+                        }
+                        .disabled(starting || stopping)
+                    }
+
+                    if !statusMessage.isEmpty {
+                        Text(statusMessage)
+                            .font(.caption2)
+                            .foregroundColor(isStatusError ? .red : .green)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.vertical, 4)
+                    }
                 }
             }
             #else
@@ -176,15 +207,27 @@ struct ScreenTimeSection: View {
         .padding()
         .background(Color(.systemBackground))
         .cornerRadius(16)
+        .onAppear {
+            #if canImport(FamilyControls)
+            authorized = AuthorizationCenter.shared.authorizationStatus == .approved
+            #endif
+            isMonitoringActive = Shared.defaults.bool(forKey: Shared.isMonitoringActiveKey)
+            activeMinutes = Shared.defaults.integer(forKey: Shared.monitoringMinutesKey)
+        }
     }
     
     #if canImport(FamilyControls)
     private func requestAuth() async {
         do {
             try await AuthorizationCenter.shared.requestAuthorization(for: .individual)
+            // requestAuthorization only returns successfully when user approved
+            await MainActor.run { authorized = true }
             await updateAuthStatus()
         } catch {
-            await MainActor.run { authStatus = "Error: \(error.localizedDescription)" }
+            await MainActor.run {
+                authorized = AuthorizationCenter.shared.authorizationStatus == .approved
+                authStatus = "Error: \(error.localizedDescription)"
+            }
         }
     }
 
@@ -223,9 +266,14 @@ struct ScreenTimeSection: View {
         do {
             center.stopMonitoring([DeviceActivityName("dailyMonitor")])
             try center.startMonitoring(DeviceActivityName("dailyMonitor"), during: schedule, events: events)
-            
+
+            Shared.defaults.set(true, forKey: Shared.isMonitoringActiveKey)
+            Shared.defaults.set(baseMinutes, forKey: Shared.monitoringMinutesKey)
+
             await MainActor.run {
-                statusMessage = "✅ Monitoring active (\(baseMinutes) min limit)"
+                isMonitoringActive = true
+                activeMinutes = baseMinutes
+                statusMessage = ""
                 isStatusError = false
             }
         } catch {
@@ -253,8 +301,13 @@ struct ScreenTimeSection: View {
         }
         #endif
         
+        Shared.defaults.set(false, forKey: Shared.isMonitoringActiveKey)
+        Shared.defaults.set(0, forKey: Shared.monitoringMinutesKey)
+
         await MainActor.run {
-            statusMessage = "✅ Monitoring stopped"
+            isMonitoringActive = false
+            activeMinutes = 0
+            statusMessage = ""
             isStatusError = false
         }
     }

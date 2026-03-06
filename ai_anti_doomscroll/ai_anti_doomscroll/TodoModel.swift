@@ -4,6 +4,10 @@
 //
 //  SwiftData model for local-only todo storage
 //
+//  NOTE: Any new fields added to LocalTodo MUST be Optional (e.g. Bool?, String?)
+//  so SwiftData can perform a lightweight migration on existing stores without
+//  wiping user data. Use `?? defaultValue` when reading them.
+//
 
 import Foundation
 import SwiftData
@@ -15,20 +19,35 @@ final class LocalTodo {
     var phone: String
     var appleId: String?
     var createdAt: Date
-    var isDeleted: Bool // True if deleted (soft delete)
-    
-    init(id: Int = Int.random(in: 1000000...9999999), task: String, phone: String, appleId: String? = nil) {
+    var isDeleted: Bool
+
+    // Optional so SwiftData can migrate existing records (nil == false)
+    var isTodaysFocus: Bool?
+    var isCompleted: Bool?
+
+    init(id: Int = Int.random(in: 1000000...9999999),
+         task: String,
+         phone: String,
+         appleId: String? = nil,
+         isTodaysFocus: Bool = false,
+         isCompleted: Bool = false) {
         self.id = id
         self.task = task
         self.phone = phone
         self.appleId = appleId
         self.createdAt = Date()
         self.isDeleted = false
+        self.isTodaysFocus = isTodaysFocus
+        self.isCompleted = isCompleted
     }
-    
-    // Convert to Todo struct for UI
+
     func toNetworkTodo() -> Todo {
-        Todo(id: id, task: task, phone: phone, appleId: appleId)
+        Todo(id: id,
+             task: task,
+             phone: phone,
+             appleId: appleId,
+             isTodaysFocus: isTodaysFocus ?? false,
+             isCompleted: isCompleted ?? false)
     }
 }
 
@@ -38,4 +57,6 @@ struct Todo: Identifiable, Codable {
     var task: String
     var phone: String?
     var appleId: String?
+    var isTodaysFocus: Bool = false
+    var isCompleted: Bool = false
 }

@@ -27,6 +27,10 @@ enum Shared {
     static let blockedAtKey  = "blockedAt"     // timestamp when apps were blocked
     static let blockedAppsKey = "blockedApps"  // JSON array of blocked app tokens
     static let applicationTokensKey = "applicationTokens"  // stored application tokens for blocking
+
+    // Keys for monitoring state display
+    static let isMonitoringActiveKey = "isMonitoringActive"
+    static let monitoringMinutesKey  = "monitoringMinutes"
 }
 
 // MARK: - Selection persistence (App ↔ Extension via App Group)

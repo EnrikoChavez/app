@@ -17,9 +17,20 @@ struct ai_anti_doomscrollApp: App {
     
     init() {
         // 1. Set up SwiftData container
+        // SwiftData performs lightweight migration automatically when:
+        //   - New fields are Optional (Bool?, String?, etc.)
+        //   - Existing fields are removed
+        // Always add new LocalTodo fields as Optional to preserve user data across updates.
         let schema = Schema([LocalTodo.self])
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-        container = try! ModelContainer(for: schema, configurations: [config])
+
+        do {
+            container = try ModelContainer(for: schema, configurations: [config])
+        } catch {
+            // If migration still fails for some unexpected reason, crash loudly in
+            // development so it gets fixed — do NOT silently delete user data.
+            fatalError("❌ SwiftData failed to load: \(error)\nCheck that any new LocalTodo fields are declared as Optional.")
+        }
         
         // 2. Handle login state from Keychain
         if let token = KeychainHelper.getToken(), !token.isEmpty {
@@ -31,7 +42,7 @@ struct ai_anti_doomscrollApp: App {
         // 3. Set up a default base URL if nothing is saved yet
         if Shared.defaults.string(forKey: Shared.baseURLKey) == nil {
             Shared.defaults.set(
-                "http://MacBook-Pro-80.local:8000",   // fallback dev URL
+                "http://MacBook-Pro-80.local:8000",
                 forKey: Shared.baseURLKey
             )
         }
@@ -42,11 +53,11 @@ struct ai_anti_doomscrollApp: App {
             if isLoggedIn {
                 ContentView()
                     .modelContainer(container)
-                    .preferredColorScheme(.light) // Force light mode only
+                    .preferredColorScheme(.light)
             } else {
                 LoginView()
                     .modelContainer(container)
-                    .preferredColorScheme(.light) // Force light mode only
+                    .preferredColorScheme(.light)
             }
         }
     }

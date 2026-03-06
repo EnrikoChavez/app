@@ -12,6 +12,10 @@
 		<string>fetch</string>
 		<string>processing</string>
 	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>OrgIdentifier.ai-anti-doomscroll.backgroundtask</string>
+	</array>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>This app needs microphone access so you can talk to the AI agent to unblock your apps.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>

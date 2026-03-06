@@ -111,6 +111,10 @@ struct ContentView: View {
                             // Tab 3: Monitoring
                             monitoringTab
                                 .tag(2)
+
+                            // Tab 4: Gallery
+                            galleryTab
+                                .tag(3)
                         }
                         .tabViewStyle(.page(indexDisplayMode: .never))
                     }
@@ -131,7 +135,7 @@ struct ContentView: View {
                     }
                 }
                 .sheet(isPresented: $showingChatView) {
-                    ChatView(chatManager: chatManager, todos: todoRepository.todos) {
+                    ChatView(chatManager: chatManager, todos: todoRepository.focusTodos) {
                         showingChatView = false
                         // Only evaluate if conversation wasn't cancelled
                         handleChatEnd()
@@ -167,7 +171,7 @@ struct ContentView: View {
                 .padding(.vertical, 10)
                 .foregroundColor(selectedTab == 0 ? .blue : .gray)
             }
-            
+
             // Tasks Tab
             Button(action: { selectedTab = 1 }) {
                 VStack(spacing: 4) {
@@ -180,18 +184,31 @@ struct ContentView: View {
                 .padding(.vertical, 10)
                 .foregroundColor(selectedTab == 1 ? .blue : .gray)
             }
-            
+
             // Monitor Tab
             Button(action: { selectedTab = 2 }) {
                 VStack(spacing: 4) {
                     Image(systemName: "chart.bar")
                         .font(.system(size: 20))
-                    Text("Monitor")
+                    Text("Set Timer")
                         .font(.system(size: 12, weight: .medium))
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
                 .foregroundColor(selectedTab == 2 ? .blue : .gray)
+            }
+
+            // Gallery Tab
+            Button(action: { selectedTab = 3 }) {
+                VStack(spacing: 4) {
+                    Image(systemName: "checkmark.seal")
+                        .font(.system(size: 20))
+                    Text("Gallery")
+                        .font(.system(size: 12, weight: .medium))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .foregroundColor(selectedTab == 3 ? .blue : .gray)
             }
         }
         .background(Color(.systemBackground))
@@ -389,37 +406,161 @@ struct ContentView: View {
     // Tab 1: Calls & Chats
     var callsChatsTab: some View {
         ScrollView {
-            VStack(spacing: 0) {
+            VStack(spacing: 16) {
                 statusHeroCard
                     .padding(.horizontal)
                     .padding(.top, 20)
+
+                // How to use instructions
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("How it works")
+                        .font(.subheadline).bold()
+                        .padding(.bottom, 12)
+
+                    VStack(spacing: 10) {
+                        instructionRow(step: "1", icon: "checklist", color: .blue,
+                            title: "Add your tasks",
+                            detail: "Go to the Tasks tab and dump everything you need to do. Move items to Today's Focus to tell the AI what to check.")
+
+                        instructionRow(step: "2", icon: "chart.bar", color: .green,
+                            title: "Set a time limit",
+                            detail: "Go to the Set Timer tab, pick the apps you want to limit and choose a minute interval. Tap Start Session.")
+
+                        instructionRow(step: "3", icon: "lock.fill", color: .orange,
+                            title: "Apps get blocked",
+                            detail: "Once you hit the time limit your selected apps are blocked automatically.")
+
+                        instructionRow(step: "4", icon: "brain.head.profile", color: .purple,
+                            title: "Talk or text the AI to unblock",
+                            detail: "Use the voice call or text chat to convince the AI you've finished your tasks. If it believes you, your apps unlock.")
+                    }
+                }
+                .padding(20)
+                .background(Color(.systemBackground))
+                .cornerRadius(20)
+                .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 4)
+                .padding(.horizontal)
             }
-            .padding(.bottom, 100) // Extra padding for bottom tab bar
+            .padding(.bottom, 100)
         }
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
+    }
+
+    @ViewBuilder
+    private func instructionRow(step: String, icon: String, color: Color, title: String, detail: String) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.12))
+                    .frame(width: 38, height: 38)
+                Image(systemName: icon)
+                    .font(.system(size: 16))
+                    .foregroundColor(color)
+            }
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.subheadline).bold()
+                Text(detail)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(12)
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(12)
     }
     
     // Tab 2: Todos
     var todosTab: some View {
         ScrollView {
+            TodoSection(
+                overallTodos: todoRepository.overallTodos,
+                focusTodos: todoRepository.focusTodos,
+                newTask: $newTask,
+                addTodo: addTodo,
+                deleteTodo: deleteTodo,
+                moveToFocus: moveToFocus,
+                moveToOverall: moveToOverall,
+                completeTodo: completeTodo
+            )
+            .padding(.horizontal)
+            .padding(.top, 20)
+            .padding(.bottom, 100)
+        }
+        .background(Color(.systemGroupedBackground).ignoresSafeArea())
+    }
+
+    // Tab 4: Gallery (completed tasks)
+    var galleryTab: some View {
+        ScrollView {
             VStack(spacing: 0) {
-                TodoSection(
-                    todos: Binding(
-                        get: { todoRepository.todos },
-                        set: { _ in }
-                    ),
-                    newTask: $newTask,
-                    phone: phone,
-                    addTodo: addTodo,
-                    deleteTodo: deleteTodo
-                )
-                .padding()
+                VStack(alignment: .leading, spacing: 14) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Gallery")
+                                .font(.title3).bold()
+                            Text("Tasks you've completed")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                        Text("\(todoRepository.completedTodos.count)")
+                            .font(.caption).bold()
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.blue.opacity(0.1))
+                            .foregroundColor(.blue)
+                            .clipShape(Capsule())
+                    }
+
+                    if todoRepository.completedTodos.isEmpty {
+                        VStack(spacing: 12) {
+                            Image(systemName: "checkmark.seal")
+                                .font(.system(size: 40))
+                                .foregroundColor(.gray.opacity(0.5))
+                            Text("No completed tasks yet.\nMark tasks as done to see them here.")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 40)
+                    } else {
+                        VStack(spacing: 8) {
+                            ForEach(todoRepository.completedTodos) { todo in
+                                HStack(spacing: 12) {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundColor(.green)
+                                        .font(.system(size: 16))
+
+                                    Text(todo.task)
+                                        .font(.body)
+                                        .foregroundColor(.secondary)
+                                        .lineLimit(2)
+
+                                    Spacer()
+
+                                    Button(action: { removeFromGallery(id: todo.id) }) {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundColor(.gray.opacity(0.4))
+                                    }
+                                }
+                                .padding(14)
+                                .background(Color(.secondarySystemBackground))
+                                .cornerRadius(12)
+                            }
+                        }
+                    }
+                }
+                .padding(16)
                 .background(Color(.systemBackground))
                 .cornerRadius(20)
                 .padding(.horizontal)
                 .padding(.top, 20)
             }
-            .padding(.bottom, 100) // Extra padding for bottom tab bar
+            .padding(.bottom, 100)
         }
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
     }
@@ -483,6 +624,30 @@ struct ContentView: View {
     func deleteTodo(id: Int) {
         if let todo = todoRepository.todos.first(where: { $0.id == id }) {
             todoRepository.deleteTodo(todo)
+        }
+    }
+
+    func moveToFocus(id: Int) {
+        if let todo = todoRepository.todos.first(where: { $0.id == id }) {
+            todoRepository.moveToFocus(todo)
+        }
+    }
+
+    func moveToOverall(id: Int) {
+        if let todo = todoRepository.todos.first(where: { $0.id == id }) {
+            todoRepository.moveToOverall(todo)
+        }
+    }
+
+    func completeTodo(id: Int) {
+        if let todo = todoRepository.todos.first(where: { $0.id == id }) {
+            todoRepository.completeTodo(todo)
+        }
+    }
+
+    func removeFromGallery(id: Int) {
+        if let todo = todoRepository.todos.first(where: { $0.id == id }) {
+            todoRepository.removeFromGallery(todo)
         }
     }
     
@@ -589,7 +754,7 @@ struct ContentView: View {
                     
                     // Limit check passed, proceed with call
                     self.isStartingCall = true
-                    self.networkManager.createHumeSession(todos: self.todoRepository.todos, minutes: Int(self.minutesText) ?? 15) { result in
+                    self.networkManager.createHumeSession(todos: self.todoRepository.focusTodos, minutes: Int(self.minutesText) ?? 15) { result in
                         DispatchQueue.main.async {
                             self.isStartingCall = false
                             switch result {
@@ -662,7 +827,7 @@ struct ContentView: View {
     }
     
     func startTextChat() {
-        chatManager.startChat(todos: todoRepository.todos)
+        chatManager.startChat(todos: todoRepository.focusTodos)
         showingChatView = true
     }
     

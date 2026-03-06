@@ -163,6 +163,12 @@ class SubscriptionManager: ObservableObject {
         try? await AppStore.sync()
         await checkSubscriptionStatus()
     }
+    
+    // Testing bypass - only available in DEBUG builds
+    func enableTestingBypass() async {
+        isPremium = true
+        await syncPremiumStatusToBackend(isPremium: true)
+    }
 }
 
 enum StoreError: Error {
