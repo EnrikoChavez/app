@@ -1,21 +1,16 @@
 # call_usage.py - Handles daily call limit tracking
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from db import get_db
 from models import CallUsage
+from otp import verify_token
 from datetime import datetime, date, timezone
 
 router = APIRouter(prefix="/call-usage", tags=["call-usage"])
 
-# Daily limit: 60 seconds (1 minute)
 DAILY_LIMIT_SECONDS = 600.0
-
-
-# Helper: get phone number from header
-def get_phone(x_phone: str = Header(...)):
-    return x_phone
 
 
 class CallLimitResponse(BaseModel):
@@ -32,7 +27,7 @@ class RecordCallDurationRequest(BaseModel):
 @router.get("/check-limit")
 def check_call_limit(
     db: Session = Depends(get_db),
-    phone: str = Depends(get_phone)
+    phone: str = Depends(verify_token)
 ):
     """
     Check if user can make a call based on daily limit.
@@ -72,7 +67,7 @@ def check_call_limit(
 def record_call_duration(
     request: RecordCallDurationRequest,
     db: Session = Depends(get_db),
-    phone: str = Depends(get_phone)
+    phone: str = Depends(verify_token)
 ):
     """
     Record call duration after a call ends.

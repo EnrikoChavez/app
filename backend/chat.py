@@ -1,5 +1,5 @@
 # chat.py - Handles Gemini text chat with conversation memory
-from fastapi import APIRouter, HTTPException, Depends, Header
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import List, Optional
 import httpx
@@ -9,24 +9,19 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from db import get_db
 from models import ChatUsage
+from otp import verify_token
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent"
 
-# Limits
 MAX_MESSAGES_PER_DAY = 1000
 MAX_CHARACTERS_PER_MESSAGE = 3000
 
-# In-memory conversation storage (in production, use Redis or database)
+# In-memory conversation storage
 # Format: {phone: {"history": [...], "todos": "...", "started_at": datetime}}
 conversations = {}
-
-
-# Helper: get phone number from header
-def get_phone(x_phone: str = Header(...)):
-    return x_phone
 
 
 class ChatMessage(BaseModel):
@@ -127,7 +122,7 @@ def record_chat_message(db: Session, phone: str):
 @router.post("/message")
 async def send_chat_message(
     request: ChatRequest,
-    phone: str = Depends(get_phone),
+    phone: str = Depends(verify_token),
     db: Session = Depends(get_db)
 ):
     """
@@ -240,7 +235,7 @@ async def send_chat_message(
 
 @router.post("/end")
 async def end_conversation(
-    phone: str = Depends(get_phone)
+    phone: str = Depends(verify_token)
 ):
     """
     End a conversation and return the full transcript for evaluation.
@@ -276,7 +271,7 @@ async def end_conversation(
 
 @router.delete("/cancel")
 async def cancel_conversation(
-    phone: str = Depends(get_phone)
+    phone: str = Depends(verify_token)
 ):
     """Cancel an active conversation without evaluation."""
     if phone in conversations:

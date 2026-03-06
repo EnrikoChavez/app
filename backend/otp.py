@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Header, Depends
 from pydantic import BaseModel
+from typing import Optional
 import redis
 import os
 import jwt
@@ -49,9 +50,22 @@ class VerifyRequest(BaseModel):
 def create_jwt(phone: str):
     payload = {
         "phone": phone,
-        "exp": time.time() + 3600
+        "exp": time.time() + 30 * 24 * 3600  # 30 days
     }
     return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+
+
+def verify_token(authorization: Optional[str] = Header(default=None)) -> str:
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Authorization header missing or invalid")
+    token = authorization[len("Bearer "):]
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        return payload["phone"]
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Session expired, please log in again")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
 @router.post("/send")
 def send_otp(data: PhoneRequest):

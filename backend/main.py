@@ -3,7 +3,8 @@ import os
 import base64
 import httpx
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, Depends
+from otp import verify_token
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from todo import router as todo_router
@@ -97,7 +98,7 @@ async def analyze_transcript_with_gemini(transcript: str) -> bool:
         return False
 
 @app.post("/hume/evaluate-transcript")
-async def evaluate_transcript(payload: dict):
+async def evaluate_transcript(payload: dict, phone: str = Depends(verify_token)):
     """
     Endpoint for iOS app to send transcript for evaluation.
     """
@@ -177,15 +178,14 @@ async def get_hume_access_token():
 # @app.post("/trigger-call") - DEPRECATED
 
 @app.post("/hume/create-session")
-async def create_hume_session(payload: dict, request: Request):
+async def create_hume_session(payload: dict, phone: str = Depends(verify_token)):
     """
     Generate WebSocket connection details for Hume AI EVI.
     Checks daily call limit before creating session.
     """
     print("📥 Received request for /hume/create-session")
-    
+
     # Check call limit before proceeding
-    phone = request.headers.get("x-phone")
     if phone:
         from call_usage import check_call_limit
         from db import get_db

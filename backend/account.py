@@ -1,22 +1,18 @@
 # account.py - Handles account management operations
-from fastapi import APIRouter, HTTPException, Depends, Header
+from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from db import get_db
 from models import Todo, Profile, CallUsage
+from otp import verify_token
 from datetime import date
 
 router = APIRouter(prefix="/account", tags=["account"])
 
 
-# Helper: get phone number from header
-def get_phone(x_phone: str = Header(...)):
-    return x_phone
-
-
 @router.delete("/delete")
 def delete_account(
     db: Session = Depends(get_db),
-    phone: str = Depends(get_phone)
+    phone: str = Depends(verify_token)
 ):
     """
     Delete user account and all associated data.

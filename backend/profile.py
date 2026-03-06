@@ -2,9 +2,9 @@
 from fastapi import APIRouter, HTTPException, Depends, Body
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from fastapi import Header
 from db import get_db
 from models import Profile
+from otp import verify_token
 from datetime import datetime, timezone
 
 router = APIRouter(prefix="/profile", tags=["profile"])
@@ -20,13 +20,8 @@ class SyncPremiumRequest(BaseModel):
     is_premium: bool
 
 
-# Helper: get phone number from header
-def get_phone(x_phone: str = Header(...)):
-    return x_phone
-
-
 @router.get("/premium-status")
-def get_premium_status(db: Session = Depends(get_db), phone: str = Depends(get_phone)):
+def get_premium_status(db: Session = Depends(get_db), phone: str = Depends(verify_token)):
     """Get user's premium status from Postgres."""
     profile = db.query(Profile).filter(Profile.phone == phone).first()
     
@@ -48,7 +43,7 @@ def get_premium_status(db: Session = Depends(get_db), phone: str = Depends(get_p
 def sync_premium_status(
     request: SyncPremiumRequest,
     db: Session = Depends(get_db),
-    phone: str = Depends(get_phone)
+    phone: str = Depends(verify_token)
 ):
     """Sync premium status from iOS app (after StoreKit verification)."""
     profile = db.query(Profile).filter(Profile.phone == phone).first()

@@ -1,21 +1,16 @@
 # manual_unblock.py - Handles daily manual unblock limit tracking
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from db import get_db
 from models import ManualUnblockUsage
+from otp import verify_token
 from datetime import datetime, date, timezone
 
 router = APIRouter(prefix="/manual-unblock", tags=["manual-unblock"])
 
-# Daily limit: 10 manual unblocks
 DAILY_LIMIT_COUNT = 3
-
-
-# Helper: get phone number from header
-def get_phone(x_phone: str = Header(...)):
-    return x_phone
 
 
 class ManualUnblockLimitResponse(BaseModel):
@@ -28,7 +23,7 @@ class ManualUnblockLimitResponse(BaseModel):
 @router.get("/check-limit")
 def check_manual_unblock_limit(
     db: Session = Depends(get_db),
-    phone: str = Depends(get_phone)
+    phone: str = Depends(verify_token)
 ):
     """
     Check if user can perform a manual unblock based on daily limit.
@@ -67,7 +62,7 @@ def check_manual_unblock_limit(
 @router.post("/record")
 def record_manual_unblock(
     db: Session = Depends(get_db),
-    phone: str = Depends(get_phone)
+    phone: str = Depends(verify_token)
 ):
     """
     Record a manual unblock.

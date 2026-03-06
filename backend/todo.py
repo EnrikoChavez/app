@@ -1,13 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from fastapi import Header
 from db import get_db
 from models import Todo, Profile
+from otp import verify_token
 
-# -----------------------------------
-# FastAPI router
-# -----------------------------------
 router = APIRouter(prefix="/todos", tags=["todos"])
 
 
@@ -22,13 +19,8 @@ class TodoResponse(BaseModel):
     phone: str
 
 
-# Helper: get phone number from header (simple auth mechanism)
-def get_phone(x_phone: str = Header(...)):
-    return x_phone
-
-
 @router.get("")
-def get_todos(db: Session = Depends(get_db), phone: str = Depends(get_phone)):
+def get_todos(db: Session = Depends(get_db), phone: str = Depends(verify_token)):
     """Get all todos for a user. Syncs from Postgres."""
     todos = db.query(Todo).filter(Todo.phone == phone).order_by(Todo.created_at.desc()).all()
     return {
@@ -46,7 +38,7 @@ def get_todos(db: Session = Depends(get_db), phone: str = Depends(get_phone)):
 
 
 @router.post("")
-def add_todo(item: TodoItem, db: Session = Depends(get_db), phone: str = Depends(get_phone)):
+def add_todo(item: TodoItem, db: Session = Depends(get_db), phone: str = Depends(verify_token)):
     """Add a todo. Saves to Postgres immediately."""
     todo = Todo(task=item.task, phone=phone, apple_id=item.apple_id)
     db.add(todo)
@@ -78,7 +70,7 @@ def add_todo(item: TodoItem, db: Session = Depends(get_db), phone: str = Depends
 
 
 @router.put("/{todo_id}")
-def update_todo(todo_id: int, item: TodoItem, db: Session = Depends(get_db), phone: str = Depends(get_phone)):
+def update_todo(todo_id: int, item: TodoItem, db: Session = Depends(get_db), phone: str = Depends(verify_token)):
     """Update a todo. Syncs to Postgres."""
     todo = db.query(Todo).filter(Todo.id == todo_id, Todo.phone == phone).first()
     if not todo:
@@ -102,7 +94,7 @@ def update_todo(todo_id: int, item: TodoItem, db: Session = Depends(get_db), pho
 
 
 @router.delete("/{todo_id}")
-def delete_todo(todo_id: int, db: Session = Depends(get_db), phone: str = Depends(get_phone)):
+def delete_todo(todo_id: int, db: Session = Depends(get_db), phone: str = Depends(verify_token)):
     """Delete a todo. Syncs to Postgres."""
     todo = db.query(Todo).filter(Todo.id == todo_id, Todo.phone == phone).first()
     if not todo:

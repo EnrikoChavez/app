@@ -24,6 +24,9 @@ final class NetworkManager {
         if !phoneHeader.isEmpty {
             req.setValue(phoneHeader, forHTTPHeaderField: "x-phone")
         }
+        if let token = KeychainHelper.getToken() {
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
         extraHeaders.forEach { req.setValue($1, forHTTPHeaderField: $0) }
         if let jsonBody = jsonBody {
             req.httpBody = try? JSONSerialization.data(withJSONObject: jsonBody)
