@@ -31,7 +31,7 @@ class SubscriptionManager: ObservableObject {
     //    - Scheme > Run > Options > StoreKit Configuration = your file
     // ==========================================
     
-    let subscriptionGroupID = "20864321" // Replace with your Subscription Group ID from App Store Connect
+    let subscriptionGroupID = "21912575" // Subscription Group ID from App Store Connect
     let productIDs = [
         "ai_anti_doomscroll.basic"
     ]
@@ -164,11 +164,6 @@ class SubscriptionManager: ObservableObject {
         await checkSubscriptionStatus()
     }
     
-    // Testing bypass - only available in DEBUG builds
-    func enableTestingBypass() async {
-        isPremium = true
-        await syncPremiumStatusToBackend(isPremium: true)
-    }
 }
 
 enum StoreError: Error {

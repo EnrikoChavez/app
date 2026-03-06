@@ -20,10 +20,10 @@ struct PaywallView: View {
                 VStack(spacing: 0) {
                     // Header
                     VStack(spacing: 12) {
-                        Text("Unlock Premium")
+                        Text("Unlock Anti Doomscrolling")
                             .font(.system(size: 32, weight: .bold, design: .rounded))
                         
-                        Text("Get unlimited AI coaching sessions and advanced features")
+                        Text("Get AI Chat based focus sessions")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
@@ -51,41 +51,11 @@ struct PaywallView: View {
                                 handlePurchaseResult(product: product, result: result)
                             }
                     }
-                    
-                    // Testing Bypass Button
-                    Button(action: {
-                        Task {
-                            await subscriptionManager.enableTestingBypass()
-                            dismiss()
-                        }
-                    }) {
-                        Text("Testing Bypass")
-                            .font(.subheadline)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 10)
-                            .background(Color.orange)
-                            .cornerRadius(8)
-                    }
-                    .padding(.top, 20)
-                    .padding(.bottom, 10)
-                    
-                    // Close button
-                    Button(action: { dismiss() }) {
-                        Text("Maybe Later")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                            .padding()
-                    }
-                    .padding(.bottom, 20)
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Close") {
-                        dismiss()
-                    }
                 }
             }
             .alert("Purchase Error", isPresented: $showError) {

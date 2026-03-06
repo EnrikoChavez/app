@@ -23,7 +23,7 @@ struct ContentView: View {
     @State private var serverResponse: String = "Idle"
     @State private var newTask = ""
     @AppStorage("isLoggedIn") private var isLoggedIn = false
-    @State private var phone = UserDefaults.standard.string(forKey: "userPhone") ?? "123"
+    @State private var phone = UserDefaults.standard.string(forKey: "userPhone") ?? ""
 
     @StateObject private var store = SelectionStore()
     @State private var showPicker = false

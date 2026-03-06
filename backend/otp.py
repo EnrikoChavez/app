@@ -34,6 +34,11 @@ SECRET_KEY = os.getenv("SECRET_KEY", "supersecret")
 t_client = Client(os.getenv("TWILIO_ACCOUNT_SID"), os.getenv("TWILIO_AUTH_TOKEN"))
 VERIFY_SID = os.getenv("TWILIO_VERIFY_SID")
 
+# Test credentials for Apple review / TestFlight testers
+# Set these in your .env file (or Render environment variables)
+TEST_PHONE = os.getenv("TEST_PHONE", "+10000000002")
+TEST_OTP = os.getenv("TEST_OTP", "123456")
+
 class PhoneRequest(BaseModel):
     phone: str
 
@@ -51,6 +56,10 @@ def create_jwt(phone: str):
 @router.post("/send")
 def send_otp(data: PhoneRequest):
     phone = data.phone
+
+    # Bypass Twilio for test account
+    if TEST_PHONE and phone == TEST_PHONE:
+        return {"status": "pending"}
 
     # --- Rate limit (only if Redis is available) ---
     if r:
@@ -70,6 +79,13 @@ def send_otp(data: PhoneRequest):
 
 @router.post("/verify")
 def verify_otp(data: VerifyRequest):
+    # Bypass Twilio for test account
+    if TEST_PHONE and data.phone == TEST_PHONE:
+        if TEST_OTP and data.otp == TEST_OTP:
+            token = create_jwt(data.phone)
+            return {"token": token}
+        raise HTTPException(status_code=401, detail="Invalid or expired code")
+
     check = t_client.verify.v2.services(VERIFY_SID).verification_checks.create(to=data.phone, code=data.otp)
     if check.status == "approved":
         token = create_jwt(data.phone)

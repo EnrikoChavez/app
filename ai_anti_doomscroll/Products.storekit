@@ -58,11 +58,11 @@
   },
   "subscriptionGroups" : [
     {
-      "id" : "20864321",
+      "id" : "21912575",
       "localizations" : [
 
       ],
-      "name" : "Premium Subscriptions",
+      "name" : "Subscription",
       "subscriptions" : [
         {
           "adHocOffers" : [
@@ -71,22 +71,22 @@
           "codeOffers" : [
 
           ],
-          "displayPrice" : "4.99",
+          "displayPrice" : "3.99",
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "6731234567",
           "introductoryOffer" : null,
           "localizations" : [
             {
-              "description" : "Unlock unlimited AI coaching sessions and all premium features",
-              "displayName" : "Premium Basic",
+              "description" : "Unlock AI-based Anti Doomscrolling",
+              "displayName" : "All Access",
               "locale" : "en_US"
             }
           ],
           "productID" : "ai_anti_doomscroll.basic",
           "recurringSubscriptionPeriod" : "P1M",
-          "referenceName" : "Premium Basic",
-          "subscriptionGroupID" : "20864321",
+          "referenceName" : "All Access",
+          "subscriptionGroupID" : "21912575",
           "type" : "RecurringSubscription"
         }
       ]

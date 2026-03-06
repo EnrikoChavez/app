@@ -18,26 +18,9 @@ class UsageMonitorExtension: DeviceActivityMonitor {
     
     override func intervalDidStart(for activity: DeviceActivityName) {
         logger.log("🟢 intervalDidStart triggered for \(activity.rawValue, privacy: .public)")
-        guard let defaults = UserDefaults(suiteName: Shared.appGroupId) else {
-            logger.log("❌ Failed to get UserDefaults with suiteName: \(Shared.appGroupId, privacy: .public)")
-            return
-        }
-
-        // Read shared values saved by the app
-        let baseURL = defaults.string(forKey: Shared.baseURLKey) ?? ""
-        let phone   = defaults.string(forKey: Shared.phoneKey) ?? ""
-        let minutes = defaults.integer(forKey: Shared.minutesKey)
-
-        logger.log("🔍 Loaded values from UserDefaults:")
-        logger.log("   baseURL = \(baseURL, privacy: .public)")
-        logger.log("   phone   = \(phone, privacy: .public)")
-        logger.log("   minutes = \(minutes, privacy: .public)")
-        
-        // Ensure shield is cleared when monitoring starts (don't block yet)
-        let store = ManagedSettingsStore()
-        store.shield.applications = nil
-        logger.log("🔄 Shield cleared - apps not blocked yet, waiting for threshold")
-        }
+        // Block intentionally NOT cleared here — if the user was blocked yesterday
+        // they stay blocked until they talk to the AI and get manually unblocked.
+    }
 
     override func intervalDidEnd(for activity: DeviceActivityName) {
         logger.log("🔴 intervalDidEnd triggered for \(activity.rawValue, privacy: .public)")

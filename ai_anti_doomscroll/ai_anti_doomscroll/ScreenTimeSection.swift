@@ -242,18 +242,19 @@ struct ScreenTimeSection: View {
         let baseMinutes = Int(minutesText) ?? 15
         Shared.defaults.set(baseMinutes, forKey: Shared.minutesKey)
 
+        // Create one threshold per multiple of baseMinutes up to the max minutes in a day.
+        // e.g. 15 min base → triggers at 15, 30, 45 ... 1440 (96 events)
+        // This ensures re-blocking fires every time usage hits the next multiple after an unblock.
+        let maxMultiples = 1440 / baseMinutes
         var events: [DeviceActivityEvent.Name: DeviceActivityEvent] = [:]
-        let multiples = Array(1...1000)
-        for m in multiples {
+        for m in 1...maxMultiples {
             let mins = m * baseMinutes
-            let name = DeviceActivityEvent.Name("usageThreshold_\(mins)")
-            let event = DeviceActivityEvent(
+            events[DeviceActivityEvent.Name("usageThreshold_\(mins)")] = DeviceActivityEvent(
                 applications: store.selection.applicationTokens,
                 categories:  store.selection.categoryTokens,
                 webDomains:  store.selection.webDomainTokens,
                 threshold: DateComponents(minute: mins)
             )
-            events[name] = event
         }
 
         let schedule = DeviceActivitySchedule(

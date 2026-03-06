@@ -21,6 +21,7 @@ struct LoginView: View {
     @State private var otp = ""
     @State private var stage = "phone" // "phone" or "otp"
     @State private var errorMessage: String?
+    @State private var isLoading = false
     
     // Popular countries with their codes and flags (sorted reverse alphabetically)
     static let countries: [Country] = [
@@ -66,11 +67,11 @@ struct LoginView: View {
             if stage == "phone" {
                 phoneInputView
                 
-                Button("Send OTP") {
+                Button(isLoading ? "Sending..." : "Send OTP") {
                     sendOTP()
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(phoneNumber.isEmpty)
+                .disabled(phoneNumber.isEmpty || isLoading)
                 .padding(.top, 20)
             }
 
@@ -83,11 +84,11 @@ struct LoginView: View {
                     }
                     .buttonStyle(.bordered)
                     
-                    Button("Verify OTP") {
+                    Button(isLoading ? "Verifying..." : "Verify OTP") {
                         verifyOTP()
                     }
                     .buttonStyle(.borderedProminent)
-                    .disabled(otp.isEmpty)
+                    .disabled(otp.isEmpty || isLoading)
                 }
                 .padding(.top, 20)
             }
@@ -195,21 +196,37 @@ struct LoginView: View {
     }
 
     func sendOTP() {
-        // build full URL using your baseURL property
         guard let url = APIConfig.url("/otp/send") else { return }
-        
+
+        isLoading = true
+        errorMessage = nil
+
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
+        request.timeoutInterval = 15
         request.httpBody = try? JSONSerialization.data(
             withJSONObject: ["phone": fullPhoneNumber]
         )
 
-        URLSession.shared.dataTask(with: request) { _, _, _ in
+        URLSession.shared.dataTask(with: request) { _, response, error in
             DispatchQueue.main.async {
+                isLoading = false
+                if let error = error {
+                    if (error as NSError).code == NSURLErrorNotConnectedToInternet {
+                        errorMessage = "No internet connection. Please check your network."
+                    } else if (error as NSError).code == NSURLErrorTimedOut {
+                        errorMessage = "Request timed out. Please try again."
+                    } else {
+                        errorMessage = "Could not send code. Please try again."
+                    }
+                    return
+                }
+                if let http = response as? HTTPURLResponse, http.statusCode == 429 {
+                    errorMessage = "Too many requests. Please wait before trying again."
+                    return
+                }
                 stage = "otp"
-                errorMessage = nil // Clear any previous errors
             }
         }.resume()
     }
@@ -217,32 +234,38 @@ struct LoginView: View {
     func verifyOTP() {
         guard let url = APIConfig.url("/otp/verify") else { return }
 
+        isLoading = true
+        errorMessage = nil
+
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 15
         let body = ["phone": fullPhoneNumber, "otp": otp]
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
-        URLSession.shared.dataTask(with: request) { data, _, _ in
-            if let data = data,
-               let result = try? JSONDecoder().decode([String: String].self, from: data),
-               let token = result["token"] {
-                
-                // ✅ Save token in Keychain (already done)
-                KeychainHelper.saveToken(token)
-
-                // ✅ Save phone number in UserDefaults
-                UserDefaults.standard.set(fullPhoneNumber, forKey: "userPhone")
-
-                DispatchQueue.main.async {
-                    isLoggedIn = true
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            DispatchQueue.main.async {
+                isLoading = false
+                if let error = error {
+                    if (error as NSError).code == NSURLErrorNotConnectedToInternet {
+                        errorMessage = "No internet connection. Please check your network."
+                    } else if (error as NSError).code == NSURLErrorTimedOut {
+                        errorMessage = "Request timed out. Please try again."
+                    } else {
+                        errorMessage = "Could not verify code. Please try again."
+                    }
+                    return
                 }
-                // after saving Keychain token & setting isLoggedIn = true
-                Shared.defaults.set(fullPhoneNumber, forKey: Shared.phoneKey)
-            } else {
-                DispatchQueue.main.async {
-                    errorMessage = "Invalid OTP"
-                    // Clear OTP field on error
+                if let data = data,
+                   let result = try? JSONDecoder().decode([String: String].self, from: data),
+                   let token = result["token"] {
+                    KeychainHelper.saveToken(token)
+                    UserDefaults.standard.set(fullPhoneNumber, forKey: "userPhone")
+                    Shared.defaults.set(fullPhoneNumber, forKey: Shared.phoneKey)
+                    isLoggedIn = true
+                } else {
+                    errorMessage = "Incorrect code. Please try again."
                     otp = ""
                 }
             }
