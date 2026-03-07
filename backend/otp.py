@@ -31,7 +31,10 @@ except Exception as e:
     r = None
 
 RATE_LIMIT = 3          # per hour per phone
-SECRET_KEY = os.getenv("SECRET_KEY", "supersecret")
+_secret = os.getenv("SECRET_KEY")
+if not _secret:
+    raise RuntimeError("SECRET_KEY environment variable must be set")
+SECRET_KEY: str = _secret
 t_client = Client(os.getenv("TWILIO_ACCOUNT_SID"), os.getenv("TWILIO_AUTH_TOKEN"))
 VERIFY_SID = os.getenv("TWILIO_VERIFY_SID")
 

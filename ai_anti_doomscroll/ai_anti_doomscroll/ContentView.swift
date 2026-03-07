@@ -420,11 +420,13 @@ struct ContentView: View {
                     VStack(spacing: 10) {
                         instructionRow(step: "1", icon: "checklist", color: .blue,
                             title: "Add your tasks",
-                            detail: "Go to the Tasks tab and dump everything you need to do. Move items to Today's Focus to tell the AI what to check.")
+                            detail: "Go to the Tasks tab and dump everything you need to do. Move items to Today's Focus to tell the AI what to check.",
+                            action: { selectedTab = 1 })
 
                         instructionRow(step: "2", icon: "chart.bar", color: .green,
                             title: "Set a time limit",
-                            detail: "Go to the Set Timer tab, pick the apps you want to limit and choose a minute interval. Tap Start Session.")
+                            detail: "Go to the Set Timer tab, pick the apps you want to limit and choose a minute interval. Tap Start Session.",
+                            action: { selectedTab = 2 })
 
                         instructionRow(step: "3", icon: "lock.fill", color: .orange,
                             title: "Apps get blocked",
@@ -447,8 +449,8 @@ struct ContentView: View {
     }
 
     @ViewBuilder
-    private func instructionRow(step: String, icon: String, color: Color, title: String, detail: String) -> some View {
-        HStack(alignment: .top, spacing: 14) {
+    private func instructionRow(step: String, icon: String, color: Color, title: String, detail: String, action: (() -> Void)? = nil) -> some View {
+        let content = HStack(alignment: .top, spacing: 14) {
             ZStack {
                 Circle()
                     .fill(color.opacity(0.12))
@@ -459,8 +461,15 @@ struct ContentView: View {
             }
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(title)
-                    .font(.subheadline).bold()
+                HStack(spacing: 4) {
+                    Text(title)
+                        .font(.subheadline).bold()
+                    if action != nil {
+                        Image(systemName: "chevron.right")
+                            .font(.caption).bold()
+                            .foregroundColor(color)
+                    }
+                }
                 Text(detail)
                     .font(.caption)
                     .foregroundColor(.secondary)
@@ -470,6 +479,13 @@ struct ContentView: View {
         .padding(12)
         .background(Color(.secondarySystemBackground))
         .cornerRadius(12)
+
+        if let action = action {
+            Button(action: action) { content }
+                .buttonStyle(.plain)
+        } else {
+            content
+        }
     }
     
     // Tab 2: Todos

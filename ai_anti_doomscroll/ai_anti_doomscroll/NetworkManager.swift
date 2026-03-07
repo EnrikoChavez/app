@@ -1,6 +1,10 @@
 // NetworkManager.swift
 import Foundation
 
+extension Notification.Name {
+    static let sessionExpired = Notification.Name("sessionExpired")
+}
+
 final class NetworkManager {
     private let session: URLSession = {
         let cfg = URLSessionConfiguration.default
@@ -11,6 +15,23 @@ final class NetworkManager {
 
     private var phoneHeader: String {
         UserDefaults.standard.string(forKey: "userPhone") ?? "123"
+    }
+
+    private func handle401() {
+        DispatchQueue.main.async {
+            KeychainHelper.deleteToken()
+            UserDefaults.standard.removeObject(forKey: "userPhone")
+            UserDefaults.standard.set(false, forKey: "isLoggedIn")
+            NotificationCenter.default.post(name: .sessionExpired, object: nil)
+        }
+    }
+
+    private func checkUnauthorized(_ response: URLResponse?) -> Bool {
+        if let http = response as? HTTPURLResponse, http.statusCode == 401 {
+            handle401()
+            return true
+        }
+        return false
     }
 
     private func makeRequest(path: String,
@@ -39,11 +60,9 @@ final class NetworkManager {
             completion(.failure(NSError(domain: "NetworkManager", code: 400, userInfo: [NSLocalizedDescriptionKey: "Request build failed"])))
             return
         }
-        session.dataTask(with: req) { data, _, error in
-            if let error = error {
-                completion(.failure(error))
-                return
-            }
+        session.dataTask(with: req) { data, response, error in
+            if let error = error { completion(.failure(error)); return }
+            if self.checkUnauthorized(response) { return }
             guard let data = data,
                   let decoded = try? JSONDecoder().decode([String: [Todo]].self, from: data),
                   let todos = decoded["todos"] else {
@@ -146,11 +165,8 @@ final class NetworkManager {
         
         print("📡 iOS: Sending /hume/create-session request...")
         session.dataTask(with: req) { data, response, error in
-            if let error = error {
-                print("❌ iOS Network Error: \(error.localizedDescription)")
-                completion(.failure(error))
-                return
-            }
+            if let error = error { print("❌ iOS Network Error: \(error.localizedDescription)"); completion(.failure(error)); return }
+            if self.checkUnauthorized(response) { return }
             
             guard let data = data else {
                 print("❌ iOS Error: No data returned from server")
@@ -238,21 +254,17 @@ final class NetworkManager {
             return
         }
         session.dataTask(with: req) { data, response, error in
-            if let error = error {
-                completion(.failure(error))
-                return
-            }
+            if let error = error { completion(.failure(error)); return }
+            if self.checkUnauthorized(response) { return }
             guard let data = data,
                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
                 completion(.failure(NSError(domain: "NetworkManager", code: 500, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])))
                 return
             }
-            
             let canCall = json["can_call"] as? Bool ?? false
             let remaining = json["remaining_seconds"] as? Double ?? 0.0
             let used = json["used_seconds"] as? Double ?? 0.0
             let limit = json["limit_seconds"] as? Double ?? 60.0
-            
             completion(.success(CallLimitInfo(canCall: canCall, remainingSeconds: remaining, usedSeconds: used, limitSeconds: limit)))
         }.resume()
     }
@@ -278,21 +290,17 @@ final class NetworkManager {
             return
         }
         session.dataTask(with: req) { data, response, error in
-            if let error = error {
-                completion(.failure(error))
-                return
-            }
+            if let error = error { completion(.failure(error)); return }
+            if self.checkUnauthorized(response) { return }
             guard let data = data,
                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
                 completion(.failure(NSError(domain: "NetworkManager", code: 500, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])))
                 return
             }
-            
             let canUnblock = json["can_unblock"] as? Bool ?? false
             let remaining = json["remaining_count"] as? Int ?? 0
             let used = json["used_count"] as? Int ?? 0
             let limit = json["limit_count"] as? Int ?? 3
-            
             completion(.success(ManualUnblockLimitInfo(canUnblock: canUnblock, remainingCount: remaining, usedCount: used, limitCount: limit)))
         }.resume()
     }
@@ -323,17 +331,13 @@ final class NetworkManager {
         }
         
         session.dataTask(with: req) { data, response, error in
-            if let error = error {
-                completion(.failure(error))
-                return
-            }
-            
+            if let error = error { completion(.failure(error)); return }
+            if self.checkUnauthorized(response) { return }
             guard let data = data,
                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
                 completion(.failure(NSError(domain: "NetworkManager", code: 500, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])))
                 return
             }
-            
             guard let responseText = json["response"] as? String else {
                 completion(.failure(NSError(domain: "NetworkManager", code: 500, userInfo: [NSLocalizedDescriptionKey: "No response text"])))
                 return

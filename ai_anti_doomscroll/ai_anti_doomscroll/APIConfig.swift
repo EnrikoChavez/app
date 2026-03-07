@@ -16,7 +16,7 @@ enum APIConfig {
     static var baseURL: String {
         if IS_LOCAL {
             // Local development - update IP to your Mac's local IP
-            Shared.defaults.set("http://192.168.1.159:8000", forKey: Shared.baseURLKey)
+            Shared.defaults.set("http://192.168.1.247:8000", forKey: Shared.baseURLKey)
         } else {
             // Production (cloud)
             Shared.defaults.set("https://ds-sqxf.onrender.com", forKey: Shared.baseURLKey)

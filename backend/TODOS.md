@@ -21,3 +21,8 @@ Secure the Todos: Change the endpoints to use the JWT token from otp.py.
 Migrate to Postgres: Move away from the .db file before you get your first 100 users.
 Add Logging/Monitoring: Use a tool like Sentry or Loguru so you know when the backend crashes before your users do.
 Final Verdict: You have a great foundation. Fix the Authentication security, and you are functionally ready for a Beta launch! 100% ready for a TestFlight or Beta launch-day Beta! 🚀
+
+5. IAP Server-Side Receipt Validation
+The Issue: The /profile/sync-premium endpoint trusts the iOS app's claim that is_premium is true. Any user with a valid JWT token can call this endpoint directly and get premium for free without purchasing.
+The Fix: Instead of trusting the client, the iOS app should send the signed transaction ID from StoreKit to the backend, which then verifies it with Apple's App Store Server API before marking the user as premium.
+References: https://developer.apple.com/documentation/appstoreserverapi

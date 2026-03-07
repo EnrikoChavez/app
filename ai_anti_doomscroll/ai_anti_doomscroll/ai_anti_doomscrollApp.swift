@@ -46,6 +46,15 @@ struct ai_anti_doomscrollApp: App {
                 forKey: Shared.baseURLKey
             )
         }
+
+        // 4. Force logout when JWT token expires
+        NotificationCenter.default.addObserver(
+            forName: .sessionExpired,
+            object: nil,
+            queue: .main
+        ) { [self] _ in
+            isLoggedIn = false
+        }
     }
 
     var body: some Scene {
