@@ -207,6 +207,17 @@ struct ScreenTimeSection: View {
         .padding()
         .background(Color(.systemBackground))
         .cornerRadius(16)
+
+        HStack(alignment: .top, spacing: 6) {
+            Image(systemName: "info.circle")
+                .font(.caption2)
+                .foregroundColor(.secondary)
+            Text("Time is cumulative across sessions. For example, a 15 min limit blocks at 4 min + 4 min + 7 min of total usage — not 15 consecutive minutes.")
+                .font(.caption2)
+                .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.horizontal, 4)
         .onAppear {
             #if canImport(FamilyControls)
             authorized = AuthorizationCenter.shared.authorizationStatus == .approved
