@@ -379,7 +379,7 @@ struct ContentView: View {
             }) {
                 HStack(spacing: 4) {
                     if let limitInfo = manualUnblockLimitInfo {
-                        Text(isBlocked ? "Manual Unblocks (\(limitInfo.remainingCount)/\(limitInfo.limitCount))" : "Decrease Unblock Counter (\(limitInfo.remainingCount)/\(limitInfo.limitCount))")
+                        Text(isBlocked ? "Manual Daily Unblocks (\(limitInfo.remainingCount)/\(limitInfo.limitCount))" : "Decrease Daily Unblock Counter (\(limitInfo.remainingCount)/\(limitInfo.limitCount))")
                             .font(.caption2).bold()
                             .foregroundColor(limitInfo.canUnblock ? .secondary : .red)
                     } else {
