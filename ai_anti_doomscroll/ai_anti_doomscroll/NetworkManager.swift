@@ -283,42 +283,6 @@ final class NetworkManager {
         }.resume()
     }
     
-    // Manual unblock limit checking and recording
-    func checkManualUnblockLimit(completion: @escaping (Result<ManualUnblockLimitInfo, Error>) -> Void) {
-        guard let req = makeRequest(path: "/manual-unblock/check-limit") else {
-            completion(.failure(NSError(domain: "NetworkManager", code: 400, userInfo: [NSLocalizedDescriptionKey: "Request build failed"])))
-            return
-        }
-        session.dataTask(with: req) { data, response, error in
-            if let error = error { completion(.failure(error)); return }
-            if self.checkUnauthorized(response) { return }
-            guard let data = data,
-                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-                completion(.failure(NSError(domain: "NetworkManager", code: 500, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])))
-                return
-            }
-            let canUnblock = json["can_unblock"] as? Bool ?? false
-            let remaining = json["remaining_count"] as? Int ?? 0
-            let used = json["used_count"] as? Int ?? 0
-            let limit = json["limit_count"] as? Int ?? 3
-            completion(.success(ManualUnblockLimitInfo(canUnblock: canUnblock, remainingCount: remaining, usedCount: used, limitCount: limit)))
-        }.resume()
-    }
-    
-    func recordManualUnblock(completion: @escaping (Result<Void, Error>) -> Void) {
-        guard let req = makeRequest(path: "/manual-unblock/record", method: "POST") else {
-            completion(.failure(NSError(domain: "NetworkManager", code: 400, userInfo: [NSLocalizedDescriptionKey: "Request build failed"])))
-            return
-        }
-        session.dataTask(with: req) { data, _, error in
-            if let error = error {
-                completion(.failure(error))
-                return
-            }
-            completion(.success(()))
-        }.resume()
-    }
-    
     // Chat methods
     func sendChatMessage(message: String, todos: [String], isNewConversation: Bool, completion: @escaping (Result<ChatResponse, Error>) -> Void) {
         guard let req = makeRequest(path: "/chat/message", method: "POST", jsonBody: [

@@ -71,7 +71,6 @@ struct ContentView: View {
     @State private var callLimitInfo: CallLimitInfo? = nil
     @State private var isCheckingLimit = false
     @State private var manualUnblockLimitInfo: ManualUnblockLimitInfo? = nil
-    @State private var isCheckingUnblockLimit = false
 
     let networkManager = NetworkManager()
     
@@ -379,10 +378,6 @@ struct ContentView: View {
                 }
             }) {
                 HStack(spacing: 4) {
-                    if isCheckingUnblockLimit {
-                        ProgressView()
-                            .scaleEffect(0.7)
-                    }
                     if let limitInfo = manualUnblockLimitInfo {
                         Text(isBlocked ? "Manual Unblocks (\(limitInfo.remainingCount)/\(limitInfo.limitCount))" : "Decrease Unblock Counter (\(limitInfo.remainingCount)/\(limitInfo.limitCount))")
                             .font(.caption2).bold()
@@ -395,7 +390,7 @@ struct ContentView: View {
                 }
                 .underline()
             }
-            .disabled(isCheckingUnblockLimit || (manualUnblockLimitInfo?.canUnblock == false && isBlocked))
+            .disabled(manualUnblockLimitInfo?.canUnblock == false && isBlocked)
         }
         .padding(24)
         .background(Color(.systemBackground))
@@ -690,26 +685,8 @@ struct ContentView: View {
         }
     }
     
-    func unblockApps() {
-        // Check limit before unblocking
-        guard let limitInfo = manualUnblockLimitInfo, limitInfo.canUnblock else {
-            activeAlert = .error(message: "You've reached your daily limit of 3 manual unblocks. Please use AI voice call or text chat to unblock.")
-            return
-        }
-        
-        // Record the manual unblock
-        networkManager.recordManualUnblock { result in
-            DispatchQueue.main.async {
-                switch result {
-                case .success:
-                    // Refresh limit info after recording
-                    checkManualUnblockLimit()
-                case .failure(let error):
-                    print("❌ Failed to record manual unblock: \(error.localizedDescription)")
-                }
-            }
-        }
-        
+    // Core unblock — always updates the shield and UI, no limit checks
+    private func performUnblock() {
         #if canImport(ManagedSettings)
         if #available(iOS 16.0, *) { blockManager.unblockApps() }
         #endif
@@ -720,23 +697,30 @@ struct ContentView: View {
             defaults.removeObject(forKey: Shared.blockedAtKey)
         }
     }
-    
-    func checkManualUnblockLimit() {
-        isCheckingUnblockLimit = true
-        networkManager.checkManualUnblockLimit { result in
-            DispatchQueue.main.async {
-                isCheckingUnblockLimit = false
-                switch result {
-                case .success(let limitInfo):
-                    self.manualUnblockLimitInfo = limitInfo
-                    print("📊 Manual unblock limit: \(limitInfo.remainingCount)/\(limitInfo.limitCount) remaining")
-                case .failure(let error):
-                    print("❌ Failed to check manual unblock limit: \(error.localizedDescription)")
-                    // On error, allow unblock (fail open)
-                    self.manualUnblockLimitInfo = ManualUnblockLimitInfo(canUnblock: true, remainingCount: 3, usedCount: 0, limitCount: 3)
-                }
-            }
+
+    func unblockApps() {
+        guard UnblockLimitManager.shared.canUnblock else {
+            activeAlert = .error(message: "You've reached your daily limit of \(UnblockLimitManager.shared.limitCount) manual unblocks. Please use AI voice call or text chat to unblock.")
+            return
         }
+        UnblockLimitManager.shared.recordUnblock()
+        refreshUnblockLimit()
+        performUnblock()
+    }
+
+    func checkManualUnblockLimit() {
+        refreshUnblockLimit()
+    }
+
+    private func refreshUnblockLimit() {
+        let mgr = UnblockLimitManager.shared
+        manualUnblockLimitInfo = ManualUnblockLimitInfo(
+            canUnblock: mgr.canUnblock,
+            remainingCount: mgr.remainingCount,
+            usedCount: mgr.usedCount,
+            limitCount: mgr.limitCount
+        )
+        print("📊 Manual unblock limit: \(mgr.remainingCount)/\(mgr.limitCount) remaining")
     }
 
     func checkCallLimit() {
@@ -886,7 +870,7 @@ struct ContentView: View {
                 case .success(let data):
                     let unblock = data["unblock"] as? Bool ?? false
                     let message = data["message"] as? String ?? ""
-                    if unblock { self.unblockApps() }
+                    if unblock { self.performUnblock() }
                     self.activeAlert = .evaluation(message: message)
                 case .failure(let error):
                     self.activeAlert = .error(message: "Evaluation failed: \(error.localizedDescription)")

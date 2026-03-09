@@ -6,7 +6,10 @@ from sqlalchemy import and_
 from db import get_db
 from models import CallUsage
 from otp import verify_token
-from datetime import datetime, date, timezone
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
+
+EASTERN = ZoneInfo("America/New_York")
 
 router = APIRouter(prefix="/call-usage", tags=["call-usage"])
 
@@ -33,7 +36,7 @@ def check_call_limit(
     Check if user can make a call based on daily limit.
     Returns remaining time and whether they can call.
     """
-    today = date.today()
+    today = datetime.now(EASTERN).date()
     
     # Get or create today's usage record
     usage = db.query(CallUsage).filter(
@@ -76,7 +79,7 @@ def record_call_duration(
     duration_seconds = request.duration_seconds
     print(f"📞 Recording call duration: {duration_seconds:.2f} seconds for phone {phone}")
     
-    today = date.today()
+    today = datetime.now(EASTERN).date()
     
     # Get or create today's usage record
     usage = db.query(CallUsage).filter(

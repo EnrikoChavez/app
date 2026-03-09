@@ -212,7 +212,7 @@ struct ScreenTimeSection: View {
             Image(systemName: "info.circle")
                 .font(.caption2)
                 .foregroundColor(.secondary)
-            Text("Time is cumulative across sessions. For example, a 15 min limit blocks at 4 min + 4 min + 7 min of total usage — not 15 consecutive minutes.")
+            Text("Time is cumulative across all selected apps. For example, a 15 min limit blocks at 8 total minutes in instagram + 7 total minutes in youtube.")
                 .font(.caption2)
                 .foregroundColor(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
