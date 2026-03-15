@@ -57,14 +57,15 @@ struct TodoSection: View {
                 } else {
                     VStack(spacing: 8) {
                         ForEach(overallTodos) { todo in
-                            HStack(spacing: 12) {
+                            HStack(alignment: .top, spacing: 12) {
                                 Circle()
                                     .stroke(Color.blue, lineWidth: 2)
                                     .frame(width: 12, height: 12)
+                                    .padding(.top, 4)
 
                                 Text(todo.task)
                                     .font(.body)
-                                    .lineLimit(2)
+                                    .fixedSize(horizontal: false, vertical: true)
 
                                 Spacer()
 
@@ -137,14 +138,15 @@ struct TodoSection: View {
                 } else {
                     VStack(spacing: 8) {
                         ForEach(focusTodos) { todo in
-                            HStack(spacing: 12) {
+                            HStack(alignment: .top, spacing: 12) {
                                 Circle()
                                     .stroke(Color.green, lineWidth: 2)
                                     .frame(width: 12, height: 12)
+                                    .padding(.top, 4)
 
                                 Text(todo.task)
                                     .font(.body)
-                                    .lineLimit(2)
+                                    .fixedSize(horizontal: false, vertical: true)
 
                                 Spacer()
 

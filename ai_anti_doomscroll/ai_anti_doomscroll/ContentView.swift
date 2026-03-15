@@ -541,15 +541,16 @@ struct ContentView: View {
                     } else {
                         VStack(spacing: 8) {
                             ForEach(todoRepository.completedTodos) { todo in
-                                HStack(spacing: 12) {
+                                HStack(alignment: .top, spacing: 12) {
                                     Image(systemName: "checkmark.circle.fill")
                                         .foregroundColor(.green)
                                         .font(.system(size: 16))
+                                        .padding(.top, 2)
 
                                     Text(todo.task)
                                         .font(.body)
                                         .foregroundColor(.secondary)
-                                        .lineLimit(2)
+                                        .fixedSize(horizontal: false, vertical: true)
 
                                     Spacer()
 
@@ -672,6 +673,19 @@ struct ContentView: View {
     func checkBlockStatus() {
         #if canImport(ManagedSettings)
         if #available(iOS 16.0, *) {
+            // If the UserDefaults flag says blocked but the shield has no tokens,
+            // the flag is stale (e.g. iOS reset the ManagedSettingsStore). Clear it.
+            let shieldIsActuallyActive = !blockManager.blockedApplicationTokens.isEmpty
+            if blockManager.isBlocked && !shieldIsActuallyActive {
+                print("🧹 checkBlockStatus: stale isBlocked flag detected — clearing")
+                if let defaults = UserDefaults(suiteName: Shared.appGroupId) {
+                    defaults.set(false, forKey: Shared.isBlockedKey)
+                    defaults.removeObject(forKey: Shared.blockedAtKey)
+                }
+                isBlocked = false
+                blockedAt = nil
+                return
+            }
             isBlocked = blockManager.isBlocked
             blockedAt = blockManager.blockedAt
         }

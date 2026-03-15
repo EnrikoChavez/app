@@ -37,6 +37,21 @@ struct ScreenTimeSection: View {
         #endif
     }
 
+    private var selectionLabel: String {
+        if isSelectionEmpty { return "Select Apps" }
+        #if canImport(FamilyControls)
+        let apps = store.selection.applicationTokens.count
+        let cats = store.selection.categoryTokens.count
+        switch (apps, cats) {
+        case (_, 0): return "\(apps) App\(apps == 1 ? "" : "s")"
+        case (0, _): return "\(cats) Categor\(cats == 1 ? "y" : "ies")"
+        default:     return "\(cats) Categor\(cats == 1 ? "y" : "ies"), \(apps) App\(apps == 1 ? "" : "s")"
+        }
+        #else
+        return "Selected"
+        #endif
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             HStack {
@@ -117,7 +132,7 @@ struct ScreenTimeSection: View {
                             VStack(spacing: 8) {
                                 Image(systemName: "apps.iphone")
                                     .font(.title3)
-                                Text(isSelectionEmpty ? "Select Apps" : "\(store.selection.applicationTokens.count) Apps")
+                                Text(selectionLabel)
                                     .font(.caption).bold()
                             }
                             .frame(maxWidth: .infinity)
@@ -161,7 +176,7 @@ struct ScreenTimeSection: View {
                         } label: {
                             HStack {
                                 if starting { ProgressView().padding(.trailing, 4) }
-                                Text("Start Session").bold()
+                                Text(isMonitoringActive ? "Restart Session" : "Start Session").bold()
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)

@@ -211,8 +211,11 @@ async def create_hume_session(payload: dict, phone: str = Depends(verify_token))
     
         # 2. Prepare variables for session_settings message
         todos = payload.get("todos", [])
-        task_list_str = "\n".join([f"• {t.get('task', '')}" for t in todos])
         minutes = payload.get("minutes", 15)
+        if todos:
+            task_list_str = "\n".join([f"• {t.get('task', '')}" for t in todos])
+        else:
+            task_list_str = "NO_TASKS: The user has no pending tasks — they have everything done! Congratulate them warmly and tell them they deserve a guilt-free break."
         
         # 3. Get EVI config ID from environment (optional)
         evi_config_id = os.getenv("HUME_EVI_CONFIG_ID")

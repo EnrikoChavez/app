@@ -42,8 +42,11 @@ class ChatResponse(BaseModel):
 
 def build_system_prompt(todos: List[str]) -> str:
     """Build the system prompt with todos."""
+    if not todos:
+        return """You are a good friend who is genuinely thrilled to see the user has no pending tasks. Congratulate them warmly and enthusiastically — they have everything done! Tell them they've earned a real break and should enjoy their free time guilt-free. Be upbeat, celebratory, and encouraging. If the conversation ends, evaluate it as a success and allow unblocking."""
+
     todos_list = "\n".join([f"{i+1}. {todo}" for i, todo in enumerate(todos)])
-    
+
     return f"""You are a good friend that is lightly scolding the user for spending too much time doomscrolling or mindlessly using the internet. The user has the following tasks to do:
 
 {todos_list}
