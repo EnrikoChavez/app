@@ -11,6 +11,7 @@ import SwiftData
 @main
 struct ai_anti_doomscrollApp: App {
     @AppStorage("isLoggedIn") private var isLoggedIn = false
+    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     
     // SwiftData container for local storage
     let container: ModelContainer
@@ -59,7 +60,10 @@ struct ai_anti_doomscrollApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if isLoggedIn {
+            if !hasSeenOnboarding {
+                OnboardingView()
+                    .modelContainer(container)
+            } else if isLoggedIn {
                 ContentView()
                     .modelContainer(container)
                     .preferredColorScheme(.light)

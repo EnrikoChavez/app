@@ -41,7 +41,7 @@ struct VoiceCallView: View {
             }
             
             VStack(spacing: 8) {
-                Text("AI Coaching Session")
+                Text("AI Companion Session")
                     .font(.title2).bold()
                 Text(callManager.callStatus)
                     .foregroundColor(.secondary)

@@ -128,44 +128,56 @@ struct ScreenTimeSection: View {
                     // Config Grid
                     HStack(spacing: 12) {
                         // App Selection
-                        Button(action: { showPicker = true }) {
-                            VStack(spacing: 8) {
-                                Image(systemName: "apps.iphone")
-                                    .font(.title3)
-                                Text(selectionLabel)
-                                    .font(.caption).bold()
+                        VStack(spacing: 4) {
+                            Text("Apps to Block")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            Button(action: { showPicker = true }) {
+                                VStack(spacing: 8) {
+                                    Image(systemName: "apps.iphone")
+                                        .font(.title3)
+                                    Text(selectionLabel)
+                                        .font(.caption).bold()
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background(Color.blue.opacity(0.1))
+                                .foregroundColor(.blue)
+                                .cornerRadius(12)
                             }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(Color.blue.opacity(0.1))
-                            .foregroundColor(.blue)
-                            .cornerRadius(12)
+                            .familyActivityPicker(isPresented: $showPicker, selection: $store.selection)
                         }
-                        .familyActivityPicker(isPresented: $showPicker, selection: $store.selection)
 
                         // Time Limit
-                        Menu {
-                            ForEach(Array(stride(from: 3, through: 120, by: 1)), id: \.self) { mins in
-                                Button("\(mins) min") { minutesText = "\(mins)" }
-                            }
-                        } label: {
-                            VStack(spacing: 8) {
-                                Image(systemName: "timer")
-                                    .font(.title3)
-                                HStack(spacing: 4) {
-                                    Text(minutesText.isEmpty ? "15" : minutesText)
-                                        .font(.body).bold()
-                                    Text("min")
-                                        .font(.body).bold()
-                                    Image(systemName: "chevron.up.chevron.down")
-                                        .font(.caption2)
+                        VStack(spacing: 4) {
+                            Text("Time limit before block")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            Menu {
+                                ForEach(Array(stride(from: 3, through: 120, by: 1)), id: \.self) { mins in
+                                    Button("\(mins) min") { minutesText = "\(mins)" }
                                 }
+                            } label: {
+                                VStack(spacing: 8) {
+                                    Image(systemName: "timer")
+                                        .font(.title3)
+                                    HStack(spacing: 4) {
+                                        Text(minutesText.isEmpty ? "15" : minutesText)
+                                            .font(.body).bold()
+                                        Text("min")
+                                            .font(.body).bold()
+                                        Image(systemName: "chevron.up.chevron.down")
+                                            .font(.caption2)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(Color.pink.opacity(0.1))
+                                .foregroundColor(.pink)
+                                .cornerRadius(12)
                             }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(Color.pink.opacity(0.1))
-                            .foregroundColor(.pink)
-                            .cornerRadius(12)
                         }
                     }
 
@@ -223,15 +235,28 @@ struct ScreenTimeSection: View {
         .background(Color(.systemBackground))
         .cornerRadius(16)
 
-        HStack(alignment: .top, spacing: 6) {
-            Image(systemName: "info.circle")
-                .font(.caption2)
-                .foregroundColor(.secondary)
-            Text("Time is cumulative across all selected apps. For example, a 15 min limit blocks at 8 total minutes in instagram + 7 total minutes in youtube.")
-                .font(.caption2)
-                .foregroundColor(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top, spacing: 6) {
+                Image(systemName: "info.circle")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                Text("Time is cumulative across all selected apps. For example, a 15 min limit blocks at 8 total minutes in instagram + 7 total minutes in youtube.")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            HStack(alignment: .top, spacing: 6) {
+                Image(systemName: "info.circle")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                Text("Tracking runs silently in the background to not mess with the experience of using an app, you won't notice anything while using your apps. However once you hit your time limit, they'll be blocked.")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 4)
         .onAppear {
             #if canImport(FamilyControls)
