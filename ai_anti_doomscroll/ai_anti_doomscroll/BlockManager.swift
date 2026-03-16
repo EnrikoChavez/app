@@ -86,9 +86,11 @@ class BlockManager {
             return
         }
         
-        // Remove shield
+        // Remove shield for all types
         store.shield.applications = nil
-        print("🛡️ BlockManager: store.shield.applications set to nil")
+        store.shield.applicationCategories = nil
+        store.shield.webDomains = nil
+        print("🛡️ BlockManager: shields cleared for apps, categories, and web domains")
         
         // Clear blocked state
         defaults.set(false, forKey: Shared.isBlockedKey)
@@ -118,6 +120,21 @@ class BlockManager {
         return Date(timeIntervalSince1970: timestamp)
     }
     
+    /// Returns true if any shield (apps, categories, or web domains) is currently active
+    var shieldIsActive: Bool {
+        let hasApps = !(store.shield.applications ?? []).isEmpty
+        let hasCats: Bool = {
+            switch store.shield.applicationCategories {
+            case .none: return false
+            case .all: return true
+            case .specific(let cats, except: _): return !cats.isEmpty
+            @unknown default: return false
+            }
+        }()
+        let hasWeb = !(store.shield.webDomains ?? []).isEmpty
+        return hasApps || hasCats || hasWeb
+    }
+
     /// Get currently blocked application tokens
     var blockedApplicationTokens: Set<ApplicationToken> {
         return store.shield.applications ?? []

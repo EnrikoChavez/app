@@ -250,7 +250,7 @@ struct ContentView: View {
                 ZStack {
                     Circle()
                         .fill(isBlocked ? Color.red.opacity(0.1) : Color.green.opacity(0.1))
-                        .frame(width: 60, height: 60)
+                        .frame(width: 100, height: 60)
                     
                     Image(systemName: isBlocked ? "lock.fill" : "shield.checkered")
                         .font(.title)
@@ -265,7 +265,7 @@ struct ContentView: View {
                             .font(.caption)
                             .foregroundColor(.secondary)
                     } else {
-                        Text("Monitoring your progress")
+                        Text("AI companion still available to chat while apps are not blocked")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -673,9 +673,9 @@ struct ContentView: View {
     func checkBlockStatus() {
         #if canImport(ManagedSettings)
         if #available(iOS 16.0, *) {
-            // If the UserDefaults flag says blocked but the shield has no tokens,
+            // If the UserDefaults flag says blocked but the shield is not actually active,
             // the flag is stale (e.g. iOS reset the ManagedSettingsStore). Clear it.
-            let shieldIsActuallyActive = !blockManager.blockedApplicationTokens.isEmpty
+            let shieldIsActuallyActive = blockManager.shieldIsActive
             if blockManager.isBlocked && !shieldIsActuallyActive {
                 print("🧹 checkBlockStatus: stale isBlocked flag detected — clearing")
                 if let defaults = UserDefaults(suiteName: Shared.appGroupId) {

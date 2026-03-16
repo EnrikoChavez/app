@@ -237,7 +237,7 @@ struct PrivacyPolicyView: View {
                         - Authenticate your account (phone number)
                         - Process AI voice calls and text chats for app unblocking
                         - Evaluate conversations to determine if apps should be unblocked
-                        - Track usage limits (call duration, message count, manual unblocks) for daily limits
+                        - Track usage limits (call duration) for daily limits
                         
                         We do NOT use your information for:
                         - Advertising or marketing
@@ -250,7 +250,7 @@ struct PrivacyPolicyView: View {
                         We store minimal data on our servers:
                         - Phone number (for authentication)
                         - Premium subscription status
-                        - Daily usage limits (call duration, message count, manual unblock count)
+                        - Daily usage limits (call duration)
                         
                         All sensitive data (todos, task lists, screen time settings) is stored exclusively on your device using iOS SwiftData. We do not have access to this information.
                         

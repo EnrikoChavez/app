@@ -12,7 +12,7 @@ import Foundation
 struct UnblockLimitManager {
     static let shared = UnblockLimitManager()
 
-    private let dailyLimit = 3
+    private let dailyLimit = 2
     private let countKey   = "unblockUsedCount"
     private let dateKey    = "unblockLastResetDate"
 

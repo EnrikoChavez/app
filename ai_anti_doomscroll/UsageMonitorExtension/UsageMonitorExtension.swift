@@ -49,12 +49,26 @@ class UsageMonitorExtension: DeviceActivityMonitor {
         
         // 2. Apply the shield IMMEDIATELY
         let store = ManagedSettingsStore()
-        let tokens = selection.applicationTokens
-        
-        if !tokens.isEmpty {
-            store.shield.applications = tokens
-            logger.log("✅ Shield applied IMMEDIATELY for \(tokens.count) apps")
-            
+        let appTokens = selection.applicationTokens
+        let categoryTokens = selection.categoryTokens
+        let webDomainTokens = selection.webDomainTokens
+
+        let hasAnything = !appTokens.isEmpty || !categoryTokens.isEmpty || !webDomainTokens.isEmpty
+
+        if hasAnything {
+            if !appTokens.isEmpty {
+                store.shield.applications = appTokens
+                logger.log("✅ Shield applied for \(appTokens.count) apps")
+            }
+            if !categoryTokens.isEmpty {
+                store.shield.applicationCategories = .specific(categoryTokens)
+                logger.log("✅ Shield applied for \(categoryTokens.count) categories")
+            }
+            if !webDomainTokens.isEmpty {
+                store.shield.webDomains = webDomainTokens
+                logger.log("✅ Shield applied for \(webDomainTokens.count) web domains")
+            }
+
             // 3. Store blocked state for the UI
             defaults.set(true, forKey: Shared.isBlockedKey)
             defaults.set(Date().timeIntervalSince1970, forKey: Shared.blockedAtKey)
