@@ -130,11 +130,18 @@ class HumeCallManager: NSObject, ObservableObject, URLSessionWebSocketDelegate {
     private func setupAudio() {
         let audioSession = AVAudioSession.sharedInstance()
         do {
-            try audioSession.setCategory(.playAndRecord, mode: .voiceChat, options: [.defaultToSpeaker, .allowBluetooth])
+            try audioSession.setCategory(.playAndRecord, mode: .videoChat, options: [.defaultToSpeaker, .allowBluetooth])
             try audioSession.setActive(true)
             
             if audioEngine.isRunning { audioEngine.stop() }
-            
+
+            // Enable voice processing on the input node — this activates Apple's
+            // built-in echo cancellation at the engine level, preventing the
+            // speaker output from being picked up by the mic and sent back to Hume.
+            if #available(iOS 14.0, *) {
+                try audioEngine.inputNode.setVoiceProcessingEnabled(true)
+            }
+
             audioEngine.attach(playerNode)
             audioEngine.connect(playerNode, to: audioEngine.mainMixerNode, format: playbackFormat)
             
