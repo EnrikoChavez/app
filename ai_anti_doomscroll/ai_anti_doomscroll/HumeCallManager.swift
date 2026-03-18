@@ -127,20 +127,26 @@ class HumeCallManager: NSObject, ObservableObject, URLSessionWebSocketDelegate {
         }
     }
     
+    /// Call this early (e.g. on ContentView appear) to activate the audio session
+    /// before the first call, preventing the silent first-call failure.
+    func activateAudioSession() {
+        do {
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.playAndRecord, mode: .videoChat, options: [.defaultToSpeaker, .allowBluetooth])
+            try session.setActive(true)
+            print("🔊 HumeCallManager: audio session pre-activated")
+        } catch {
+            print("⚠️ HumeCallManager: audio session pre-activation failed (non-fatal): \(error.localizedDescription)")
+        }
+    }
+
     private func setupAudio() {
         let audioSession = AVAudioSession.sharedInstance()
         do {
             try audioSession.setCategory(.playAndRecord, mode: .videoChat, options: [.defaultToSpeaker, .allowBluetooth])
             try audioSession.setActive(true)
-            
-            if audioEngine.isRunning { audioEngine.stop() }
 
-            // Enable voice processing on the input node — this activates Apple's
-            // built-in echo cancellation at the engine level, preventing the
-            // speaker output from being picked up by the mic and sent back to Hume.
-            if #available(iOS 14.0, *) {
-                try audioEngine.inputNode.setVoiceProcessingEnabled(true)
-            }
+            if audioEngine.isRunning { audioEngine.stop() }
 
             audioEngine.attach(playerNode)
             audioEngine.connect(playerNode, to: audioEngine.mainMixerNode, format: playbackFormat)

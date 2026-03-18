@@ -611,7 +611,10 @@ struct ContentView: View {
         #endif
         
         checkBlockStatus()
-        
+
+        // Pre-activate audio session so the first call works reliably
+        callManager.activateAudioSession()
+
         // Check call limit on load
         checkCallLimit()
         checkManualUnblockLimit()
