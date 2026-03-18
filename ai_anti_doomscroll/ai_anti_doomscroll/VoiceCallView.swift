@@ -63,8 +63,20 @@ struct VoiceCallView: View {
                     .padding()
                     .foregroundColor(.secondary)
             }
-            .frame(maxHeight: 150)
-            
+            .frame(maxHeight: 250)
+
+            // Speaker tip
+            HStack(alignment: .top, spacing: 4) {
+                Image(systemName: "speaker.wave.2")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                Text("Sometimes AI interrupts itself on speaker mode, to help prevent, use headphones, mute, or lower volume.")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.leading)
+            }
+            .padding(.horizontal, 24)
+
             Spacer()
             
             // Controls
