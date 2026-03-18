@@ -70,7 +70,7 @@ struct VoiceCallView: View {
                 Image(systemName: "speaker.wave.2")
                     .font(.caption2)
                     .foregroundColor(.secondary)
-                Text("Sometimes AI interrupts itself on speaker mode, to help prevent, use headphones, mute, or lower volume.")
+                Text("Sometimes AI interrupts itself on speaker mode, to help prevent, use headphones, mute, or lower volume. Try restarting call if you don't hear audio.")
                     .font(.caption2)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.leading)

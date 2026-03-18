@@ -26,6 +26,33 @@ class HumeCallManager: NSObject, ObservableObject, URLSessionWebSocketDelegate {
     
     private var audioConverter: AVAudioConverter?
     private var initialVariables: [String: String]?
+    private var routeChangeObserver: Any?
+
+    override init() {
+        super.init()
+        routeChangeObserver = NotificationCenter.default.addObserver(
+            forName: AVAudioSession.routeChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self, self.isCalling else { return }
+            guard let reason = notification.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt,
+                  let changeReason = AVAudioSession.RouteChangeReason(rawValue: reason) else { return }
+            switch changeReason {
+            case .oldDeviceUnavailable, .newDeviceAvailable:
+                print("🔄 Audio route changed — restarting tap")
+                self.restartAudioTap()
+            default:
+                break
+            }
+        }
+    }
+
+    deinit {
+        if let observer = routeChangeObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+    }
     
     // Call duration tracking
     private var callStartTime: Date?
@@ -132,7 +159,7 @@ class HumeCallManager: NSObject, ObservableObject, URLSessionWebSocketDelegate {
     func activateAudioSession() {
         do {
             let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playAndRecord, mode: .videoChat, options: [.defaultToSpeaker, .allowBluetooth])
+            try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
             try session.setActive(true)
             print("🔊 HumeCallManager: audio session pre-activated")
         } catch {
@@ -143,19 +170,26 @@ class HumeCallManager: NSObject, ObservableObject, URLSessionWebSocketDelegate {
     private func setupAudio() {
         let audioSession = AVAudioSession.sharedInstance()
         do {
-            try audioSession.setCategory(.playAndRecord, mode: .videoChat, options: [.defaultToSpeaker, .allowBluetooth])
+            try audioSession.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
             try audioSession.setActive(true)
-
             if audioEngine.isRunning { audioEngine.stop() }
 
             audioEngine.attach(playerNode)
             audioEngine.connect(playerNode, to: audioEngine.mainMixerNode, format: playbackFormat)
             
             let inputNode = audioEngine.inputNode
-            let hardwareFormat = inputNode.outputFormat(forBus: 0)
-            
+
+            // Use AVAudioSession.sampleRate which always reflects the CURRENT hardware
+            // rate even after a route change. inputNode.outputFormat(forBus:) can return
+            // a stale cached rate when the engine is stopped, causing a tap format crash.
+            let currentSampleRate = AVAudioSession.sharedInstance().sampleRate
+            let hardwareFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32,
+                                               sampleRate: currentSampleRate,
+                                               channels: 1,
+                                               interleaved: false)!
+
             audioConverter = AVAudioConverter(from: hardwareFormat, to: recordingFormat)
-            
+
             inputNode.removeTap(onBus: 0)
             inputNode.installTap(onBus: 0, bufferSize: 1024, format: hardwareFormat) { [weak self] (buffer, time) in
                 self?.processAndSendAudio(buffer: buffer)
@@ -260,6 +294,31 @@ class HumeCallManager: NSObject, ObservableObject, URLSessionWebSocketDelegate {
         }
     }
     
+    private func restartAudioTap() {
+        guard audioEngine.isRunning else { return }
+        audioEngine.stop()
+        audioEngine.inputNode.removeTap(onBus: 0)
+
+        let inputNode = audioEngine.inputNode
+        let currentSampleRate = AVAudioSession.sharedInstance().sampleRate
+        let newFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32,
+                                      sampleRate: currentSampleRate,
+                                      channels: 1,
+                                      interleaved: false)!
+        audioConverter = AVAudioConverter(from: newFormat, to: recordingFormat)
+        inputNode.installTap(onBus: 0, bufferSize: 1024, format: newFormat) { [weak self] buffer, _ in
+            self?.processAndSendAudio(buffer: buffer)
+        }
+
+        do {
+            audioEngine.prepare()
+            try audioEngine.start()
+            print("✅ Audio tap restarted after route change (format: \(newFormat))")
+        } catch {
+            print("❌ Failed to restart audio engine after route change: \(error.localizedDescription)")
+        }
+    }
+
     func stopCall() {
         // Stop the timer first
         callTimer?.invalidate()
