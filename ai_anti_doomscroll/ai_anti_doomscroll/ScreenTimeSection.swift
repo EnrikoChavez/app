@@ -219,6 +219,43 @@ struct ScreenTimeSection: View {
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.vertical, 4)
                     }
+
+                    // Selected apps & categories list
+                    if !isSelectionEmpty {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("Tracked Apps & Categories")
+                                .font(.caption).bold()
+                                .foregroundColor(.secondary)
+
+                            let appTokens = Array(store.selection.applicationTokens)
+                            let catCount = store.selection.categoryTokens.count
+
+                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 60), spacing: 12)], spacing: 12) {
+                                ForEach(appTokens, id: \.self) { token in
+                                    Label(token)
+                                        .labelStyle(.iconOnly)
+                                        .scaleEffect(1.6)
+                                        .frame(width: 44, height: 44)
+                                }
+
+                                if catCount > 0 {
+                                    VStack(spacing: 2) {
+                                        Image(systemName: "square.grid.2x2.fill")
+                                            .font(.title2)
+                                            .foregroundColor(.blue)
+                                        Text("+\(catCount) categor\(catCount == 1 ? "y" : "ies")")
+                                            .font(.system(size: 8))
+                                            .foregroundColor(.secondary)
+                                    }
+                                    .frame(width: 60, height: 44)
+                                }
+                            }
+                        }
+                        .padding(14)
+                        .background(Color(.systemGray6).opacity(0.5))
+                        .cornerRadius(12)
+                        .id("\(store.selection.applicationTokens.count)-\(store.selection.categoryTokens.count)-\(store.selection.webDomainTokens.count)")
+                    }
                 }
             }
             #else
