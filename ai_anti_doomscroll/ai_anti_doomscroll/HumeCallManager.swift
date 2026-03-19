@@ -159,7 +159,7 @@ class HumeCallManager: NSObject, ObservableObject, URLSessionWebSocketDelegate {
     func activateAudioSession() {
         do {
             let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
+            try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetoothHFP])
             try session.setActive(true)
             print("🔊 HumeCallManager: audio session pre-activated")
         } catch {
@@ -170,7 +170,7 @@ class HumeCallManager: NSObject, ObservableObject, URLSessionWebSocketDelegate {
     private func setupAudio() {
         let audioSession = AVAudioSession.sharedInstance()
         do {
-            try audioSession.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
+            try audioSession.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetoothHFP])
             try audioSession.setActive(true)
             if audioEngine.isRunning { audioEngine.stop() }
 

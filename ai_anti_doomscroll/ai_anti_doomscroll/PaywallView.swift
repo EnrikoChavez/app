@@ -11,6 +11,8 @@ struct PaywallView: View {
     @ObservedObject var subscriptionManager: SubscriptionManager
     @State private var showError = false
     @State private var errorMessage = ""
+    @State private var showTerms = false
+    @State private var showPrivacy = false
     
     var body: some View {
         NavigationStack {
@@ -52,12 +54,23 @@ struct PaywallView: View {
                             }
                     }
                 }
+
+                // Required by App Store: links to Privacy Policy and Terms of Use
+                HStack(spacing: 20) {
+                    Button("Privacy Policy") { showPrivacy = true }
+                    Button("Terms of Use") { showTerms = true }
+                }
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.bottom, 16)
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                 }
             }
+            .sheet(isPresented: $showPrivacy) { PrivacyPolicyView() }
+            .sheet(isPresented: $showTerms) { TermsOfServiceView() }
             .alert("Purchase Error", isPresented: $showError) {
                 Button("OK", role: .cancel) { }
             } message: {
