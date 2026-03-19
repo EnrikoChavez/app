@@ -40,7 +40,7 @@ struct PaywallView: View {
                         SubscriptionStoreView(groupID: subscriptionManager.subscriptionGroupID)
                             .subscriptionStoreControlStyle(.prominentPicker)
                             .subscriptionStoreButtonLabel(.multiline)
-                            .storeButton(.visible, for: .restorePurchases, .policies)
+                            .storeButton(.visible, for: .restorePurchases)
                             .onInAppPurchaseCompletion { product, result in
                                 handlePurchaseResult(product: product, result: result)
                             }
@@ -48,7 +48,7 @@ struct PaywallView: View {
                         SubscriptionStoreView(productIDs: subscriptionManager.productIDs)
                             .subscriptionStoreControlStyle(.prominentPicker)
                             .subscriptionStoreButtonLabel(.multiline)
-                            .storeButton(.visible, for: .restorePurchases, .policies)
+                            .storeButton(.visible, for: .restorePurchases)
                             .onInAppPurchaseCompletion { product, result in
                                 handlePurchaseResult(product: product, result: result)
                             }
@@ -56,21 +56,19 @@ struct PaywallView: View {
                 }
 
                 // Required by App Store: links to Privacy Policy and Terms of Use
-                HStack(spacing: 20) {
-                    Button("Privacy Policy") { showPrivacy = true }
-                    Button("Terms of Use") { showTerms = true }
+                HStack(spacing: 24) {
+                    Link("Privacy Policy", destination: URL(string: "https://www.notion.so/AI-Anti-Doomscroll-Privacy-Policy-325a5fecb17980f4ba34dd163b656826")!)
+                    Link("Terms of Use", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
                 }
-                .font(.caption)
                 .foregroundColor(.secondary)
-                .padding(.bottom, 16)
+                .font(.footnote)
+    
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                 }
             }
-            .sheet(isPresented: $showPrivacy) { PrivacyPolicyView() }
-            .sheet(isPresented: $showTerms) { TermsOfServiceView() }
             .alert("Purchase Error", isPresented: $showError) {
                 Button("OK", role: .cancel) { }
             } message: {
