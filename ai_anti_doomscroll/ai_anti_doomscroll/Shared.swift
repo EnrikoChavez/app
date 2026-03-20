@@ -5,6 +5,8 @@ import SwiftUI
 
 #if canImport(FamilyControls)
 import FamilyControls
+import DeviceActivity
+import ManagedSettings
 #endif
 
 // MARK: - App Group & shared keys
@@ -60,4 +62,44 @@ final class SelectionStore: ObservableObject {
         }
         #endif
     }
+
+    #if canImport(FamilyControls)
+    /// Restart monitoring with a fresh schedule so thresholds reset from zero.
+    /// Called after unblocking so the timer starts fresh.
+    func restartMonitoring() {
+        let baseMinutes = Shared.defaults.integer(forKey: Shared.minutesKey)
+        guard baseMinutes > 0 else { return }
+        guard !selection.applicationTokens.isEmpty
+           || !selection.categoryTokens.isEmpty
+           || !selection.webDomainTokens.isEmpty else { return }
+
+        let maxMultiples = 1440 / baseMinutes
+        var events: [DeviceActivityEvent.Name: DeviceActivityEvent] = [:]
+        for m in 1...maxMultiples {
+            let mins = m * baseMinutes
+            events[DeviceActivityEvent.Name("usageThreshold_\(mins)")] = DeviceActivityEvent(
+                applications: selection.applicationTokens,
+                categories:  selection.categoryTokens,
+                webDomains:  selection.webDomainTokens,
+                threshold: DateComponents(minute: mins),
+                includesPastActivity: false
+            )
+        }
+
+        let schedule = DeviceActivitySchedule(
+            intervalStart: DateComponents(hour: 0, minute: 0, second: 0),
+            intervalEnd:   DateComponents(hour: 23, minute: 59, second: 59),
+            repeats: true
+        )
+
+        let center = DeviceActivityCenter()
+        center.stopMonitoring([DeviceActivityName("dailyMonitor")])
+        do {
+            try center.startMonitoring(DeviceActivityName("dailyMonitor"), during: schedule, events: events)
+            print("🔄 Monitoring restarted after unblock (\(baseMinutes) min threshold)")
+        } catch {
+            print("❌ Failed to restart monitoring: \(error.localizedDescription)")
+        }
+    }
+    #endif
 }

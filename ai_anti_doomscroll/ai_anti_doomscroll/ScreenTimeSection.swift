@@ -341,7 +341,8 @@ struct ScreenTimeSection: View {
                 applications: store.selection.applicationTokens,
                 categories:  store.selection.categoryTokens,
                 webDomains:  store.selection.webDomainTokens,
-                threshold: DateComponents(minute: mins)
+                threshold: DateComponents(minute: mins),
+                includesPastActivity: false
             )
         }
 

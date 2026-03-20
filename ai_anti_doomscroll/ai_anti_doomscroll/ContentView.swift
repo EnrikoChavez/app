@@ -713,6 +713,11 @@ struct ContentView: View {
             defaults.set(false, forKey: Shared.isBlockedKey)
             defaults.removeObject(forKey: Shared.blockedAtKey)
         }
+
+        // Restart monitoring with a fresh schedule so thresholds reset from zero
+        #if canImport(FamilyControls)
+        store.restartMonitoring()
+        #endif
     }
 
     func unblockApps() {
