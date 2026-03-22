@@ -33,6 +33,11 @@ enum Shared {
     // Keys for monitoring state display
     static let isMonitoringActiveKey = "isMonitoringActive"
     static let monitoringMinutesKey  = "monitoringMinutes"
+
+    // Warning shield: true when the 5-min warning shield is active (dismissable)
+    static let isWarningShieldKey = "isWarningShield"
+    // Whether warning notifications are enabled for the current monitoring session
+    static let warningsEnabledKey = "warningsEnabled"
 }
 
 // MARK: - Selection persistence (App ↔ Extension via App Group)
@@ -84,6 +89,16 @@ final class SelectionStore: ObservableObject {
                 threshold: DateComponents(minute: mins),
                 includesPastActivity: false
             )
+            let warnMins = mins - 5
+            if warnMins > 0 {
+                events[DeviceActivityEvent.Name("warningThreshold_\(warnMins)")] = DeviceActivityEvent(
+                    applications: selection.applicationTokens,
+                    categories:  selection.categoryTokens,
+                    webDomains:  selection.webDomainTokens,
+                    threshold: DateComponents(minute: warnMins),
+                    includesPastActivity: false
+                )
+            }
         }
 
         let schedule = DeviceActivitySchedule(

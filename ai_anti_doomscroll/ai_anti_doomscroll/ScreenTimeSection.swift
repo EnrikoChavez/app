@@ -182,21 +182,41 @@ struct ScreenTimeSection: View {
                     }
 
                     // Control Buttons
-                    HStack(spacing: 12) {
-                        Button {
-                            Task { await startMonitoring() }
-                        } label: {
-                            HStack {
-                                if starting { ProgressView().padding(.trailing, 4) }
-                                Text(isMonitoringActive ? "Restart Session" : "Start Session").bold()
+                    VStack(spacing: 10) {
+                        HStack(spacing: 10) {
+                            // Start without warning
+                            Button {
+                                Task { await startMonitoring(withWarning: false) }
+                            } label: {
+                                VStack(spacing: 2) {
+                                    Text(isMonitoringActive ? "Restart" : "Start").bold()
+                                    Text("no block warning").font(.caption2)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(isSelectionEmpty ? Color.gray.opacity(0.2) : Color.green)
+                                .foregroundColor(.white)
+                                .cornerRadius(12)
                             }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(isSelectionEmpty ? Color.gray.opacity(0.2) : Color.green)
-                            .foregroundColor(.white)
-                            .cornerRadius(12)
+                            .disabled(starting || stopping || isSelectionEmpty)
+
+                            // Start with 5-min warning
+                            Button {
+                                Task { await startMonitoring(withWarning: true) }
+                            } label: {
+                                VStack(spacing: 2) {
+                                    if starting { ProgressView().padding(.bottom, 2) }
+                                    Text(isMonitoringActive ? "Restart" : "Start").bold()
+                                    Text("with 5 minute block warning").font(.caption2)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(isSelectionEmpty ? Color.gray.opacity(0.2) : Color.green)
+                                .foregroundColor(.white)
+                                .cornerRadius(12)
+                            }
+                            .disabled(starting || stopping || isSelectionEmpty)
                         }
-                        .disabled(starting || stopping || isSelectionEmpty)
 
                         Button {
                             Task { await stopMonitoring() }
@@ -204,8 +224,8 @@ struct ScreenTimeSection: View {
                             Text("Stop Monitoring")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
+                                .frame(maxWidth: .infinity)
                                 .padding(.vertical, 8)
-                                .padding(.horizontal, 12)
                                 .background(Color(.systemGray5))
                                 .cornerRadius(8)
                         }
@@ -319,7 +339,7 @@ struct ScreenTimeSection: View {
         }
     }
 
-    private func startMonitoring() async {
+    private func startMonitoring(withWarning: Bool = true) async {
         starting = true
         await MainActor.run {
             statusMessage = ""
@@ -329,14 +349,15 @@ struct ScreenTimeSection: View {
 
         let baseMinutes = Int(minutesText) ?? 15
         Shared.defaults.set(baseMinutes, forKey: Shared.minutesKey)
+        Shared.defaults.set(withWarning, forKey: Shared.warningsEnabledKey)
 
         // Create one threshold per multiple of baseMinutes up to the max minutes in a day.
-        // e.g. 15 min base → triggers at 15, 30, 45 ... 1440 (96 events)
-        // This ensures re-blocking fires every time usage hits the next multiple after an unblock.
+        // e.g. 15 min base → block at 15, 30, 45 ... 1440; warning at 10, 25, 40 ... (5 min early)
         let maxMultiples = 1440 / baseMinutes
         var events: [DeviceActivityEvent.Name: DeviceActivityEvent] = [:]
         for m in 1...maxMultiples {
             let mins = m * baseMinutes
+            // Block event
             events[DeviceActivityEvent.Name("usageThreshold_\(mins)")] = DeviceActivityEvent(
                 applications: store.selection.applicationTokens,
                 categories:  store.selection.categoryTokens,
@@ -344,6 +365,19 @@ struct ScreenTimeSection: View {
                 threshold: DateComponents(minute: mins),
                 includesPastActivity: false
             )
+            // Warning event: only when warnings enabled and threshold > 5 min
+            if withWarning {
+                let warnMins = mins - 5
+                if warnMins > 0 {
+                    events[DeviceActivityEvent.Name("warningThreshold_\(warnMins)")] = DeviceActivityEvent(
+                        applications: store.selection.applicationTokens,
+                        categories:  store.selection.categoryTokens,
+                        webDomains:  store.selection.webDomainTokens,
+                        threshold: DateComponents(minute: warnMins),
+                        includesPastActivity: false
+                    )
+                }
+            }
         }
 
         let schedule = DeviceActivitySchedule(
