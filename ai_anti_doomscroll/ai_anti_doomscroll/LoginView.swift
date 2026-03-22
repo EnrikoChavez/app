@@ -59,55 +59,57 @@ struct LoginView: View {
     ]
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                Text("sign in")
-                    .font(.largeTitle).bold()
-                    .padding(.top, 40)
+        GeometryReader { geo in
+            ScrollView {
+                VStack(spacing: 24) {
+                    Spacer()
 
-                // MARK: - Sign in with Apple
-                SignInWithAppleButton(.signIn) { request in
-                    request.requestedScopes = [.email, .fullName]
-                } onCompletion: { result in
-                    handleAppleSignIn(result)
-                }
-                .signInWithAppleButtonStyle(.black)
-                .frame(height: 50)
-                .cornerRadius(12)
-                .padding(.horizontal)
+                    Text("sign in")
+                        .font(.largeTitle).bold()
 
-                // Divider
-                HStack {
-                    Rectangle().frame(height: 1).foregroundColor(.secondary.opacity(0.3))
-                    Text("or").font(.subheadline).foregroundColor(.secondary)
-                    Rectangle().frame(height: 1).foregroundColor(.secondary.opacity(0.3))
-                }
-                .padding(.horizontal, 30)
-
-                // MARK: - Phone sign in
-                if stage == "phone" {
-                    phoneInputView
-                    
-                    Button(isLoading ? "Sending..." : "Send OTP") {
-                        sendOTP()
+                    // MARK: - Sign in with Apple
+                    SignInWithAppleButton(.signIn) { request in
+                        request.requestedScopes = [.email, .fullName]
+                    } onCompletion: { result in
+                        handleAppleSignIn(result)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(phoneNumber.isEmpty || isLoading)
-                    .padding(.top, 8)
-                }
+                    .signInWithAppleButtonStyle(.black)
+                    .frame(height: 50)
+                    .cornerRadius(12)
+                    .padding(.horizontal)
 
-                if stage == "otp" {
-                    otpInputView
-                    
-                    HStack(spacing: 15) {
-                        Button("Back") {
-                            goBackToPhone()
+                    // Divider
+                    HStack {
+                        Rectangle().frame(height: 1).foregroundColor(.secondary.opacity(0.3))
+                        Text("or").font(.subheadline).foregroundColor(.secondary)
+                        Rectangle().frame(height: 1).foregroundColor(.secondary.opacity(0.3))
+                    }
+                    .padding(.horizontal, 30)
+
+                    // MARK: - Phone sign in
+                    if stage == "phone" {
+                        phoneInputView
+
+                        Button(isLoading ? "Sending..." : "Send OTP") {
+                            sendOTP()
                         }
-                        .buttonStyle(.bordered)
-                        
-                        Button(isLoading ? "Verifying..." : "Verify OTP") {
-                            verifyOTP()
-                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(phoneNumber.isEmpty || isLoading)
+                        .padding(.top, 8)
+                    }
+
+                    if stage == "otp" {
+                        otpInputView
+
+                        HStack(spacing: 15) {
+                            Button("Back") {
+                                goBackToPhone()
+                            }
+                            .buttonStyle(.bordered)
+
+                            Button(isLoading ? "Verifying..." : "Verify OTP") {
+                                verifyOTP()
+                            }
                         .buttonStyle(.borderedProminent)
                         .disabled(otp.isEmpty || isLoading)
                     }
@@ -121,11 +123,14 @@ struct LoginView: View {
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
                 }
+
+                Spacer()
             }
             .padding()
+            .frame(minHeight: geo.size.height)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemGroupedBackground))
+        }
     }
     
     // MARK: - Phone Input View
