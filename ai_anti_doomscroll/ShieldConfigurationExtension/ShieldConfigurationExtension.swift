@@ -9,9 +9,38 @@ import UIKit
 
 class ShieldConfigurationExtension: ShieldConfigurationDataSource {
 
+    private let defaults = UserDefaults(suiteName: "group.OrgIdentifier.ai-anti-doomscroll")
+
+    private var isAwareness: Bool {
+        defaults?.bool(forKey: "isAwarenessShield") ?? false
+    }
+
     private var isWarning: Bool {
-        UserDefaults(suiteName: "group.OrgIdentifier.ai-anti-doomscroll")?
-            .bool(forKey: "isWarningShield") ?? false
+        defaults?.bool(forKey: "isWarningShield") ?? false
+    }
+
+    private func awarenessConfig() -> ShieldConfiguration {
+        let minutes = defaults?.integer(forKey: "fc.minutes") ?? 0
+        let timeText = minutes > 0 ? "\(minutes) minutes" : "your set time limit"
+        return ShieldConfiguration(
+            backgroundBlurStyle: .systemUltraThinMaterial,
+            title: ShieldConfiguration.Label(
+                text: "Opening Doomscroll App",
+                color: .label
+            ),
+            subtitle: ShieldConfiguration.Label(
+                text: "Your time on this app is being tracked and will block after some time. Are you sure you want to continue?",
+                color: .secondaryLabel
+            ),
+            primaryButtonLabel: ShieldConfiguration.Label(
+                text: "Yes, continue",
+                color: .label
+            ),
+            secondaryButtonLabel: ShieldConfiguration.Label(
+                text: "Don't continue",
+                color: .secondaryLabel
+            )
+        )
     }
 
     private func warningConfig() -> ShieldConfiguration {
@@ -48,7 +77,9 @@ class ShieldConfigurationExtension: ShieldConfigurationDataSource {
     }
 
     private func currentConfig() -> ShieldConfiguration {
-        isWarning ? warningConfig() : blockConfig()
+        if isAwareness { return awarenessConfig() }
+        if isWarning { return warningConfig() }
+        return blockConfig()
     }
 
     override func configuration(shielding application: Application) -> ShieldConfiguration {

@@ -290,8 +290,10 @@ struct LoginView: View {
                     KeychainHelper.saveToken(token)
                     if let userId = result["user_id"] as? String {
                         UserDefaults.standard.set(userId, forKey: "userId")
+                        Analytics.identify(userId: userId)
                     }
                     UserDefaults.standard.removeObject(forKey: "userPhone")
+                    Analytics.signedInWithApple()
                     isLoggedIn = true
                 } else {
                     errorMessage = "Sign in failed. Please try again."
@@ -372,7 +374,9 @@ struct LoginView: View {
                     Shared.defaults.set(fullPhoneNumber, forKey: Shared.phoneKey)
                     if let userId = result["user_id"] as? String {
                         UserDefaults.standard.set(userId, forKey: "userId")
+                        Analytics.identify(userId: userId)
                     }
+                    Analytics.signedInWithPhone()
                     isLoggedIn = true
                 } else {
                     errorMessage = "Incorrect code. Please try again."

@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import PostHog
 
 @main
 struct ai_anti_doomscrollApp: App {
@@ -17,6 +18,9 @@ struct ai_anti_doomscrollApp: App {
     let container: ModelContainer
     
     init() {
+        // 0. Set up PostHog analytics
+        Analytics.setup()
+
         // 1. Set up SwiftData container
         // SwiftData performs lightweight migration automatically when:
         //   - New fields are Optional (Bool?, String?, etc.)

@@ -18,6 +18,7 @@ struct PaywallView: View {
         NavigationStack {
             ZStack {
                 Color(.systemGroupedBackground).ignoresSafeArea()
+                    .onAppear { Analytics.paywallShown() }
                 
                 VStack(spacing: 0) {
                     // Header

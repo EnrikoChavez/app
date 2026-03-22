@@ -22,6 +22,8 @@ struct ScreenTimeSection: View {
     @State private var authorized = false
     @State private var isMonitoringActive = false
     @State private var activeMinutes = 0
+    @State private var activeMode = ""
+    @State private var stopRemaining = StopMonitoringLimitManager.shared.remainingCount
     @ObservedObject var store: SelectionStore
     var updateAuthStatus: () async -> Void
 
@@ -110,7 +112,7 @@ struct ScreenTimeSection: View {
                                 .font(.subheadline).bold()
                                 .foregroundColor(isMonitoringActive ? .green : .secondary)
                             if isMonitoringActive {
-                                Text("\(activeMinutes) min limit")
+                                Text("\(activeMinutes) min · \(activeMode)")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
@@ -200,14 +202,13 @@ struct ScreenTimeSection: View {
                             }
                             .disabled(starting || stopping || isSelectionEmpty)
 
-                            // Start with 5-min warning
                             Button {
                                 Task { await startMonitoring(withWarning: true) }
                             } label: {
                                 VStack(spacing: 2) {
                                     if starting { ProgressView().padding(.bottom, 2) }
                                     Text(isMonitoringActive ? "Restart" : "Start").bold()
-                                    Text("with 5 minute block warning").font(.caption2)
+                                    Text("with 5 min block warning").font(.caption2)
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 12)
@@ -218,18 +219,62 @@ struct ScreenTimeSection: View {
                             .disabled(starting || stopping || isSelectionEmpty)
                         }
 
+                        HStack(spacing: 10) {
+                            // Start with awareness only
+                            Button {
+                                Task { await startMonitoring(withWarning: false, withAwareness: true) }
+                            } label: {
+                                VStack(spacing: 2) {
+                                    Text(isMonitoringActive ? "Restart" : "Start").bold()
+                                    Text("with awareness").font(.caption2)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(isSelectionEmpty ? Color.gray.opacity(0.2) : Color.indigo)
+                                .foregroundColor(.white)
+                                .cornerRadius(12)
+                            }
+                            .disabled(starting || stopping || isSelectionEmpty)
+
+                            // Start with awareness + 5-min warning
+                            Button {
+                                Task { await startMonitoring(withWarning: true, withAwareness: true) }
+                            } label: {
+                                VStack(spacing: 2) {
+                                    Text(isMonitoringActive ? "Restart" : "Start").bold()
+                                    Text("awareness + block warning").font(.caption2)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(isSelectionEmpty ? Color.gray.opacity(0.2) : Color.indigo)
+                                .foregroundColor(.white)
+                                .cornerRadius(12)
+                            }
+                            .disabled(starting || stopping || isSelectionEmpty)
+                        }
+
+                        let canStop = StopMonitoringLimitManager.shared.canStop
                         Button {
                             Task { await stopMonitoring() }
                         } label: {
-                            Text("Stop Monitoring")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 8)
-                                .background(Color(.systemGray5))
-                                .cornerRadius(8)
+                            HStack(spacing: 6) {
+                                Text("Stop Monitoring")
+                                    .font(.caption)
+                                if canStop {
+                                    Text("(\(stopRemaining) left today)")
+                                        .font(.caption2)
+                                } else {
+                                    Text("(limit reached)")
+                                        .font(.caption2)
+                                }
+                            }
+                            .foregroundColor(canStop ? .secondary : .red.opacity(0.7))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .background(Color(.systemGray5))
+                            .cornerRadius(8)
                         }
-                        .disabled(starting || stopping)
+                        .disabled(starting || stopping || !canStop)
                     }
 
                     if !statusMessage.isEmpty {
@@ -321,6 +366,8 @@ struct ScreenTimeSection: View {
             #endif
             isMonitoringActive = Shared.defaults.bool(forKey: Shared.isMonitoringActiveKey)
             activeMinutes = Shared.defaults.integer(forKey: Shared.monitoringMinutesKey)
+            activeMode = Shared.defaults.string(forKey: Shared.monitoringModeKey) ?? ""
+            stopRemaining = StopMonitoringLimitManager.shared.remainingCount
         }
     }
     
@@ -339,7 +386,7 @@ struct ScreenTimeSection: View {
         }
     }
 
-    private func startMonitoring(withWarning: Bool = true) async {
+    private func startMonitoring(withWarning: Bool = true, withAwareness: Bool = false) async {
         starting = true
         await MainActor.run {
             statusMessage = ""
@@ -394,9 +441,48 @@ struct ScreenTimeSection: View {
             Shared.defaults.set(true, forKey: Shared.isMonitoringActiveKey)
             Shared.defaults.set(baseMinutes, forKey: Shared.monitoringMinutesKey)
 
+            let modeLabel: String = {
+                switch (withWarning, withAwareness) {
+                case (false, false): return "no warning"
+                case (true,  false): return "5 min warning"
+                case (false, true):  return "awareness"
+                case (true,  true):  return "awareness + warning"
+                }
+            }()
+            Shared.defaults.set(modeLabel, forKey: Shared.monitoringModeKey)
+
+            // Immediately apply the awareness shield so the next app open shows the consent screen
+            if withAwareness {
+                Shared.defaults.set(true, forKey: Shared.isAwarenessShieldKey)
+                #if canImport(ManagedSettings)
+                let shieldStore = ManagedSettingsStore()
+                if !store.selection.applicationTokens.isEmpty {
+                    shieldStore.shield.applications = store.selection.applicationTokens
+                }
+                if !store.selection.categoryTokens.isEmpty {
+                    shieldStore.shield.applicationCategories = .specific(store.selection.categoryTokens)
+                }
+                if !store.selection.webDomainTokens.isEmpty {
+                    shieldStore.shield.webDomains = store.selection.webDomainTokens
+                }
+                #endif
+            } else {
+                Shared.defaults.set(false, forKey: Shared.isAwarenessShieldKey)
+            }
+
+            #if canImport(FamilyControls)
+            Analytics.monitoringStarted(
+                minutes: baseMinutes,
+                withWarning: withWarning,
+                appCount: store.selection.applicationTokens.count,
+                categoryCount: store.selection.categoryTokens.count
+            )
+            #endif
+
             await MainActor.run {
                 isMonitoringActive = true
                 activeMinutes = baseMinutes
+                activeMode = modeLabel
                 statusMessage = ""
                 isStatusError = false
             }
@@ -409,12 +495,18 @@ struct ScreenTimeSection: View {
     }
 
     private func stopMonitoring() async {
+        guard StopMonitoringLimitManager.shared.canStop else { return }
+
         await MainActor.run {
             stopping = true
             statusMessage = ""
         }
         defer { Task { @MainActor in stopping = false } }
-        
+
+        StopMonitoringLimitManager.shared.recordStop()
+        await MainActor.run { stopRemaining = StopMonitoringLimitManager.shared.remainingCount }
+
+        Analytics.monitoringStopped()
         let center = DeviceActivityCenter()
         center.stopMonitoring([DeviceActivityName("dailyMonitor")])
         
@@ -427,10 +519,12 @@ struct ScreenTimeSection: View {
         
         Shared.defaults.set(false, forKey: Shared.isMonitoringActiveKey)
         Shared.defaults.set(0, forKey: Shared.monitoringMinutesKey)
+        Shared.defaults.set(false, forKey: Shared.isAwarenessShieldKey)
 
         await MainActor.run {
             isMonitoringActive = false
             activeMinutes = 0
+            activeMode = ""
             statusMessage = ""
             isStatusError = false
         }

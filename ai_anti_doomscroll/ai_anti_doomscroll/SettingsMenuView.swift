@@ -122,6 +122,8 @@ struct SettingsMenuView: View {
                 isDeleting = false
                 switch result {
                 case .success:
+                    Analytics.accountDeleted()
+                    Analytics.reset()
                     KeychainHelper.deleteToken()
                     UserDefaults.standard.set(false, forKey: "isLoggedIn")
                     UserDefaults.standard.removeObject(forKey: "userPhone")

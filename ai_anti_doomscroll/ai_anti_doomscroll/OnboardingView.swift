@@ -79,9 +79,12 @@ struct OnboardingView: View {
 
                 // Skip button (hidden on last page)
                 if currentPage < pages.count - 1 {
-                    Button("Skip") { hasSeenOnboarding = true }
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+                    Button("Skip") {
+                        Analytics.onboardingSkipped(atPage: currentPage)
+                        hasSeenOnboarding = true
+                    }
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
                 } else {
                     Color.clear.frame(height: 20)
                 }
@@ -96,6 +99,7 @@ struct OnboardingView: View {
         if currentPage < pages.count - 1 {
             withAnimation { currentPage += 1 }
         } else {
+            Analytics.onboardingCompleted()
             hasSeenOnboarding = true
         }
     }

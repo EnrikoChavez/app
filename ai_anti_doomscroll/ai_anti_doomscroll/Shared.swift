@@ -38,6 +38,10 @@ enum Shared {
     static let isWarningShieldKey = "isWarningShield"
     // Whether warning notifications are enabled for the current monitoring session
     static let warningsEnabledKey = "warningsEnabled"
+    // Awareness shield: true when the initial consent shield should be shown
+    static let isAwarenessShieldKey = "isAwarenessShield"
+    // Active monitoring mode label (one of 4 modes)
+    static let monitoringModeKey = "monitoringMode"
 }
 
 // MARK: - Selection persistence (App ↔ Extension via App Group)

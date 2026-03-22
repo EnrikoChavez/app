@@ -128,15 +128,13 @@ class SubscriptionManager: ObservableObject {
     }
     
     private func updateSubscriptionStatus(_ transaction: Transaction) async {
-        // Look up the product using the transaction's productID
         do {
             let products = try await Product.products(for: [transaction.productID])
             if let product = products.first {
                 currentSubscription = product
                 isPremium = true
                 print("✅ Subscription activated: \(product.displayName)")
-                
-                // Sync premium status to Postgres
+                Analytics.subscriptionStarted(productId: transaction.productID)
                 await syncPremiumStatusToBackend(isPremium: true)
             }
         } catch {

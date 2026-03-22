@@ -630,21 +630,23 @@ struct ContentView: View {
     
     func addTodo() {
         guard !newTask.isEmpty else { return }
-        // Get Apple ID (from StoreKit or UserDefaults)
         let appleId = UserDefaults.standard.string(forKey: "appleId") ?? nil
         todoRepository.addTodo(newTask, phone: phone, appleId: appleId)
         newTask = ""
+        Analytics.todoAdded()
     }
     
     func deleteTodo(id: Int) {
         if let todo = todoRepository.todos.first(where: { $0.id == id }) {
             todoRepository.deleteTodo(todo)
+            Analytics.todoDeleted()
         }
     }
 
     func moveToFocus(id: Int) {
         if let todo = todoRepository.todos.first(where: { $0.id == id }) {
             todoRepository.moveToFocus(todo)
+            Analytics.todoSetAsFocus()
         }
     }
 
@@ -657,6 +659,7 @@ struct ContentView: View {
     func completeTodo(id: Int) {
         if let todo = todoRepository.todos.first(where: { $0.id == id }) {
             todoRepository.completeTodo(todo)
+            Analytics.todoCompleted()
         }
     }
 
@@ -667,6 +670,8 @@ struct ContentView: View {
     }
     
     func logout() {
+        Analytics.loggedOut()
+        Analytics.reset()
         KeychainHelper.deleteToken()
         UserDefaults.standard.removeObject(forKey: "userPhone")
         UserDefaults.standard.removeObject(forKey: "userId")
@@ -727,13 +732,16 @@ struct ContentView: View {
     }
 
     func unblockApps() {
+        Analytics.manualUnblockAttempted()
         guard UnblockLimitManager.shared.canUnblock else {
+            Analytics.manualUnblockLimitReached()
             activeAlert = .error(message: "You've reached your daily limit of \(UnblockLimitManager.shared.limitCount) manual unblocks. Please use AI voice call or text chat to unblock.")
             return
         }
         UnblockLimitManager.shared.recordUnblock()
         refreshUnblockLimit()
         performUnblock()
+        Analytics.manualUnblockSucceeded()
     }
 
     func checkManualUnblockLimit() {
@@ -805,6 +813,7 @@ struct ContentView: View {
                                     }
                                     self.callManager.startCall(websocketURL: wsURL, initialVariables: variables, maxDurationSeconds: maxDuration)
                                     self.showingCallView = true
+                                    Analytics.voiceCallStarted()
                                 } else {
                                     self.activeAlert = .error(message: "Server did not return a call URL.")
                                 }
@@ -827,11 +836,9 @@ struct ContentView: View {
     
     func handleCallEnd() {
         let finalTranscript = callManager.transcript
-        // Get call duration BEFORE stopCall() resets it (if not already stopped)
         let callDuration = callManager.callDuration
         print("📱 iOS: Call ended. Duration calculated: \(callDuration)s")
         
-        // Stop the call (this resets callStartTime) - safe to call multiple times
         callManager.stopCall()
         
         // Record call duration
@@ -857,6 +864,7 @@ struct ContentView: View {
     func startTextChat() {
         chatManager.startChat(todos: todoRepository.focusTodos)
         showingChatView = true
+        Analytics.chatStarted()
     }
     
     func handleChatEnd() {
@@ -873,7 +881,7 @@ struct ContentView: View {
                 case .success(let transcript):
                     print("📱 Chat transcript received: \(transcript.prefix(100))...")
                     if !transcript.isEmpty {
-                        evaluateCall(transcript: transcript)
+                        evaluateCall(transcript: transcript, isChat: true)
                     } else {
                         // If transcript is empty, user might have cancelled
                         print("⚠️ Chat transcript is empty")
@@ -889,7 +897,7 @@ struct ContentView: View {
         }
     }
     
-    func evaluateCall(transcript: String) {
+    func evaluateCall(transcript: String, isChat: Bool = false) {
         isEvaluating = true
         networkManager.evaluateTranscript(transcript: transcript) { result in
             DispatchQueue.main.async {
@@ -898,6 +906,11 @@ struct ContentView: View {
                 case .success(let data):
                     let unblock = data["unblock"] as? Bool ?? false
                     let message = data["message"] as? String ?? ""
+                    if isChat {
+                        Analytics.chatEnded(unblocked: unblock)
+                    } else {
+                        Analytics.voiceCallEnded(durationSeconds: self.callManager.callDuration, unblocked: unblock)
+                    }
                     if unblock { self.performUnblock() }
                     self.activeAlert = .evaluation(message: message)
                 case .failure(let error):
