@@ -122,11 +122,11 @@ struct SettingsMenuView: View {
                 isDeleting = false
                 switch result {
                 case .success:
-                    // Log out and clear all user data
+                    KeychainHelper.deleteToken()
                     UserDefaults.standard.set(false, forKey: "isLoggedIn")
                     UserDefaults.standard.removeObject(forKey: "userPhone")
+                    UserDefaults.standard.removeObject(forKey: "userId")
                     UserDefaults.standard.removeObject(forKey: "appleId")
-                    // Close settings menu - app will show login screen
                     isPresented = false
                 case .failure(let error):
                     print("❌ Failed to delete account: \(error.localizedDescription)")

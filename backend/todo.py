@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from db import get_db
 from models import Todo, Profile
-from otp import verify_token
+from otp import verify_token, get_user_identifier
 
 router = APIRouter(prefix="/todos", tags=["todos"])
 
@@ -20,8 +20,8 @@ class TodoResponse(BaseModel):
 
 
 @router.get("")
-def get_todos(db: Session = Depends(get_db), phone: str = Depends(verify_token)):
-    """Get all todos for a user. Syncs from Postgres."""
+def get_todos(db: Session = Depends(get_db), user_id: str = Depends(verify_token)):
+    phone = get_user_identifier(user_id, db)
     todos = db.query(Todo).filter(Todo.phone == phone).order_by(Todo.created_at.desc()).all()
     return {
         "todos": [
@@ -38,21 +38,19 @@ def get_todos(db: Session = Depends(get_db), phone: str = Depends(verify_token))
 
 
 @router.post("")
-def add_todo(item: TodoItem, db: Session = Depends(get_db), phone: str = Depends(verify_token)):
-    """Add a todo. Saves to Postgres immediately."""
+def add_todo(item: TodoItem, db: Session = Depends(get_db), user_id: str = Depends(verify_token)):
+    phone = get_user_identifier(user_id, db)
     todo = Todo(task=item.task, phone=phone, apple_id=item.apple_id)
     db.add(todo)
     db.commit()
     db.refresh(todo)
     
-    # Update user's last_active timestamp
     profile = db.query(Profile).filter(Profile.phone == phone).first()
     if profile:
         from datetime import datetime
         profile.last_active = datetime.utcnow()
         db.commit()
     else:
-        # Create profile if it doesn't exist
         profile = Profile(phone=phone, is_premium=False)
         db.add(profile)
         db.commit()
@@ -70,8 +68,8 @@ def add_todo(item: TodoItem, db: Session = Depends(get_db), phone: str = Depends
 
 
 @router.put("/{todo_id}")
-def update_todo(todo_id: int, item: TodoItem, db: Session = Depends(get_db), phone: str = Depends(verify_token)):
-    """Update a todo. Syncs to Postgres."""
+def update_todo(todo_id: int, item: TodoItem, db: Session = Depends(get_db), user_id: str = Depends(verify_token)):
+    phone = get_user_identifier(user_id, db)
     todo = db.query(Todo).filter(Todo.id == todo_id, Todo.phone == phone).first()
     if not todo:
         raise HTTPException(status_code=404, detail="Invalid id")
@@ -94,8 +92,8 @@ def update_todo(todo_id: int, item: TodoItem, db: Session = Depends(get_db), pho
 
 
 @router.delete("/{todo_id}")
-def delete_todo(todo_id: int, db: Session = Depends(get_db), phone: str = Depends(verify_token)):
-    """Delete a todo. Syncs to Postgres."""
+def delete_todo(todo_id: int, db: Session = Depends(get_db), user_id: str = Depends(verify_token)):
+    phone = get_user_identifier(user_id, db)
     todo = db.query(Todo).filter(Todo.id == todo_id, Todo.phone == phone).first()
     if not todo:
         raise HTTPException(status_code=404, detail="Invalid id")

@@ -21,6 +21,7 @@ final class NetworkManager {
         DispatchQueue.main.async {
             KeychainHelper.deleteToken()
             UserDefaults.standard.removeObject(forKey: "userPhone")
+            UserDefaults.standard.removeObject(forKey: "userId")
             UserDefaults.standard.set(false, forKey: "isLoggedIn")
             NotificationCenter.default.post(name: .sessionExpired, object: nil)
         }

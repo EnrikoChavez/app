@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from db import get_db
 from models import ChatUsage
-from otp import verify_token
+from otp import verify_token, get_user_identifier
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -19,29 +19,27 @@ GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini
 MAX_MESSAGES_PER_DAY = 1000
 MAX_CHARACTERS_PER_MESSAGE = 3000
 
-# In-memory conversation storage
-# Format: {phone: {"history": [...], "todos": "...", "started_at": datetime}}
+# In-memory conversation storage keyed by user_id
 conversations = {}
 
 
 class ChatMessage(BaseModel):
-    role: str  # "user" or "assistant"
+    role: str
     content: str
 
 
 class ChatRequest(BaseModel):
     message: str
-    todos: List[str]  # List of todo tasks
-    is_new_conversation: bool = False  # Start new conversation
+    todos: List[str]
+    is_new_conversation: bool = False
 
 
 class ChatResponse(BaseModel):
     response: str
-    conversation_ended: bool = False  # True if user indicated conversation is done
+    conversation_ended: bool = False
 
 
 def build_system_prompt(todos: List[str]) -> str:
-    """Build the system prompt with todos."""
     if not todos:
         return """You are a good friend who is genuinely thrilled to see the user has no pending tasks. Congratulate them warmly and enthusiastically — they have everything done! Tell them they've earned a real break and should enjoy their free time guilt-free. Be upbeat, celebratory, and encouraging. If the conversation ends, evaluate it as a success and allow unblocking."""
 
@@ -57,7 +55,6 @@ Keep your responses concise and friendly but firm. Remember the conversation con
 
 
 def detect_conversation_end(user_message: str) -> bool:
-    """Detect if user wants to end the conversation."""
     end_phrases = [
         "i'm done",
         "i'm finished",
@@ -74,10 +71,6 @@ def detect_conversation_end(user_message: str) -> bool:
 
 
 def check_chat_limits(db: Session, phone: str):
-    """
-    Check if user can send a message based on daily limits.
-    Returns (can_send, messages_sent_today)
-    """
     today = date.today()
     
     usage = db.query(ChatUsage).filter(
@@ -95,9 +88,6 @@ def check_chat_limits(db: Session, phone: str):
 
 
 def record_chat_message(db: Session, phone: str):
-    """
-    Record that a message was sent (increment daily count).
-    """
     today = date.today()
     
     usage = db.query(ChatUsage).filter(
@@ -125,25 +115,20 @@ def record_chat_message(db: Session, phone: str):
 @router.post("/message")
 async def send_chat_message(
     request: ChatRequest,
-    phone: str = Depends(verify_token),
+    user_id: str = Depends(verify_token),
     db: Session = Depends(get_db)
 ):
-    """
-    Send a message to Gemini chat and get response.
-    Maintains conversation history per user.
-    Enforces daily message limit and character limit per message.
-    """
     if not GEMINI_API_KEY:
         raise HTTPException(status_code=500, detail="Gemini API key not configured")
     
-    # Check character limit per message
+    phone = get_user_identifier(user_id, db)
+
     if len(request.message) > MAX_CHARACTERS_PER_MESSAGE:
         raise HTTPException(
             status_code=400,
             detail=f"Message too long. Maximum {MAX_CHARACTERS_PER_MESSAGE} characters allowed."
         )
     
-    # Check daily message limit
     can_send, messages_sent = check_chat_limits(db, phone)
     if not can_send:
         raise HTTPException(
@@ -151,36 +136,31 @@ async def send_chat_message(
             detail=f"Daily message limit reached. You've sent {messages_sent} messages today (limit: {MAX_MESSAGES_PER_DAY})."
         )
     
-    # Start new conversation or get existing
-    if request.is_new_conversation or phone not in conversations:
-        conversations[phone] = {
+    if request.is_new_conversation or user_id not in conversations:
+        conversations[user_id] = {
             "history": [],
             "todos": request.todos,
             "started_at": datetime.now()
         }
-        # Add system prompt as first message
         system_prompt = build_system_prompt(request.todos)
-        conversations[phone]["history"].append({
+        conversations[user_id]["history"].append({
             "role": "user",
             "parts": [{"text": system_prompt}]
         })
-        conversations[phone]["history"].append({
+        conversations[user_id]["history"].append({
             "role": "model",
             "parts": [{"text": "I see you have some tasks to complete. Let's talk about them. What have you been up to?"}]
         })
     
-    conversation = conversations[phone]
+    conversation = conversations[user_id]
     
-    # Add user message to history
     conversation["history"].append({
         "role": "user",
         "parts": [{"text": request.message}]
     })
     
-    # Check if user wants to end conversation
     conversation_ended = detect_conversation_end(request.message)
     
-    # Prepare request to Gemini
     url = f"{GEMINI_API_URL}?key={GEMINI_API_KEY}"
     
     try:
@@ -203,22 +183,17 @@ async def send_chat_message(
             
             result = response.json()
             
-            # Extract AI response
             if "candidates" in result and len(result["candidates"]) > 0:
                 ai_response = result["candidates"][0]["content"]["parts"][0]["text"]
                 
-                # Add AI response to history
                 conversation["history"].append({
                     "role": "model",
                     "parts": [{"text": ai_response}]
                 })
                 
-                # Limit history to last 20 messages to avoid token limits
                 if len(conversation["history"]) > 20:
-                    # Keep system prompt and recent messages
                     conversation["history"] = conversation["history"][:2] + conversation["history"][-18:]
                 
-                # Record that a message was sent (only after successful send)
                 record_chat_message(db, phone)
                 
                 return {
@@ -238,23 +213,19 @@ async def send_chat_message(
 
 @router.post("/end")
 async def end_conversation(
-    phone: str = Depends(verify_token)
+    user_id: str = Depends(verify_token)
 ):
-    """
-    End a conversation and return the full transcript for evaluation.
-    """
-    print(f"📞 Received request to end conversation for phone: {phone}")
+    print(f"📞 Received request to end conversation for user: {user_id}")
     print(f"📞 Active conversations: {list(conversations.keys())}")
     
-    if phone not in conversations:
-        print(f"❌ No active conversation found for phone: {phone}")
+    if user_id not in conversations:
+        print(f"❌ No active conversation found for user: {user_id}")
         raise HTTPException(status_code=404, detail="No active conversation found")
     
-    conversation = conversations[phone]
+    conversation = conversations[user_id]
     
-    # Build transcript from history (excluding system prompt)
     transcript_parts = []
-    for msg in conversation["history"][2:]:  # Skip system prompt and initial greeting
+    for msg in conversation["history"][2:]:
         role = "You" if msg["role"] == "user" else "AI"
         content = msg["parts"][0]["text"]
         transcript_parts.append(f"{role}: {content}")
@@ -262,9 +233,8 @@ async def end_conversation(
     transcript = "\n".join(transcript_parts)
     print(f"✅ Built transcript with {len(transcript_parts)} messages. Transcript length: {len(transcript)}")
     
-    # Clean up conversation
-    del conversations[phone]
-    print(f"✅ Conversation ended and cleaned up for phone: {phone}")
+    del conversations[user_id]
+    print(f"✅ Conversation ended and cleaned up for user: {user_id}")
     
     return {
         "transcript": transcript,
@@ -274,9 +244,8 @@ async def end_conversation(
 
 @router.delete("/cancel")
 async def cancel_conversation(
-    phone: str = Depends(verify_token)
+    user_id: str = Depends(verify_token)
 ):
-    """Cancel an active conversation without evaluation."""
-    if phone in conversations:
-        del conversations[phone]
+    if user_id in conversations:
+        del conversations[user_id]
     return {"message": "Conversation cancelled"}

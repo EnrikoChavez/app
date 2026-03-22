@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AuthenticationServices
 
 struct Country: Identifiable {
     let id = UUID()
@@ -23,7 +24,6 @@ struct LoginView: View {
     @State private var errorMessage: String?
     @State private var isLoading = false
     
-    // Popular countries with their codes and flags (sorted reverse alphabetically)
     static let countries: [Country] = [
         Country(name: "United States", code: "+1", flag: "🇺🇸"),
         Country(name: "United Kingdom", code: "+44", flag: "🇬🇧"),
@@ -59,48 +59,71 @@ struct LoginView: View {
     ]
 
     var body: some View {
-        VStack(spacing: 30) {
-            Text("sign in with phone")
-                .font(.largeTitle).bold()
-                .padding(.top, 40)
+        ScrollView {
+            VStack(spacing: 24) {
+                Text("sign in")
+                    .font(.largeTitle).bold()
+                    .padding(.top, 40)
 
-            if stage == "phone" {
-                phoneInputView
-                
-                Button(isLoading ? "Sending..." : "Send OTP") {
-                    sendOTP()
+                // MARK: - Sign in with Apple
+                SignInWithAppleButton(.signIn) { request in
+                    request.requestedScopes = [.email, .fullName]
+                } onCompletion: { result in
+                    handleAppleSignIn(result)
                 }
-                .buttonStyle(.borderedProminent)
-                .disabled(phoneNumber.isEmpty || isLoading)
-                .padding(.top, 20)
-            }
+                .signInWithAppleButtonStyle(.black)
+                .frame(height: 50)
+                .cornerRadius(12)
+                .padding(.horizontal)
 
-            if stage == "otp" {
-                otpInputView
-                
-                HStack(spacing: 15) {
-                    Button("Back") {
-                        goBackToPhone()
-                    }
-                    .buttonStyle(.bordered)
+                // Divider
+                HStack {
+                    Rectangle().frame(height: 1).foregroundColor(.secondary.opacity(0.3))
+                    Text("or").font(.subheadline).foregroundColor(.secondary)
+                    Rectangle().frame(height: 1).foregroundColor(.secondary.opacity(0.3))
+                }
+                .padding(.horizontal, 30)
+
+                // MARK: - Phone sign in
+                if stage == "phone" {
+                    phoneInputView
                     
-                    Button(isLoading ? "Verifying..." : "Verify OTP") {
-                        verifyOTP()
+                    Button(isLoading ? "Sending..." : "Send OTP") {
+                        sendOTP()
                     }
                     .buttonStyle(.borderedProminent)
-                    .disabled(otp.isEmpty || isLoading)
+                    .disabled(phoneNumber.isEmpty || isLoading)
+                    .padding(.top, 8)
                 }
-                .padding(.top, 20)
-            }
 
-            if let error = errorMessage {
-                Text(error)
-                    .foregroundColor(.red)
-                    .font(.caption)
-                    .multilineTextAlignment(.center)
+                if stage == "otp" {
+                    otpInputView
+                    
+                    HStack(spacing: 15) {
+                        Button("Back") {
+                            goBackToPhone()
+                        }
+                        .buttonStyle(.bordered)
+                        
+                        Button(isLoading ? "Verifying..." : "Verify OTP") {
+                            verifyOTP()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(otp.isEmpty || isLoading)
+                    }
+                    .padding(.top, 8)
+                }
+
+                if let error = errorMessage {
+                    Text(error)
+                        .foregroundColor(.red)
+                        .font(.caption)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                }
             }
+            .padding()
         }
-        .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemGroupedBackground))
     }
@@ -111,7 +134,6 @@ struct LoginView: View {
         VStack(spacing: 20) {
             
             HStack(spacing: 12) {
-                // Country Code Picker
                 Menu {
                     ForEach(LoginView.countries) { country in
                         Button {
@@ -143,7 +165,6 @@ struct LoginView: View {
                     )
                 }
                 
-                // Phone Number (single field)
                 TextField("Phone number", text: $phoneNumber)
                     .keyboardType(.phonePad)
                     .padding(.vertical, 16)
@@ -191,9 +212,90 @@ struct LoginView: View {
     
     func goBackToPhone() {
         stage = "phone"
-        otp = "" // Clear the OTP field
-        errorMessage = nil // Clear any error messages
+        otp = ""
+        errorMessage = nil
     }
+
+    // MARK: - Apple Sign In
+
+    func handleAppleSignIn(_ result: Result<ASAuthorization, Error>) {
+        switch result {
+        case .success(let auth):
+            guard let credential = auth.credential as? ASAuthorizationAppleIDCredential,
+                  let identityTokenData = credential.identityToken,
+                  let identityToken = String(data: identityTokenData, encoding: .utf8) else {
+                errorMessage = "Could not process Apple Sign In credentials."
+                return
+            }
+
+            var nameStr: String?
+            if let fullName = credential.fullName {
+                let parts = [fullName.givenName, fullName.familyName].compactMap { $0 }
+                if !parts.isEmpty { nameStr = parts.joined(separator: " ") }
+            }
+
+            authenticateWithApple(
+                identityToken: identityToken,
+                email: credential.email,
+                fullName: nameStr
+            )
+
+        case .failure(let error):
+            if (error as NSError).code == ASAuthorizationError.canceled.rawValue {
+                return
+            }
+            errorMessage = "Apple Sign In failed. Please try again."
+            print("❌ Apple Sign In error: \(error.localizedDescription)")
+        }
+    }
+
+    func authenticateWithApple(identityToken: String, email: String?, fullName: String?) {
+        guard let url = APIConfig.url("/auth/apple") else { return }
+
+        isLoading = true
+        errorMessage = nil
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 15
+
+        var body: [String: Any] = ["identity_token": identityToken]
+        if let email = email { body["email"] = email }
+        if let fullName = fullName { body["full_name"] = fullName }
+
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            DispatchQueue.main.async {
+                isLoading = false
+                if let error = error {
+                    if (error as NSError).code == NSURLErrorNotConnectedToInternet {
+                        errorMessage = "No internet connection. Please check your network."
+                    } else if (error as NSError).code == NSURLErrorTimedOut {
+                        errorMessage = "Request timed out. Please try again."
+                    } else {
+                        errorMessage = "Could not sign in. Please try again."
+                    }
+                    return
+                }
+                if let data = data,
+                   let result = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let token = result["token"] as? String {
+                    KeychainHelper.saveToken(token)
+                    if let userId = result["user_id"] as? String {
+                        UserDefaults.standard.set(userId, forKey: "userId")
+                    }
+                    UserDefaults.standard.removeObject(forKey: "userPhone")
+                    isLoggedIn = true
+                } else {
+                    errorMessage = "Sign in failed. Please try again."
+                }
+            }
+        }.resume()
+    }
+
+    // MARK: - Phone OTP
 
     func sendOTP() {
         guard let url = APIConfig.url("/otp/send") else { return }
@@ -258,11 +360,14 @@ struct LoginView: View {
                     return
                 }
                 if let data = data,
-                   let result = try? JSONDecoder().decode([String: String].self, from: data),
-                   let token = result["token"] {
+                   let result = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let token = result["token"] as? String {
                     KeychainHelper.saveToken(token)
                     UserDefaults.standard.set(fullPhoneNumber, forKey: "userPhone")
                     Shared.defaults.set(fullPhoneNumber, forKey: Shared.phoneKey)
+                    if let userId = result["user_id"] as? String {
+                        UserDefaults.standard.set(userId, forKey: "userId")
+                    }
                     isLoggedIn = true
                 } else {
                     errorMessage = "Incorrect code. Please try again."

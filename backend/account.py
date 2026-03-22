@@ -2,9 +2,8 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from db import get_db
-from models import Todo, Profile, CallUsage
-from otp import verify_token
-from datetime import date
+from models import Todo, Profile, CallUsage, User
+from otp import verify_token, get_user_identifier, get_user
 
 router = APIRouter(prefix="/account", tags=["account"])
 
@@ -12,32 +11,29 @@ router = APIRouter(prefix="/account", tags=["account"])
 @router.delete("/delete")
 def delete_account(
     db: Session = Depends(get_db),
-    phone: str = Depends(verify_token)
+    user_id: str = Depends(verify_token)
 ):
     """
     Delete user account and all associated data.
-    This includes:
-    - All todos
-    - Profile information
-    - Call usage history
     """
-    print(f"🗑️ Deleting account for phone: {phone}")
+    phone = get_user_identifier(user_id, db)
+    user = get_user(user_id, db)
+    print(f"🗑️ Deleting account for user {user.id} (phone={phone})")
     
-    # Delete all todos
     todos_deleted = db.query(Todo).filter(Todo.phone == phone).delete()
     print(f"  - Deleted {todos_deleted} todos")
     
-    # Delete profile
     profile_deleted = db.query(Profile).filter(Profile.phone == phone).delete()
     print(f"  - Deleted {profile_deleted} profile(s)")
     
-    # Delete call usage history
     call_usage_deleted = db.query(CallUsage).filter(CallUsage.phone == phone).delete()
     print(f"  - Deleted {call_usage_deleted} call usage records")
+
+    db.delete(user)
     
     db.commit()
     
-    print(f"✅ Account deletion complete for phone: {phone}")
+    print(f"✅ Account deletion complete for user {user.id}")
     
     return {
         "message": "Account deleted successfully",

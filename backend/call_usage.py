@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from db import get_db
 from models import CallUsage
-from otp import verify_token
+from otp import verify_token, get_user_identifier
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
@@ -27,18 +27,10 @@ class RecordCallDurationRequest(BaseModel):
     duration_seconds: float
 
 
-@router.get("/check-limit")
-def check_call_limit(
-    db: Session = Depends(get_db),
-    phone: str = Depends(verify_token)
-):
-    """
-    Check if user can make a call based on daily limit.
-    Returns remaining time and whether they can call.
-    """
+def _check_limit_by_phone(db: Session, phone: str) -> CallLimitResponse:
+    """Business logic for checking call limits by phone identifier."""
     today = datetime.now(EASTERN).date()
     
-    # Get or create today's usage record
     usage = db.query(CallUsage).filter(
         and_(
             CallUsage.phone == phone,
@@ -47,7 +39,6 @@ def check_call_limit(
     ).first()
     
     if not usage:
-        # No usage today, full limit available
         return CallLimitResponse(
             can_call=True,
             remaining_seconds=DAILY_LIMIT_SECONDS,
@@ -66,22 +57,27 @@ def check_call_limit(
     )
 
 
+@router.get("/check-limit")
+def check_call_limit(
+    db: Session = Depends(get_db),
+    user_id: str = Depends(verify_token)
+):
+    phone = get_user_identifier(user_id, db)
+    return _check_limit_by_phone(db, phone)
+
+
 @router.post("/record-duration")
 def record_call_duration(
     request: RecordCallDurationRequest,
     db: Session = Depends(get_db),
-    phone: str = Depends(verify_token)
+    user_id: str = Depends(verify_token)
 ):
-    """
-    Record call duration after a call ends.
-    Adds to today's total usage.
-    """
+    phone = get_user_identifier(user_id, db)
     duration_seconds = request.duration_seconds
-    print(f"📞 Recording call duration: {duration_seconds:.2f} seconds for phone {phone}")
+    print(f"📞 Recording call duration: {duration_seconds:.2f} seconds for user {user_id} (phone={phone})")
     
     today = datetime.now(EASTERN).date()
     
-    # Get or create today's usage record
     usage = db.query(CallUsage).filter(
         and_(
             CallUsage.phone == phone,
@@ -100,7 +96,6 @@ def record_call_duration(
     else:
         print(f"📊 Found existing usage record: {usage.seconds_used:.2f}s already used today")
     
-    # Add the call duration to today's total
     old_used = usage.seconds_used
     usage.seconds_used += duration_seconds
     usage.updated_at = datetime.now(timezone.utc)

@@ -4,7 +4,7 @@ import base64
 import httpx
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException, Depends
-from otp import verify_token
+from otp import verify_token, get_user_identifier
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from todo import router as todo_router
@@ -14,19 +14,46 @@ from call_usage import router as call_usage_router
 from chat import router as chat_router
 from account import router as account_router
 from manual_unblock import router as manual_unblock_router
-from db import init_db
-from models import Base
+from apple_auth import router as apple_auth_router
+from db import init_db, get_db
+from models import Base, User, Profile
 
 
 
 load_dotenv()
 
+def migrate_existing_phone_users():
+    """Create User records for phones that exist in profiles but not in users table."""
+    from sqlalchemy.orm import Session
+    db_gen = get_db()
+    db: Session = next(db_gen)
+    try:
+        profiles = db.query(Profile.phone).distinct().all()
+        created = 0
+        for (phone,) in profiles:
+            if not phone:
+                continue
+            existing = db.query(User).filter(User.phone == phone).first()
+            if not existing:
+                user = User(phone=phone)
+                db.add(user)
+                created += 1
+        if created:
+            db.commit()
+            print(f"🔄 Migrated {created} existing phone users to users table")
+        else:
+            print("✅ No phone users to migrate")
+    except Exception as e:
+        print(f"⚠️ Migration error (non-fatal): {e}")
+        db.rollback()
+    finally:
+        db.close()
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
-    init_db(Base)   # creates tables if missing (uses SQLite file)
+    init_db(Base)
+    migrate_existing_phone_users()
     yield
-    # Shutdown (if needed)
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(todo_router)
@@ -36,6 +63,7 @@ app.include_router(call_usage_router)
 app.include_router(chat_router)
 app.include_router(account_router)
 app.include_router(manual_unblock_router)
+app.include_router(apple_auth_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -98,10 +126,7 @@ async def analyze_transcript_with_gemini(transcript: str) -> bool:
         return False
 
 @app.post("/hume/evaluate-transcript")
-async def evaluate_transcript(payload: dict, phone: str = Depends(verify_token)):
-    """
-    Endpoint for iOS app to send transcript for evaluation.
-    """
+async def evaluate_transcript(payload: dict, user_id: str = Depends(verify_token)):
     transcript = payload.get("transcript", "")
     if not transcript:
         return {"unblock": False, "message": "No transcript provided"}
@@ -122,17 +147,12 @@ async def evaluate_transcript(payload: dict, phone: str = Depends(verify_token))
 
 
 async def get_hume_access_token():
-    """
-    Exchange API Key + Secret Key for a temporary access token.
-    Uses Basic Auth: base64(API_KEY:SECRET_KEY)
-    """
     if not HUME_API_KEY or not HUME_SECRET_KEY:
         raise HTTPException(
             status_code=500,
             detail="Hume API Key and Secret Key must be configured in .env (HUME_API_KEY and HUME_SECRET_KEY)"
         )
     
-    # Hume uses Basic Auth (API_KEY:SECRET_KEY) to get a token
     credentials = f"{HUME_API_KEY}:{HUME_SECRET_KEY}"
     encoded_credentials = base64.b64encode(credentials.encode()).decode()
     
@@ -146,7 +166,7 @@ async def get_hume_access_token():
                     "Content-Type": "application/x-www-form-urlencoded"
                 },
                 data={"grant_type": "client_credentials"},
-                timeout=10.0 # Shorter timeout to fail fast
+                timeout=10.0
             )
             
             print(f"📡 Hume OAuth Response Status: {response.status_code}")
@@ -174,42 +194,31 @@ async def get_hume_access_token():
             detail=f"Hume token exchange HTTP error: {str(e)}"
         )
 
-# Phone call endpoint removed - will be replaced with WebRTC web call endpoint in Phase 3
-# @app.post("/trigger-call") - DEPRECATED
-
 @app.post("/hume/create-session")
-async def create_hume_session(payload: dict, phone: str = Depends(verify_token)):
-    """
-    Generate WebSocket connection details for Hume AI EVI.
-    Checks daily call limit before creating session.
-    """
+async def create_hume_session(payload: dict, user_id: str = Depends(verify_token)):
     print("📥 Received request for /hume/create-session")
 
-    # Check call limit before proceeding
-    if phone:
-        from call_usage import check_call_limit
-        from db import get_db
-        
-        # Get database session
-        db = next(get_db())
-        try:
-            limit_info = check_call_limit(db=db, phone=phone)
-            if not limit_info.can_call:
-                raise HTTPException(
-                    status_code=429,
-                    detail=f"Daily call limit reached. You've used {limit_info.used_seconds:.1f}s of {limit_info.limit_seconds:.0f}s today."
-                )
-            print(f"✅ Call limit check passed: {limit_info.remaining_seconds:.1f}s remaining")
-        finally:
-            db.close()
+    from sqlalchemy.orm import Session as SA_Session
+    from call_usage import _check_limit_by_phone
+
+    db = next(get_db())
+    try:
+        phone = get_user_identifier(user_id, db)
+        limit_info = _check_limit_by_phone(db, phone)
+        if not limit_info.can_call:
+            raise HTTPException(
+                status_code=429,
+                detail=f"Daily call limit reached. You've used {limit_info.used_seconds:.1f}s of {limit_info.limit_seconds:.0f}s today."
+            )
+        print(f"✅ Call limit check passed: {limit_info.remaining_seconds:.1f}s remaining")
+    finally:
+        db.close()
     
     try:
-        # 1. Get a secure temporary access token
         print("🔑 Fetching Hume access token...")
         access_token = await get_hume_access_token()
         print("✅ Access token received")
     
-        # 2. Prepare variables for session_settings message
         todos = payload.get("todos", [])
         minutes = payload.get("minutes", 15)
         if todos:
@@ -217,19 +226,15 @@ async def create_hume_session(payload: dict, phone: str = Depends(verify_token))
         else:
             task_list_str = "NO_TASKS: The user has no pending tasks — they have everything done! Congratulate them warmly and tell them they deserve a guilt-free break."
         
-        # 3. Get EVI config ID from environment (optional)
         evi_config_id = os.getenv("HUME_EVI_CONFIG_ID")
         
-        # 4. Build WebSocket URL using access_token (not API key)
         from urllib.parse import urlencode
         params = {"access_token": access_token}
         if evi_config_id:
             params["config_id"] = evi_config_id
         
-        # The correct path is /v0/evi/chat (EVI 3 standard)
         ws_url = f"wss://api.hume.ai/v0/evi/chat?{urlencode(params)}"
         
-        # 5. Return WebSocket URL and variables for iOS to send in session_settings
         return {
             "websocket_url": ws_url,
             "initial_variables": {
@@ -245,16 +250,11 @@ async def create_hume_session(payload: dict, phone: str = Depends(verify_token))
 
 @app.post("/hume-webhook")
 async def hume_webhook(request: Request):
-    """
-    Handle Hume AI webhook events (session ended, transcript available, etc.).
-    """
     event = await request.json()
     event_type = event.get("type")
 
     if event_type == "session_ended":
         transcript = event.get("transcript", "")
-        
-        # Store or summarize transcript for continuity
         print("Hume Transcript:\n", transcript[:])
 
     return {"ok": True}
@@ -263,4 +263,3 @@ async def hume_webhook(request: Request):
 @app.get("/")
 def homepage():
     return {"bananas": "okk"}
-

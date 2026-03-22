@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from db import get_db
 from models import ManualUnblockUsage
-from otp import verify_token
+from otp import verify_token, get_user_identifier
 from datetime import datetime, date, timezone
 
 router = APIRouter(prefix="/manual-unblock", tags=["manual-unblock"])
@@ -23,15 +23,11 @@ class ManualUnblockLimitResponse(BaseModel):
 @router.get("/check-limit")
 def check_manual_unblock_limit(
     db: Session = Depends(get_db),
-    phone: str = Depends(verify_token)
+    user_id: str = Depends(verify_token)
 ):
-    """
-    Check if user can perform a manual unblock based on daily limit.
-    Returns remaining count and whether they can unblock.
-    """
+    phone = get_user_identifier(user_id, db)
     today = date.today()
     
-    # Get or create today's usage record
     usage = db.query(ManualUnblockUsage).filter(
         and_(
             ManualUnblockUsage.phone == phone,
@@ -40,7 +36,6 @@ def check_manual_unblock_limit(
     ).first()
     
     if not usage:
-        # No usage today, full limit available
         return ManualUnblockLimitResponse(
             can_unblock=True,
             remaining_count=DAILY_LIMIT_COUNT,
@@ -62,17 +57,13 @@ def check_manual_unblock_limit(
 @router.post("/record")
 def record_manual_unblock(
     db: Session = Depends(get_db),
-    phone: str = Depends(verify_token)
+    user_id: str = Depends(verify_token)
 ):
-    """
-    Record a manual unblock.
-    Increments today's total usage.
-    """
-    print(f"🔓 Recording manual unblock for phone {phone}")
+    phone = get_user_identifier(user_id, db)
+    print(f"🔓 Recording manual unblock for user {user_id} (phone={phone})")
     
     today = date.today()
     
-    # Get or create today's usage record
     usage = db.query(ManualUnblockUsage).filter(
         and_(
             ManualUnblockUsage.phone == phone,
@@ -91,7 +82,6 @@ def record_manual_unblock(
     else:
         print(f"📊 Found existing usage record: {usage.unblock_count} unblocks already used today")
     
-    # Increment the unblock count
     old_count = usage.unblock_count
     usage.unblock_count += 1
     usage.updated_at = datetime.now(timezone.utc)

@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from db import get_db
 from models import Profile
-from otp import verify_token
+from otp import verify_token, get_user_identifier
 from datetime import datetime, timezone
 
 router = APIRouter(prefix="/profile", tags=["profile"])
@@ -21,12 +21,11 @@ class SyncPremiumRequest(BaseModel):
 
 
 @router.get("/premium-status")
-def get_premium_status(db: Session = Depends(get_db), phone: str = Depends(verify_token)):
-    """Get user's premium status from Postgres."""
+def get_premium_status(db: Session = Depends(get_db), user_id: str = Depends(verify_token)):
+    phone = get_user_identifier(user_id, db)
     profile = db.query(Profile).filter(Profile.phone == phone).first()
     
     if not profile:
-        # Create profile if it doesn't exist
         profile = Profile(phone=phone, is_premium=False)
         db.add(profile)
         db.commit()
@@ -43,9 +42,9 @@ def get_premium_status(db: Session = Depends(get_db), phone: str = Depends(verif
 def sync_premium_status(
     request: SyncPremiumRequest,
     db: Session = Depends(get_db),
-    phone: str = Depends(verify_token)
+    user_id: str = Depends(verify_token)
 ):
-    """Sync premium status from iOS app (after StoreKit verification)."""
+    phone = get_user_identifier(user_id, db)
     profile = db.query(Profile).filter(Profile.phone == phone).first()
     
     if not profile:

@@ -666,7 +666,13 @@ struct ContentView: View {
         }
     }
     
-    func logout() { isLoggedIn = false }
+    func logout() {
+        KeychainHelper.deleteToken()
+        UserDefaults.standard.removeObject(forKey: "userPhone")
+        UserDefaults.standard.removeObject(forKey: "userId")
+        Shared.defaults.removeObject(forKey: Shared.phoneKey)
+        isLoggedIn = false
+    }
     
     func updateAuthStatus() async {
         let status = AuthorizationCenter.shared.authorizationStatus

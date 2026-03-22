@@ -448,6 +448,9 @@
 			);
 			mainGroup = 594F48542E51664400BCCB62;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				59A3CE712F6DEBC20095E10A /* XCRemoteSwiftPackageReference "posthog-ios" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 594F485E2E51664400BCCB62 /* Products */;
 			projectDirPath = "";
@@ -1117,6 +1120,17 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		59A3CE712F6DEBC20095E10A /* XCRemoteSwiftPackageReference "posthog-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/PostHog/posthog-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.48.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
 	};
 	rootObject = 594F48552E51664400BCCB62 /* Project object */;
 }

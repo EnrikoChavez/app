@@ -4,7 +4,19 @@ from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, Date, F
 
 Base = declarative_base()
 
-# Keep existing todos schema as requested, with apple_id added
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    phone = Column(String, unique=True, index=True, nullable=True)
+    apple_id = Column(String, unique=True, index=True, nullable=True)
+    email = Column(String, nullable=True)
+    full_name = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
 class Todo(Base):
     __tablename__ = "todos"
 
