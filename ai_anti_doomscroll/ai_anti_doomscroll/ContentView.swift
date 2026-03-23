@@ -175,7 +175,7 @@ struct ContentView: View {
     @ViewBuilder
     private func tabBarItem(icon: String, label: String, tag: Int) -> some View {
         let isSelected = selectedTab == tag
-        Button(action: { selectedTab = tag }) {
+        Button(action: { withAnimation(.easeInOut(duration: 0.0)) { selectedTab = tag } }) {
             VStack(spacing: 5) {
                 Image(systemName: icon)
                     .font(.system(size: 19, weight: isSelected ? .semibold : .regular))
@@ -201,13 +201,28 @@ struct ContentView: View {
             }
             Spacer()
             
-            // Settings button
-            Button(action: {
-                showingSettingsMenu = true
-            }) {
-                Image(systemName: "gearshape.fill")
-                    .font(.title2)
-                    .foregroundColor(.primary)
+            HStack(spacing: 12) {
+                // #if DEBUG
+                Button("Rewatch\nonboarding") {
+                    UserDefaults.standard.set(false, forKey: "hasSeenOnboarding")
+                    UserDefaults.standard.removeObject(forKey: "onboardingPendingFocusTask")
+                }
+                .font(.system(size: 9, weight: .bold))
+                .foregroundColor(.gray)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 5)
+                .overlay(RoundedRectangle(cornerRadius: 7).stroke(Color.gray, lineWidth: 1.5))
+                .cornerRadius(7)
+                // #endif
+
+                Button(action: {
+                    showingSettingsMenu = true
+                }) {
+                    Image(systemName: "gearshape.fill")
+                        .font(.title2)
+                        .foregroundColor(.primary)
+                }
             }
         }
         .padding(.top, 20)
@@ -234,7 +249,7 @@ struct ContentView: View {
                             .font(.caption)
                             .foregroundColor(.secondary)
                     } else {
-                        Text("AI companion still available to chat while apps are not blocked")
+                        Text("AI companion is still available to chat while apps are not blocked")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -387,7 +402,7 @@ struct ContentView: View {
                     VStack(spacing: 10) {
                         instructionRow(step: "1", icon: "checklist", color: .blue,
                             title: "Add your tasks",
-                            detail: "Go to the Tasks tab and dump everything you need to do. Move items to Today's Focus to tell the AI what to check.",
+                            detail: "Go to the Tasks tab and write everything you need to do. Move items to Today's Focus to tell the AI what to check.",
                             action: { selectedTab = 1 })
 
                         instructionRow(step: "2", icon: "chart.bar", color: .green,
@@ -576,6 +591,14 @@ struct ContentView: View {
         
         // Initialize repository with model context
         todoRepository.setModelContext(modelContext)
+
+        // Consume task entered during onboarding — add it straight to Today's Focus
+        if let pendingTask = UserDefaults.standard.string(forKey: "onboardingPendingFocusTask"),
+           !pendingTask.isEmpty {
+            let appleId = UserDefaults.standard.string(forKey: "appleId")
+            todoRepository.addTodoToFocus(pendingTask, phone: phone, appleId: appleId)
+            UserDefaults.standard.removeObject(forKey: "onboardingPendingFocusTask")
+        }
         
         #if canImport(FamilyControls)
         Task { await updateAuthStatus() }

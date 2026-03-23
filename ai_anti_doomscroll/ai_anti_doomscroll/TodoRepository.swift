@@ -73,6 +73,23 @@ class TodoRepository: ObservableObject {
 
     // MARK: - CRUD Operations
 
+    func addTodoToFocus(_ task: String, phone: String, appleId: String?) {
+        guard let context = modelContext else { return }
+
+        let localTodo = LocalTodo(task: task, phone: phone, appleId: appleId, isTodaysFocus: true, isCompleted: false)
+        context.insert(localTodo)
+
+        do {
+            try context.save()
+            let newTodo = Todo(id: localTodo.id, task: localTodo.task, phone: localTodo.phone, appleId: localTodo.appleId, isTodaysFocus: true, isCompleted: false)
+            todos.insert(newTodo, at: 0)
+            syncTasksToShield()
+            print("✅ Onboarding focus todo added: \(task)")
+        } catch {
+            print("❌ Failed to save onboarding focus todo: \(error)")
+        }
+    }
+
     func addTodo(_ task: String, phone: String, appleId: String?) {
         guard let context = modelContext else { return }
 

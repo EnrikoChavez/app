@@ -9,143 +9,78 @@ import SwiftUI
 import FamilyControls
 #endif
 
-private struct OnboardingPage {
-    let icon: String
-    let iconColor: Color
-    let title: String
-    let description: String
+private enum OnboardingStep: Int, CaseIterable, Hashable {
+    case hook       = 0
+    case attention  = 1
+    case blocking   = 2
+    case ai         = 3
+    case task       = 4
+    case permission = 5
 }
-
-private let pages: [OnboardingPage] = [
-    OnboardingPage(
-        icon: "iphone.slash",
-        iconColor: .green,
-        title: "Stop Doomscrolling",
-        description: "Set time limits on distracting apps. When you hit your limit, they get blocked automatically — no willpower required."
-    ),
-    OnboardingPage(
-        icon: "checkmark.circle.fill",
-        iconColor: .blue,
-        title: "Plan Your Day",
-        description: "Dump your ideas into \"All Tasks\" then pick what matters most for today. Your AI companion will hold you accountable."
-    ),
-    OnboardingPage(
-        icon: "waveform.circle.fill",
-        iconColor: .purple,
-        title: "Earn Your Apps Back",
-        description: "Blocked? Have a quick voice call or text chat with your AI companion. Convince it you've done your work — then get unblocked."
-    ),
-    OnboardingPage(
-        icon: "trophy.fill",
-        iconColor: .green,
-        title: "Build Better Habits",
-        description: "Complete your tasks, watch your progress in the Gallery, and gradually reclaim your focus one day at a time."
-    ),
-]
 
 struct OnboardingView: View {
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
-    @State private var currentPage = 0
-    @State private var showPermissionPage = false
+    @State private var step: OnboardingStep = .hook
+    @State private var taskText = ""
     @State private var isRequestingPermission = false
+    @FocusState private var taskFieldFocused: Bool
+
+    private var progress: Double {
+        Double(step.rawValue + 1) / Double(OnboardingStep.allCases.count)
+    }
 
     var body: some View {
-        if showPermissionPage {
-            permissionView
-        } else {
-            infoCarousel
-        }
-    }
+        ZStack {
+            Color(red: 1.0, green: 0.88, blue: 0.88, opacity: 0.6).ignoresSafeArea()
 
-    // MARK: - Info carousel (pages 1-4)
+            VStack(spacing: 0) {
+                progressBar
+                    .padding(.horizontal, 28)
+                    .padding(.top, 60)
+                    .padding(.bottom, 8)
 
-    private var infoCarousel: some View {
-        ZStack(alignment: .bottom) {
-            TabView(selection: $currentPage) {
-                ForEach(Array(pages.enumerated()), id: \.offset) { index, page in
-                    pageView(page)
-                        .tag(index)
+                ZStack {
+                    slideContent(for: step)
+                        .id(step)
+                        .transition(.opacity)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .contentShape(Rectangle())
+                .onTapGesture { taskFieldFocused = false }
+
+                bottomControls
+                    .padding(.horizontal, 32)
+                    .padding(.bottom, 48)
             }
-            .tabViewStyle(.page(indexDisplayMode: .never))
-            .animation(.easeInOut, value: currentPage)
-
-            VStack(spacing: 20) {
-                HStack(spacing: 8) {
-                    ForEach(0..<pages.count, id: \.self) { index in
-                        Circle()
-                            .fill(index == currentPage ? Color.blue : Color.gray.opacity(0.35))
-                            .frame(width: index == currentPage ? 10 : 7, height: index == currentPage ? 10 : 7)
-                            .animation(.spring(response: 0.3), value: currentPage)
-                    }
-                }
-
-                Button(action: advance) {
-                    Text(currentPage == pages.count - 1 ? "Get Started" : "Next")
-                        .font(.body).bold()
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Color.blue)
-                        .cornerRadius(14)
-                }
-                .padding(.horizontal, 32)
-
-                if currentPage < pages.count - 1 {
-                    Button("Skip") {
-                        Analytics.onboardingSkipped(atPage: currentPage)
-                        showPermissionPage = true
-                    }
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                } else {
-                    Color.clear.frame(height: 20)
-                }
-            }
-            .padding(.bottom, 48)
         }
         .preferredColorScheme(.light)
-        .background(Color(.systemGroupedBackground).ignoresSafeArea())
+        .animation(.easeInOut(duration: 0.38), value: step)
     }
 
-    // MARK: - Screen Time permission page
+    // MARK: - Progress Bar
 
-    private var permissionView: some View {
-        VStack(spacing: 0) {
-            Spacer()
+    private var progressBar: some View {
+        ZStack(alignment: .leading) {
+            RoundedRectangle(cornerRadius: 4)
+                .fill(Color.black.opacity(0.09))
+                .frame(height: 5)
 
-            ZStack {
-                Circle()
-                    .fill(Color.blue.opacity(0.12))
-                    .frame(width: 120, height: 120)
-                Image(systemName: "lock.shield.fill")
-                    .font(.system(size: 52, weight: .semibold))
-                    .foregroundColor(.blue)
+            GeometryReader { geo in
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(AppTheme.primaryButton)
+                    .frame(width: geo.size.width * progress, height: 5)
+                    .animation(.spring(response: 0.5, dampingFraction: 0.8), value: progress)
             }
+            .frame(height: 5)
+        }
+    }
 
-            VStack(spacing: 14) {
-                Text("Allow Screen Time")
-                    .font(.title).bold()
-                    .multilineTextAlignment(.center)
-                    .padding(.top, 32)
+    // MARK: - Bottom Controls
 
-                Text("To block distracting apps, this app needs access to Screen Time. Your usage data stays on your device and is never shared.")
-                    .font(.body)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
-            }
-
-            Spacer()
-
-            VStack(spacing: 16) {
-                Button(action: {
-                    isRequestingPermission = true
-                    Task {
-                        await requestScreenTimePermission()
-                        isRequestingPermission = false
-                    }
-                }) {
+    private var bottomControls: some View {
+        VStack(spacing: 14) {
+            if step == .permission {
+                Button(action: requestPermission) {
                     HStack(spacing: 8) {
                         if isRequestingPermission {
                             ProgressView()
@@ -158,77 +93,230 @@ struct OnboardingView: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
-                    .background(Color.blue)
+                    .background(AppTheme.primaryButton)
                     .cornerRadius(14)
+                    .shadow(color: AppTheme.primaryButtonShadow, radius: 10, x: 0, y: 5)
                 }
                 .disabled(isRequestingPermission)
-                .padding(.horizontal, 32)
 
                 Button("Not now") {
-                    Analytics.onboardingCompleted()
-                    hasSeenOnboarding = true
+                    saveTaskAndFinish()
                 }
                 .font(.subheadline)
                 .foregroundColor(.secondary)
+            } else {
+                Button(action: advance) {
+                    Text(nextButtonLabel)
+                        .font(.body).bold()
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(AppTheme.primaryButton)
+                        .cornerRadius(14)
+                        .shadow(color: AppTheme.primaryButtonShadow, radius: 10, x: 0, y: 5)
+                }
             }
-            .padding(.bottom, 48)
-        }
-        .preferredColorScheme(.light)
-        .background(Color(.systemGroupedBackground).ignoresSafeArea())
-    }
-
-    // MARK: - Helpers
-
-    private func advance() {
-        if currentPage < pages.count - 1 {
-            withAnimation { currentPage += 1 }
-        } else {
-            Analytics.onboardingCompleted()
-            showPermissionPage = true
         }
     }
 
-    private func requestScreenTimePermission() async {
-        #if canImport(FamilyControls)
-        do {
-            try await AuthorizationCenter.shared.requestAuthorization(for: .individual)
-        } catch {
-            // User denied or dismissed — proceed anyway; they can grant it later in the app.
-            print("⚠️ Screen Time authorization declined: \(error.localizedDescription)")
-        }
-        #endif
-        await MainActor.run {
-            hasSeenOnboarding = true
+    private var nextButtonLabel: String {
+        switch step {
+        case .task:
+            return taskText.trimmingCharacters(in: .whitespaces).isEmpty
+                ? "Continue"
+                : "Add to Today's Focus →"
+        case .ai:
+            return "Almost there →"
+        default:
+            return "Next →"
         }
     }
 
-    private func pageView(_ page: OnboardingPage) -> some View {
+    // MARK: - Slide Content
+
+    @ViewBuilder
+    private func slideContent(for s: OnboardingStep) -> some View {
+        switch s {
+        case .hook:
+            storySlide(
+                icon: "iphone",
+                iconColor: .orange,
+                headline: "Sound familiar?",
+                body: "You open an app with a low effort check... and look up 42 minutes later.\n\nNot your fault this happens. These apps are built by hundreds of experts specifically to keep you around."
+            )
+        case .attention:
+            storySlide(
+                icon: "hourglass",
+                iconColor: .red,
+                headline: "Your attention is finite.",
+                body: "Every minute spent mindlessly scrolling is a minute taken from the things you actually care about.\n\nThis app helps you take those accidental \"42 minutes\" sessions back one at a time."
+            )
+        case .blocking:
+            storySlide(
+                icon: "iphone.slash",
+                iconColor: .indigo,
+                headline: "Automatic App Blocking",
+                body: "Set a daily time limit on any distracting app. When you hit it, the app gets blocked — automatically.\n\n Immediately rerouting your focus."
+            )
+        case .ai:
+            storySlide(
+                icon: "waveform.circle.fill",
+                iconColor: .purple,
+                headline: "Your AI Accountability Partner",
+                body: "Blocked and need back in? Have a quick voice or text chat with your AI companion.\n\nConvince your companion you're good to use distracting apps again — then get unblocked."
+            )
+        case .task:
+            taskInputSlide
+        case .permission:
+            permissionSlide
+        }
+    }
+
+    // MARK: - Slide Layouts
+
+    private func storySlide(icon: String, iconColor: Color, headline: String, body: String) -> some View {
         VStack(spacing: 32) {
             Spacer()
 
             ZStack {
                 Circle()
-                    .fill(page.iconColor.opacity(0.12))
+                    .fill(iconColor.opacity(0.12))
                     .frame(width: 120, height: 120)
-                Image(systemName: page.icon)
+                Image(systemName: icon)
                     .font(.system(size: 52, weight: .semibold))
-                    .foregroundColor(page.iconColor)
+                    .foregroundColor(iconColor)
             }
 
-            VStack(spacing: 14) {
-                Text(page.title)
+            VStack(spacing: 16) {
+                Text(headline)
                     .font(.title).bold()
                     .multilineTextAlignment(.center)
 
-                Text(page.description)
+                Text(body)
                     .font(.body)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
+                    .lineSpacing(5)
+                    .padding(.horizontal, 20)
             }
 
             Spacer()
             Spacer()
+        }
+        .padding(.horizontal, 12)
+    }
+
+    private var taskInputSlide: some View {
+        VStack(spacing: 28) {
+            Spacer()
+
+            ZStack {
+                Circle()
+                    .fill(Color.green.opacity(0.12))
+                    .frame(width: 120, height: 120)
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 52, weight: .semibold))
+                    .foregroundColor(.green)
+            }
+
+            VStack(spacing: 14) {
+                Text("Before we begin...")
+                    .font(.title).bold()
+                    .multilineTextAlignment(.center)
+
+                Text("What's one thing you need to get done today? We'll add it straight to your Today's Focus list.")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(5)
+                    .padding(.horizontal, 20)
+            }
+
+            TextField("e.g. Finish the project proposal", text: $taskText)
+                .focused($taskFieldFocused)
+                .font(.body)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+                .background(Color.white)
+                .cornerRadius(12)
+                .shadow(color: Color.black.opacity(0.07), radius: 8, x: 0, y: 3)
+                .padding(.horizontal, 4)
+                .submitLabel(.done)
+                .onSubmit { advance() }
+
+            Spacer()
+            Spacer()
+        }
+        .padding(.horizontal, 32)
+    }
+
+    private var permissionSlide: some View {
+        VStack(spacing: 32) {
+            Spacer()
+
+            ZStack {
+                Circle()
+                    .fill(Color.blue.opacity(0.12))
+                    .frame(width: 120, height: 120)
+                Image(systemName: "lock.shield.fill")
+                    .font(.system(size: 52, weight: .semibold))
+                    .foregroundColor(.blue)
+            }
+
+            VStack(spacing: 16) {
+                Text("One last thing")
+                    .font(.title).bold()
+                    .multilineTextAlignment(.center)
+
+                Text("To block distracting apps, we need access to Screen Time.\n\nYour usage data stays on your device and is never shared with anyone.")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(5)
+                    .padding(.horizontal, 20)
+            }
+
+            Spacer()
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+    }
+
+    // MARK: - Actions
+
+    private func advance() {
+        taskFieldFocused = false
+        let nextRaw = step.rawValue + 1
+        guard nextRaw < OnboardingStep.allCases.count,
+              let next = OnboardingStep(rawValue: nextRaw) else { return }
+        withAnimation(.easeInOut(duration: 0.38)) {
+            step = next
+        }
+    }
+
+    private func saveTaskAndFinish() {
+        let trimmed = taskText.trimmingCharacters(in: .whitespaces)
+        if !trimmed.isEmpty {
+            UserDefaults.standard.set(trimmed, forKey: "onboardingPendingFocusTask")
+        }
+        Analytics.onboardingCompleted()
+        hasSeenOnboarding = true
+    }
+
+    private func requestPermission() {
+        isRequestingPermission = true
+        Task {
+            #if canImport(FamilyControls)
+            do {
+                try await AuthorizationCenter.shared.requestAuthorization(for: .individual)
+            } catch {
+                print("⚠️ Screen Time authorization declined: \(error.localizedDescription)")
+            }
+            #endif
+            await MainActor.run {
+                saveTaskAndFinish()
+                isRequestingPermission = false
+            }
         }
     }
 }

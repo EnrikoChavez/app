@@ -23,7 +23,7 @@ struct TodoSection: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Today's Focus")
                             .font(.title3).bold()
-                        Text("AI will coach you on these tasks")
+                        Text("AI will help guide you on these tasks and confirm if they are done when you talk to it")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
