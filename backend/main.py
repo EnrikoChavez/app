@@ -239,11 +239,20 @@ async def create_hume_session(payload: dict, user_id: str = Depends(verify_token
 
     from sqlalchemy.orm import Session as SA_Session
     from call_usage import _check_limit_by_phone
+    from models import Profile
 
     now = datetime.now(timezone.utc)
     db = next(get_db())
     try:
         phone = get_user_identifier(user_id, db)
+
+        # Require premium subscription to access Hume AI calls
+        profile = db.query(Profile).filter(Profile.phone == phone).first()
+        if not profile or not profile.is_premium:
+            raise HTTPException(
+                status_code=403,
+                detail="Premium subscription required to use AI calls."
+            )
 
         # Auto-close any orphaned session from a crash / missed end-session call
         _close_open_session(db, phone, now)

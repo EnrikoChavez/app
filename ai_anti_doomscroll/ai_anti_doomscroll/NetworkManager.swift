@@ -217,10 +217,14 @@ final class NetworkManager {
             completion(.failure(NSError(domain: "NetworkManager", code: 400, userInfo: [NSLocalizedDescriptionKey: "Request build failed"])))
             return
         }
-        session.dataTask(with: req) { data, _, error in
+        session.dataTask(with: req) { data, response, error in
             if let error = error {
                 completion(.failure(error))
                 return
+            }
+            let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
+            if let data = data, let body = String(data: data, encoding: .utf8) {
+                print("📡 [sync-premium] HTTP \(statusCode): \(body)")
             }
             guard let data = data,
                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],

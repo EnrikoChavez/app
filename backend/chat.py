@@ -8,7 +8,7 @@ from datetime import datetime, date, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from db import get_db
-from models import ChatUsage
+from models import ChatUsage, Profile
 from otp import verify_token, get_user_identifier
 
 router = APIRouter(prefix="/chat", tags=["chat"])
@@ -122,6 +122,14 @@ async def send_chat_message(
         raise HTTPException(status_code=500, detail="Gemini API key not configured")
     
     phone = get_user_identifier(user_id, db)
+
+    # Require premium subscription to access AI chat
+    profile = db.query(Profile).filter(Profile.phone == phone).first()
+    if not profile or not profile.is_premium:
+        raise HTTPException(
+            status_code=403,
+            detail="Premium subscription required to use AI chat."
+        )
 
     if len(request.message) > MAX_CHARACTERS_PER_MESSAGE:
         raise HTTPException(

@@ -346,7 +346,7 @@ struct ScreenTimeSection: View {
         .background(Color(.systemBackground))
         .cornerRadius(16)
 
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .top, spacing: 6) {
                 Image(systemName: "info.circle")
                     .font(.caption2)

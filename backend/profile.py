@@ -63,8 +63,10 @@ def sync_premium_status(
                 detail="transaction_jws is required to grant premium status"
             )
         try:
-            verify_app_store_jws(request.transaction_jws)
+            payload = verify_app_store_jws(request.transaction_jws)
+            print(f"✅ [sync-premium] JWS verified — productId={payload.get('productId')}, bundleId={payload.get('bundleId')}")
         except ValueError as e:
+            print(f"❌ [sync-premium] JWS verification failed: {e}")
             raise HTTPException(
                 status_code=403,
                 detail=f"Apple receipt verification failed: {e}"

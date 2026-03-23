@@ -111,13 +111,9 @@ struct ContentView: View {
                             monitoringTab
                                 .tag(2)
 
-                            // Tab 4: Weekly Schedule
-                            weeklyScheduleTab
-                                .tag(3)
-
-                            // Tab 5: Gallery
+                            // Tab 4: Gallery
                             galleryTab
-                                .tag(4)
+                                .tag(3)
                         }
                         .tabViewStyle(.page(indexDisplayMode: .never))
                     }
@@ -163,10 +159,9 @@ struct ContentView: View {
     var customTabBar: some View {
         HStack(spacing: 0) {
             tabBarItem(icon: "door.right.hand.open", label: "Unblock",  tag: 0)
-            tabBarItem(icon: "checklist",           label: "Tasks",    tag: 1)
-            tabBarItem(icon: "chart.bar",           label: "Set Timer",tag: 2)
-            tabBarItem(icon: "calendar.badge.clock",label: "Schedule", tag: 3)
-            tabBarItem(icon: "checkmark.seal",      label: "Gallery",  tag: 4)
+            tabBarItem(icon: "checklist",            label: "Tasks",    tag: 1)
+            tabBarItem(icon: "chart.bar",            label: "Set Timer",tag: 2)
+            tabBarItem(icon: "checkmark.seal",       label: "Gallery",  tag: 3)
         }
         .background(Color.white)
         .overlay(
@@ -362,7 +357,10 @@ struct ContentView: View {
                             .foregroundColor(.secondary)
                     }
                 }
-                .underline()
+                .padding(.horizontal, 12)
+                .padding(.vertical, 7)
+                .background(Color(.systemGray5))
+                .cornerRadius(8)
             }
             .disabled(manualUnblockLimitInfo?.canUnblock == false && isBlocked)
         }
@@ -401,7 +399,7 @@ struct ContentView: View {
                             title: "Apps get blocked",
                             detail: "Once you hit the time limit your selected apps are blocked automatically.")
 
-                        instructionRow(step: "4", icon: "brain.head.profile", color: .purple,
+                        instructionRow(step: "4", icon: "phone", color: .purple,
                             title: "Talk or text the AI to unblock",
                             detail: "Use the voice call or text chat to convince the AI you've finished your tasks. If it believes you, your apps unlock.")
                     }
@@ -547,10 +545,10 @@ struct ContentView: View {
         .background(Color.clear.ignoresSafeArea())
     }
     
-    // Tab 3: Monitoring Dashboard
+    // Tab 3: Monitoring Dashboard (includes Weekly Schedule at the bottom)
     var monitoringTab: some View {
         ScrollView {
-            VStack(spacing: 0) {
+            VStack(spacing: 24) {
                 ScreenTimeSection(
                     authStatus: $authStatus,
                     showPicker: $showPicker,
@@ -561,19 +559,9 @@ struct ContentView: View {
                 )
                 .padding(.horizontal)
                 .padding(.top, 20)
-            }
-            .padding(.bottom, 100)
-        }
-        .background(Color.clear.ignoresSafeArea())
-    }
 
-    // Tab 4: Weekly Schedule
-    var weeklyScheduleTab: some View {
-        ScrollView {
-            VStack(spacing: 0) {
                 WeeklyScheduleSection()
                     .padding(.horizontal)
-                    .padding(.top, 20)
             }
             .padding(.bottom, 100)
         }

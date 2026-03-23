@@ -39,6 +39,8 @@ struct WeeklyScheduleSection: View {
             // ── Header ──────────────────────────────────────────────
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
+                    Text("(Hidden Bonus Feature)")
+                        .font(.caption)
                     Text("Weekly Block Schedule")
                         .font(.headline)
                     Text("Block apps on specific days and times every week")

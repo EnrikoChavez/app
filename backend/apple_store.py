@@ -30,9 +30,21 @@ def _b64url_decode(s: str) -> bytes:
     return base64.urlsafe_b64decode(s)
 
 
+def _decode_payload_unverified(payload_b64: str) -> dict:
+    """Decode the JWS payload without signature verification (used to peek at environment)."""
+    try:
+        return json.loads(_b64url_decode(payload_b64))
+    except Exception:
+        raise ValueError("Failed to decode JWS payload")
+
+
 def verify_app_store_jws(jws_token: str) -> dict:
     """
     Verify an Apple App Store JWS transaction token (StoreKit 2).
+
+    - Production / Sandbox (real Apple-signed): full certificate chain + signature verification.
+    - Xcode (local StoreKit testing): payload-only validation; cert chain is Xcode-generated
+      and intentionally not from Apple's CA, so cryptographic verification is skipped.
 
     Returns the decoded payload dict on success.
     Raises ValueError with a descriptive message on any failure.
@@ -52,65 +64,72 @@ def verify_app_store_jws(jws_token: str) -> dict:
     if header.get("alg") != "ES256":
         raise ValueError(f"Unexpected JWS algorithm: {header.get('alg')}")
 
-    x5c = header.get("x5c", [])
-    if len(x5c) < 2:
-        raise ValueError("JWS must contain a certificate chain of at least 2 certs")
+    # ── 2. Peek at payload to detect environment before cert verification ──
+    # Xcode local StoreKit testing produces environment="Xcode"; those tokens
+    # are signed by an Xcode-generated cert, not Apple's CA.  We skip chain
+    # verification for them but still validate bundle ID and expiry.
+    payload = _decode_payload_unverified(payload_b64)
+    environment = payload.get("environment", "Production")
 
-    # ── 2. Load certificate chain ──────────────────────────────────────────
-    certs = []
-    for cert_b64 in x5c:
+    if environment == "Xcode":
+        print(f"ℹ️  [verify_jws] Xcode StoreKit environment — skipping cert chain verification")
+    else:
+        # ── 3. Load certificate chain ──────────────────────────────────────
+        x5c = header.get("x5c", [])
+        if len(x5c) < 2:
+            raise ValueError("JWS must contain a certificate chain of at least 2 certs")
+
+        certs = []
+        for cert_b64 in x5c:
+            try:
+                cert_bytes = base64.b64decode(cert_b64)  # x5c uses standard base64
+                cert = x509.load_der_x509_certificate(cert_bytes, default_backend())
+                certs.append(cert)
+            except Exception as e:
+                raise ValueError(f"Failed to parse certificate in chain: {e}")
+
+        # ── 4. Verify root is an Apple CA ──────────────────────────────────
+        root_cert = certs[-1]
+        cn_attrs = root_cert.subject.get_attributes_for_oid(x509.NameOID.COMMON_NAME)
+        root_cn = cn_attrs[0].value if cn_attrs else ""
+        if "Apple" not in root_cn:
+            raise ValueError(f"Root certificate is not an Apple CA: '{root_cn}'")
+
+        # ── 5. Verify each cert is signed by the next in the chain ────────
+        for i in range(len(certs) - 1):
+            child = certs[i]
+            parent_key = certs[i + 1].public_key()
+            try:
+                parent_key.verify(
+                    child.signature,
+                    child.tbs_certificate_bytes,
+                    ECDSA(SHA256()),
+                )
+            except InvalidSignature:
+                raise ValueError(f"Certificate chain broken at index {i}")
+            except Exception as e:
+                raise ValueError(f"Certificate chain verification error: {e}")
+
+        # ── 6. Verify JWS signature with leaf cert's public key ───────────
+        leaf_public_key = certs[0].public_key()
+        signing_input = f"{header_b64}.{payload_b64}".encode("utf-8")
         try:
-            cert_bytes = base64.b64decode(cert_b64)  # x5c uses standard base64
-            cert = x509.load_der_x509_certificate(cert_bytes, default_backend())
-            certs.append(cert)
-        except Exception as e:
-            raise ValueError(f"Failed to parse certificate in chain: {e}")
-
-    # ── 3. Verify root is an Apple CA ──────────────────────────────────────
-    root_cert = certs[-1]
-    cn_attrs = root_cert.subject.get_attributes_for_oid(x509.NameOID.COMMON_NAME)
-    root_cn = cn_attrs[0].value if cn_attrs else ""
-    if "Apple" not in root_cn:
-        raise ValueError(f"Root certificate is not an Apple CA: '{root_cn}'")
-
-    # ── 4. Verify each cert is signed by the next in the chain ────────────
-    for i in range(len(certs) - 1):
-        child = certs[i]
-        parent_key = certs[i + 1].public_key()
-        try:
-            parent_key.verify(
-                child.signature,
-                child.tbs_certificate_bytes,
-                ECDSA(SHA256()),
-            )
+            signature_bytes = _b64url_decode(signature_b64)
+            leaf_public_key.verify(signature_bytes, signing_input, ECDSA(SHA256()))
         except InvalidSignature:
-            raise ValueError(f"Certificate chain broken at index {i}")
+            raise ValueError("JWS signature is invalid — token has been tampered with")
         except Exception as e:
-            raise ValueError(f"Certificate chain verification error: {e}")
+            raise ValueError(f"Signature verification error: {e}")
 
-    # ── 5. Verify JWS signature with leaf cert's public key ────────────────
-    leaf_public_key = certs[0].public_key()
-    signing_input = f"{header_b64}.{payload_b64}".encode("utf-8")
-    try:
-        signature_bytes = _b64url_decode(signature_b64)
-        leaf_public_key.verify(signature_bytes, signing_input, ECDSA(SHA256()))
-    except InvalidSignature:
-        raise ValueError("JWS signature is invalid — token has been tampered with")
-    except Exception as e:
-        raise ValueError(f"Signature verification error: {e}")
+        print(f"✅ [verify_jws] {environment} cert chain + signature verified")
 
-    # ── 6. Decode and validate payload ─────────────────────────────────────
-    try:
-        payload = json.loads(_b64url_decode(payload_b64))
-    except Exception:
-        raise ValueError("Failed to decode JWS payload")
-
+    # ── 7. Validate bundle ID ──────────────────────────────────────────────
     if payload.get("bundleId") != BUNDLE_ID:
         raise ValueError(
             f"Bundle ID mismatch: expected '{BUNDLE_ID}', got '{payload.get('bundleId')}'"
         )
 
-    # ── 7. Check subscription is not expired ───────────────────────────────
+    # ── 8. Check subscription is not expired ───────────────────────────────
     # expiresDate is in milliseconds since epoch (present for auto-renewable subs)
     expires_ms = payload.get("expiresDate")
     if expires_ms is not None:

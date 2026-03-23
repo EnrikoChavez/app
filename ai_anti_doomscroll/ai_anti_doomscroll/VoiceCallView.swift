@@ -28,7 +28,7 @@ struct VoiceCallView: View {
                     .fill(Color.blue)
                     .frame(width: 100, height: 100)
                 
-                Image(systemName: "brain.head.profile")
+                Image(systemName: "phone")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 50, height: 50)

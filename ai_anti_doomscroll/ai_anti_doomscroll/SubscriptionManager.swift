@@ -82,8 +82,8 @@ class SubscriptionManager: ObservableObject {
                     isPremium = true
                     print("✅ Active subscription: \(product.displayName)")
                     
-                    // Send the signed JWS so the backend can verify with Apple.
-                    let jws = String(data: transaction.jsonRepresentation, encoding: .utf8)
+                    let jws = result.jwsRepresentation
+                    print("🔑 [sync-premium] JWS length=\(jws.count)")
                     await syncPremiumStatusToBackend(isPremium: true, transactionJWS: jws)
                     return
                 }
@@ -104,7 +104,7 @@ class SubscriptionManager: ObservableObject {
                 for await result in Transaction.updates {
                     do {
                         let transaction = try self.checkVerified(result)
-                        await self.updateSubscriptionStatus(transaction)
+                        await self.updateSubscriptionStatus(transaction, jwsRepresentation: result.jwsRepresentation)
                         await transaction.finish()
                     } catch {
                         print("❌ Transaction update failed: \(error)")
@@ -126,7 +126,7 @@ class SubscriptionManager: ObservableObject {
         }
     }
     
-    private func updateSubscriptionStatus(_ transaction: Transaction) async {
+    private func updateSubscriptionStatus(_ transaction: Transaction, jwsRepresentation: String) async {
         do {
             let products = try await Product.products(for: [transaction.productID])
             if let product = products.first {
@@ -134,8 +134,7 @@ class SubscriptionManager: ObservableObject {
                 isPremium = true
                 print("✅ Subscription activated: \(product.displayName)")
                 Analytics.subscriptionStarted(productId: transaction.productID)
-                let jws = String(data: transaction.jsonRepresentation, encoding: .utf8)
-                await syncPremiumStatusToBackend(isPremium: true, transactionJWS: jws)
+                await syncPremiumStatusToBackend(isPremium: true, transactionJWS: jwsRepresentation)
             }
         } catch {
             print("❌ Failed to look up product: \(error)")
