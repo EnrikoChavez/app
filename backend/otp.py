@@ -39,8 +39,14 @@ SECRET_KEY: str = _secret
 t_client = Client(os.getenv("TWILIO_ACCOUNT_SID"), os.getenv("TWILIO_AUTH_TOKEN"))
 VERIFY_SID = os.getenv("TWILIO_VERIFY_SID")
 
-TEST_PHONE = os.getenv("TEST_PHONE", "+10000000002")
-TEST_OTP = os.getenv("TEST_OTP", "123456")
+_test_phone = os.getenv("TEST_PHONE")
+_test_otp = os.getenv("TEST_OTP")
+if not _test_phone:
+    raise RuntimeError("TEST_PHONE environment variable must be set")
+if not _test_otp:
+    raise RuntimeError("TEST_OTP environment variable must be set")
+TEST_PHONE: str = _test_phone
+TEST_OTP: str = _test_otp
 
 class PhoneRequest(BaseModel):
     phone: str

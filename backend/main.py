@@ -280,12 +280,14 @@ async def create_hume_session(payload: dict, user_id: str = Depends(verify_token
     
         todos = payload.get("todos", [])
         minutes = payload.get("minutes", 15)
+        companion = payload.get("companion", "1")
         if todos:
             task_list_str = "\n".join([f"• {t.get('task', '')}" for t in todos])
         else:
             task_list_str = "NO_TASKS: The user has no pending tasks — they have everything done! Congratulate them warmly and tell them they deserve a guilt-free break."
         
-        evi_config_id = os.getenv("HUME_EVI_CONFIG_ID")
+        evi_config_id = os.getenv(f"HUME_EVI_CONFIG_{companion}", os.getenv("HUME_EVI_CONFIG_ID"))
+        print(f"🎙️ Companion: {companion}, config: {evi_config_id}")
         
         from urllib.parse import urlencode
         params = {"access_token": access_token}

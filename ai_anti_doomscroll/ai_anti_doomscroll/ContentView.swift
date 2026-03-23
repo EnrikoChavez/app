@@ -71,6 +71,15 @@ struct ContentView: View {
     @State private var callLimitInfo: CallLimitInfo? = nil
     @State private var isCheckingLimit = false
     @State private var manualUnblockLimitInfo: ManualUnblockLimitInfo? = nil
+    @State private var selectedCompanion = "1"
+    private let companionNames = [
+        "1": "Companion 1",
+        "2": "Companion 2",
+        "3": "Companion 3",
+        "4": "Companion 4",
+        "5": "Companion 5",
+        "6": "Companion 6"
+    ]
 
     let networkManager = NetworkManager()
     
@@ -281,26 +290,47 @@ struct ContentView: View {
                 // AI Interaction Buttons (only visible when premium)
                 if subscriptionManager.isPremium {
                     VStack(spacing: 12) {
-                        // Voice Call Button
-                        Button(action: startVoiceCall) {
-                            HStack {
-                                if isStartingCall || isCheckingLimit {
-                                    ProgressView().tint(.white).padding(.trailing, 8)
-                                } else {
-                                    Image(systemName: "mic.fill")
+                        HStack(spacing: 10) {
+                            Button(action: { startVoiceCall(companion: selectedCompanion) }) {
+                                HStack {
+                                    if isStartingCall || isCheckingLimit {
+                                        ProgressView().tint(.white).padding(.trailing, 8)
+                                    } else {
+                                        Image(systemName: "mic.fill")
+                                    }
+                                    Text(isStartingCall ? "Connecting..." : isCheckingLimit ? "Checking..." : "Call \(companionNames[selectedCompanion] ?? "Companion")")
+                                        .bold()
                                 }
-                                Text(isStartingCall ? "Connecting..." : isCheckingLimit ? "Checking..." : "Talk to AI to Unblock")
-                                    .bold()
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background((callLimitInfo?.canCall ?? true) ? Color.blue : Color.gray)
+                                .foregroundColor(.white)
+                                .cornerRadius(15)
+                                .shadow(color: ((callLimitInfo?.canCall ?? true) ? Color.blue : Color.gray).opacity(0.3), radius: 10, x: 0, y: 5)
                             }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background((callLimitInfo?.canCall ?? true) ? Color.blue : Color.gray)
-                            .foregroundColor(.white)
-                            .cornerRadius(15)
-                            .shadow(color: ((callLimitInfo?.canCall ?? true) ? Color.blue : Color.gray).opacity(0.3), radius: 10, x: 0, y: 5)
+                            .disabled(isStartingCall || isCheckingLimit || !(callLimitInfo?.canCall ?? true))
+
+                            Menu {
+                                ForEach(["1", "2", "3", "4", "5", "6"], id: \.self) { key in
+                                    Button(action: { selectedCompanion = key }) {
+                                        if key == selectedCompanion {
+                                            Label(companionNames[key] ?? key, systemImage: "checkmark")
+                                        } else {
+                                            Text(companionNames[key] ?? key)
+                                        }
+                                    }
+                                }
+                            } label: {
+                                Image(systemName: "chevron.up.chevron.down")
+                                    .font(.body.bold())
+                                    .foregroundColor(.white)
+                                    .frame(width: 48, height: 48)
+                                    .background((callLimitInfo?.canCall ?? true) ? Color.blue : Color.gray)
+                                    .cornerRadius(15)
+                                    .shadow(color: ((callLimitInfo?.canCall ?? true) ? Color.blue : Color.gray).opacity(0.3), radius: 10, x: 0, y: 5)
+                            }
                         }
-                        .disabled(isStartingCall || isCheckingLimit || !(callLimitInfo?.canCall ?? true))
-                        
+
                         // Text Chat Button
                         Button(action: startTextChat) {
                             HStack {
@@ -320,34 +350,57 @@ struct ContentView: View {
             } else {
                 // Test Buttons (only visible when premium)
                 if subscriptionManager.isPremium {
-                    HStack(spacing: 12) {
-                        // Test Voice Call Button
-                        Button(action: startVoiceCall) {
-                            HStack {
-                                Image(systemName: "testtube.2")
-                                Text("Practice Call")
+                    VStack(spacing: 8) {
+                        HStack(spacing: 8) {
+                            Button(action: { startVoiceCall(companion: selectedCompanion) }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "testtube.2")
+                                    Text("Practice Call")
+                                }
+                                .font(.footnote).bold()
+                                .foregroundColor((callLimitInfo?.canCall ?? true) ? .blue : .gray)
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 16)
+                                .background((callLimitInfo?.canCall ?? true) ? Color.blue.opacity(0.1) : Color.gray.opacity(0.1))
+                                .cornerRadius(10)
                             }
-                            .font(.footnote).bold()
-                            .foregroundColor((callLimitInfo?.canCall ?? true) ? .blue : .gray)
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 16)
-                            .background((callLimitInfo?.canCall ?? true) ? Color.blue.opacity(0.1) : Color.gray.opacity(0.1))
-                            .cornerRadius(10)
-                        }
-                        .disabled(!(callLimitInfo?.canCall ?? true))
-                        
-                        // Test Text Chat Button
-                        Button(action: startTextChat) {
-                            HStack {
-                                Image(systemName: "message")
-                                Text("Practice Chat")
+                            .disabled(!(callLimitInfo?.canCall ?? true))
+
+                            Menu {
+                                ForEach(["1", "2", "3", "4", "5", "6"], id: \.self) { key in
+                                    Button(action: { selectedCompanion = key }) {
+                                        if key == selectedCompanion {
+                                            Label(companionNames[key] ?? key, systemImage: "checkmark")
+                                        } else {
+                                            Text(companionNames[key] ?? key)
+                                        }
+                                    }
+                                }
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Text(companionNames[selectedCompanion] ?? "Voice")
+                                    Image(systemName: "chevron.up.chevron.down")
+                                }
+                                .font(.caption2).bold()
+                                .foregroundColor(.blue)
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 10)
+                                .background(Color.blue.opacity(0.1))
+                                .cornerRadius(10)
                             }
-                            .font(.footnote).bold()
-                            .foregroundColor(.green)
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 16)
-                            .background(Color.green.opacity(0.1))
-                            .cornerRadius(10)
+
+                            Button(action: startTextChat) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "message")
+                                    Text("Practice Chat")
+                                }
+                                .font(.footnote).bold()
+                                .foregroundColor(.green)
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 16)
+                                .background(Color.green.opacity(0.1))
+                                .cornerRadius(10)
+                            }
                         }
                     }
                 }
@@ -769,8 +822,7 @@ struct ContentView: View {
         }
     }
     
-    func startVoiceCall() {
-        // First check the call limit
+    func startVoiceCall(companion: String = "1") {
         isCheckingLimit = true
         networkManager.checkCallLimit { [self] result in
             DispatchQueue.main.async {
@@ -783,9 +835,8 @@ struct ContentView: View {
                         return
                     }
                     
-                    // Limit check passed, proceed with call
                     self.isStartingCall = true
-                    self.networkManager.createHumeSession(todos: self.todoRepository.focusTodos, minutes: Int(self.minutesText) ?? 15) { result in
+                    self.networkManager.createHumeSession(todos: self.todoRepository.focusTodos, minutes: Int(self.minutesText) ?? 15, companion: companion) { result in
                         DispatchQueue.main.async {
                             self.isStartingCall = false
                             switch result {

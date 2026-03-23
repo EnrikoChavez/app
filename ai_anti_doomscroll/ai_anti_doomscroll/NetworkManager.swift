@@ -157,9 +157,9 @@ final class NetworkManager {
         }.resume()
     }
 
-    func createHumeSession(todos: [Todo], minutes: Int, completion: @escaping (Result<[String: String], Error>) -> Void) {
+    func createHumeSession(todos: [Todo], minutes: Int, companion: String = "1", completion: @escaping (Result<[String: String], Error>) -> Void) {
         let todoData = todos.map { ["task": $0.task, "id": $0.id] }
-        guard let req = makeRequest(path: "/hume/create-session", method: "POST", jsonBody: ["todos": todoData, "minutes": minutes]) else {
+        guard let req = makeRequest(path: "/hume/create-session", method: "POST", jsonBody: ["todos": todoData, "minutes": minutes, "companion": companion]) else {
             completion(.failure(NSError(domain: "NetworkManager", code: 400, userInfo: [NSLocalizedDescriptionKey: "Request build failed"])))
             return
         }
