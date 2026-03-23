@@ -111,9 +111,13 @@ struct ContentView: View {
                             monitoringTab
                                 .tag(2)
 
-                            // Tab 4: Gallery
-                            galleryTab
+                            // Tab 4: Weekly Schedule
+                            weeklyScheduleTab
                                 .tag(3)
+
+                            // Tab 5: Gallery
+                            galleryTab
+                                .tag(4)
                         }
                         .tabViewStyle(.page(indexDisplayMode: .never))
                     }
@@ -197,8 +201,21 @@ struct ContentView: View {
                 .foregroundColor(selectedTab == 2 ? .blue : .gray)
             }
 
-            // Gallery Tab
+            // Schedule Tab
             Button(action: { selectedTab = 3 }) {
+                VStack(spacing: 4) {
+                    Image(systemName: "calendar.badge.clock")
+                        .font(.system(size: 20))
+                    Text("Schedule")
+                        .font(.system(size: 12, weight: .medium))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .foregroundColor(selectedTab == 3 ? .blue : .gray)
+            }
+
+            // Gallery Tab
+            Button(action: { selectedTab = 4 }) {
                 VStack(spacing: 4) {
                     Image(systemName: "checkmark.seal")
                         .font(.system(size: 20))
@@ -207,7 +224,7 @@ struct ContentView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
-                .foregroundColor(selectedTab == 3 ? .blue : .gray)
+                .foregroundColor(selectedTab == 4 ? .blue : .gray)
             }
         }
         .background(Color(.systemBackground))
@@ -592,7 +609,20 @@ struct ContentView: View {
                 .padding(.horizontal)
                 .padding(.top, 20)
             }
-            .padding(.bottom, 100) // Extra padding for bottom tab bar
+            .padding(.bottom, 100)
+        }
+        .background(Color(.systemGroupedBackground).ignoresSafeArea())
+    }
+
+    // Tab 4: Weekly Schedule
+    var weeklyScheduleTab: some View {
+        ScrollView {
+            VStack(spacing: 0) {
+                WeeklyScheduleSection()
+                    .padding(.horizontal)
+                    .padding(.top, 20)
+            }
+            .padding(.bottom, 100)
         }
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
     }

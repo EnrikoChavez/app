@@ -10,16 +10,35 @@ class UsageMonitorExtension: DeviceActivityMonitor {
     
     override func intervalDidStart(for activity: DeviceActivityName) {
         logger.log("🟢 intervalDidStart triggered for \(activity.rawValue, privacy: .public)")
-        // Block intentionally NOT cleared here — if the user was blocked yesterday
-        // they stay blocked until they talk to the AI and get manually unblocked.
+        if activity.rawValue.hasPrefix("weeklyBlock_") {
+            logger.log("📅 Weekly block window starting — applying shield")
+            UserDefaults(suiteName: Shared.appGroupId)?.set(true, forKey: Shared.isWeeklyShieldKey)
+            blockApps(selectionKey: Shared.weeklySelectionKey)
+        }
+        // For daily monitor: block intentionally NOT cleared here — if the user was blocked
+        // yesterday they stay blocked until they talk to the AI and get manually unblocked.
     }
 
     override func intervalDidEnd(for activity: DeviceActivityName) {
         logger.log("🔴 intervalDidEnd triggered for \(activity.rawValue, privacy: .public)")
+        if activity.rawValue.hasPrefix("weeklyBlock_") {
+            logger.log("📅 Weekly block window ending — removing shield")
+            UserDefaults(suiteName: Shared.appGroupId)?.set(false, forKey: Shared.isWeeklyShieldKey)
+            let store = ManagedSettingsStore()
+            store.shield.applications = nil
+            store.shield.applicationCategories = nil
+            store.shield.webDomains = nil
+        }
     }
     
     override func eventDidReachThreshold(_ event: DeviceActivityEvent.Name, activity: DeviceActivityName) {
         logger.log("📱 Threshold reached for \(event.rawValue, privacy: .public) in \(activity.rawValue, privacy: .public)")
+
+        // Weekly schedules block via intervalDidStart — never via threshold events
+        guard !activity.rawValue.hasPrefix("weeklyBlock_") else {
+            logger.log("ℹ️ Threshold event ignored for weekly schedule activity")
+            return
+        }
 
         let warningsEnabled = UserDefaults(suiteName: Shared.appGroupId)?
             .bool(forKey: Shared.warningsEnabledKey) ?? true
@@ -70,15 +89,15 @@ class UsageMonitorExtension: DeviceActivityMonitor {
 
     // MARK: - Full Block Shield
 
-    private func blockApps() {
+    private func blockApps(selectionKey: String = Shared.selectionKey) {
         guard let defaults = UserDefaults(suiteName: Shared.appGroupId) else {
             logger.log("❌ Failed to get UserDefaults for blocking")
             return
         }
-        
-        guard let data = defaults.data(forKey: Shared.selectionKey),
+
+        guard let data = defaults.data(forKey: selectionKey),
               let selection = try? JSONDecoder().decode(FamilyActivitySelection.self, from: data) else {
-            logger.log("❌ Failed to decode selection from App Group")
+            logger.log("❌ Failed to decode selection from App Group (key: \(selectionKey))")
             return
         }
         

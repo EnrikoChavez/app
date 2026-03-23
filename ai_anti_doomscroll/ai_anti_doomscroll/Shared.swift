@@ -42,22 +42,35 @@ enum Shared {
     static let isAwarenessShieldKey = "isAwarenessShield"
     // Active monitoring mode label (one of 4 modes)
     static let monitoringModeKey = "monitoringMode"
+
+    // Weekly schedule
+    static let weeklySelectedDaysKey  = "weeklySelectedDays"   // JSON [Int] — weekday numbers (1=Sun…7=Sat)
+    static let weeklyStartHourKey     = "weeklyStartHour"
+    static let weeklyStartMinuteKey   = "weeklyStartMinute"
+    static let weeklyEndHourKey       = "weeklyEndHour"
+    static let weeklyEndMinuteKey     = "weeklyEndMinute"
+    static let isWeeklyActiveKey      = "isWeeklyActive"
+    static let weeklySelectionKey     = "fc.weeklySelection"   // separate app selection for weekly schedule
+    static let isWeeklyShieldKey      = "isWeeklyShield"       // true while a weekly schedule block is active
 }
 
 // MARK: - Selection persistence (App ↔ Extension via App Group)
 final class SelectionStore: ObservableObject {
+    private let storageKey: String
+
     #if canImport(FamilyControls)
     @Published var selection = FamilyActivitySelection() {
         didSet { persist() }
     }
     #else
     // Fallback for targets that don't support FamilyControls (like some extensions)
-    var selection = "No Selection" 
+    var selection = "No Selection"
     #endif
 
-    init() {
+    init(storageKey: String = Shared.selectionKey) {
+        self.storageKey = storageKey
         #if canImport(FamilyControls)
-        if let data = Shared.defaults.data(forKey: Shared.selectionKey),
+        if let data = Shared.defaults.data(forKey: storageKey),
            let decoded = try? JSONDecoder().decode(FamilyActivitySelection.self, from: data) {
             selection = decoded
         }
@@ -67,7 +80,7 @@ final class SelectionStore: ObservableObject {
     private func persist() {
         #if canImport(FamilyControls)
         if let data = try? JSONEncoder().encode(selection) {
-            Shared.defaults.set(data, forKey: Shared.selectionKey)
+            Shared.defaults.set(data, forKey: storageKey)
         }
         #endif
     }
