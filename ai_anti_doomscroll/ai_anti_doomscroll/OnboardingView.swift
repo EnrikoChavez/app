@@ -5,6 +5,10 @@
 
 import SwiftUI
 
+#if canImport(FamilyControls)
+import FamilyControls
+#endif
+
 private struct OnboardingPage {
     let icon: String
     let iconColor: Color
@@ -42,8 +46,20 @@ private let pages: [OnboardingPage] = [
 struct OnboardingView: View {
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     @State private var currentPage = 0
+    @State private var showPermissionPage = false
+    @State private var isRequestingPermission = false
 
     var body: some View {
+        if showPermissionPage {
+            permissionView
+        } else {
+            infoCarousel
+        }
+    }
+
+    // MARK: - Info carousel (pages 1-4)
+
+    private var infoCarousel: some View {
         ZStack(alignment: .bottom) {
             TabView(selection: $currentPage) {
                 ForEach(Array(pages.enumerated()), id: \.offset) { index, page in
@@ -55,7 +71,6 @@ struct OnboardingView: View {
             .animation(.easeInOut, value: currentPage)
 
             VStack(spacing: 20) {
-                // Dot indicators
                 HStack(spacing: 8) {
                     ForEach(0..<pages.count, id: \.self) { index in
                         Circle()
@@ -65,7 +80,6 @@ struct OnboardingView: View {
                     }
                 }
 
-                // Action button
                 Button(action: advance) {
                     Text(currentPage == pages.count - 1 ? "Get Started" : "Next")
                         .font(.body).bold()
@@ -77,11 +91,10 @@ struct OnboardingView: View {
                 }
                 .padding(.horizontal, 32)
 
-                // Skip button (hidden on last page)
                 if currentPage < pages.count - 1 {
                     Button("Skip") {
                         Analytics.onboardingSkipped(atPage: currentPage)
-                        hasSeenOnboarding = true
+                        showPermissionPage = true
                     }
                     .font(.subheadline)
                     .foregroundColor(.secondary)
@@ -95,11 +108,96 @@ struct OnboardingView: View {
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
     }
 
+    // MARK: - Screen Time permission page
+
+    private var permissionView: some View {
+        VStack(spacing: 0) {
+            Spacer()
+
+            ZStack {
+                Circle()
+                    .fill(Color.blue.opacity(0.12))
+                    .frame(width: 120, height: 120)
+                Image(systemName: "lock.shield.fill")
+                    .font(.system(size: 52, weight: .semibold))
+                    .foregroundColor(.blue)
+            }
+
+            VStack(spacing: 14) {
+                Text("Allow Screen Time")
+                    .font(.title).bold()
+                    .multilineTextAlignment(.center)
+                    .padding(.top, 32)
+
+                Text("To block distracting apps, this app needs access to Screen Time. Your usage data stays on your device and is never shared.")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+            }
+
+            Spacer()
+
+            VStack(spacing: 16) {
+                Button(action: {
+                    isRequestingPermission = true
+                    Task {
+                        await requestScreenTimePermission()
+                        isRequestingPermission = false
+                    }
+                }) {
+                    HStack(spacing: 8) {
+                        if isRequestingPermission {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .scaleEffect(0.85)
+                        }
+                        Text("Allow Screen Time")
+                            .font(.body).bold()
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(Color.blue)
+                    .cornerRadius(14)
+                }
+                .disabled(isRequestingPermission)
+                .padding(.horizontal, 32)
+
+                Button("Not now") {
+                    Analytics.onboardingCompleted()
+                    hasSeenOnboarding = true
+                }
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            }
+            .padding(.bottom, 48)
+        }
+        .preferredColorScheme(.light)
+        .background(Color(.systemGroupedBackground).ignoresSafeArea())
+    }
+
+    // MARK: - Helpers
+
     private func advance() {
         if currentPage < pages.count - 1 {
             withAnimation { currentPage += 1 }
         } else {
             Analytics.onboardingCompleted()
+            showPermissionPage = true
+        }
+    }
+
+    private func requestScreenTimePermission() async {
+        #if canImport(FamilyControls)
+        do {
+            try await AuthorizationCenter.shared.requestAuthorization(for: .individual)
+        } catch {
+            // User denied or dismissed — proceed anyway; they can grant it later in the app.
+            print("⚠️ Screen Time authorization declined: \(error.localizedDescription)")
+        }
+        #endif
+        await MainActor.run {
             hasSeenOnboarding = true
         }
     }

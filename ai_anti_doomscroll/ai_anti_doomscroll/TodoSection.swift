@@ -17,7 +17,107 @@ struct TodoSection: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // ── Top Half: Overall Todos ──────────────────────────────
+            // ── Top Half: Today's Focus ──────────────────────────────
+            VStack(alignment: .leading, spacing: 14) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Today's Focus")
+                            .font(.title3).bold()
+                        Text("AI will coach you on these tasks")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    Spacer()
+                    Text("\(focusTodos.count)")
+                        .font(.caption).bold()
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.green.opacity(0.15))
+                        .foregroundColor(.green)
+                        .clipShape(Capsule())
+                }
+
+                if focusTodos.isEmpty {
+                    emptyState(icon: "target", message: "Tap \"Today\" on a task below to focus on it")
+                } else {
+                    VStack(spacing: 8) {
+                        ForEach(focusTodos) { todo in
+                            HStack(alignment: .top, spacing: 12) {
+                                Circle()
+                                    .stroke(Color.green, lineWidth: 2)
+                                    .frame(width: 12, height: 12)
+                                    .padding(.top, 4)
+
+                                Text(todo.task)
+                                    .font(.body)
+                                    .fixedSize(horizontal: false, vertical: true)
+
+                                Spacer()
+
+                                // Complete button
+                                Button(action: { completeTodo(todo.id) }) {
+                                    HStack(spacing: 3) {
+                                        Image(systemName: "checkmark.circle.fill")
+                                        Text("Done")
+                                    }
+                                    .font(.caption2).bold()
+                                    .foregroundColor(.green)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 5)
+                                    .background(Color.green.opacity(0.12))
+                                    .cornerRadius(8)
+                                }
+
+                                // Move back to All Tasks
+                                Button(action: { moveToOverall(todo.id) }) {
+                                    HStack(spacing: 3) {
+                                        Image(systemName: "arrow.down.circle.fill")
+                                        Text("Back")
+                                    }
+                                    .font(.caption2).bold()
+                                    .foregroundColor(.secondary)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 5)
+                                    .background(Color(.systemGray5))
+                                    .cornerRadius(8)
+                                }
+
+                                Button(action: { deleteTodo(todo.id) }) {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundColor(.gray.opacity(0.4))
+                                }
+                            }
+                            .padding(14)
+                            .background(Color.green.opacity(0.05))
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.green.opacity(0.2), lineWidth: 1)
+                            )
+                        }
+                    }
+                }
+            }
+            .padding(16)
+            .background(Color(.systemBackground))
+            .cornerRadius(20)
+
+            // ── Divider ──────────────────────────────────────────────
+            HStack(spacing: 8) {
+                Rectangle()
+                    .frame(height: 1)
+                    .foregroundColor(Color(.systemGray4))
+                Text("ALL TASKS")
+                    .font(.caption2).bold()
+                    .foregroundColor(.blue)
+                Rectangle()
+                    .frame(height: 1)
+                    .foregroundColor(Color(.systemGray4))
+            }
+            .padding(.vertical, 12)
+            .padding(.horizontal, 4)
+
+            // ── Bottom Half: All Tasks ───────────────────────────────
             VStack(alignment: .leading, spacing: 14) {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
@@ -71,7 +171,7 @@ struct TodoSection: View {
 
                                 Button(action: { moveToFocus(todo.id) }) {
                                     HStack(spacing: 3) {
-                                        Image(systemName: "arrow.down.circle.fill")
+                                        Image(systemName: "arrow.up.circle.fill")
                                         Text("Today")
                                     }
                                     .font(.caption2).bold()
@@ -90,106 +190,6 @@ struct TodoSection: View {
                             .padding(14)
                             .background(Color(.secondarySystemBackground))
                             .cornerRadius(12)
-                        }
-                    }
-                }
-            }
-            .padding(16)
-            .background(Color(.systemBackground))
-            .cornerRadius(20)
-
-            // ── Divider ──────────────────────────────────────────────
-            HStack(spacing: 8) {
-                Rectangle()
-                    .frame(height: 1)
-                    .foregroundColor(Color(.systemGray4))
-                Text("TODAY'S FOCUS")
-                    .font(.caption2).bold()
-                    .foregroundColor(.green)
-                Rectangle()
-                    .frame(height: 1)
-                    .foregroundColor(Color(.systemGray4))
-            }
-            .padding(.vertical, 12)
-            .padding(.horizontal, 4)
-
-            // ── Bottom Half: Today's Focus ───────────────────────────
-            VStack(alignment: .leading, spacing: 14) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Today's Focus")
-                            .font(.title3).bold()
-                        Text("AI will coach you on these tasks")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    Spacer()
-                    Text("\(focusTodos.count)")
-                        .font(.caption).bold()
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.green.opacity(0.15))
-                        .foregroundColor(.green)
-                        .clipShape(Capsule())
-                }
-
-                if focusTodos.isEmpty {
-                    emptyState(icon: "target", message: "Tap \"Today\" on a task above to focus on it")
-                } else {
-                    VStack(spacing: 8) {
-                        ForEach(focusTodos) { todo in
-                            HStack(alignment: .top, spacing: 12) {
-                                Circle()
-                                    .stroke(Color.green, lineWidth: 2)
-                                    .frame(width: 12, height: 12)
-                                    .padding(.top, 4)
-
-                                Text(todo.task)
-                                    .font(.body)
-                                    .fixedSize(horizontal: false, vertical: true)
-
-                                Spacer()
-
-                                // Complete button
-                                Button(action: { completeTodo(todo.id) }) {
-                                    HStack(spacing: 3) {
-                                        Image(systemName: "checkmark.circle.fill")
-                                        Text("Done")
-                                    }
-                                    .font(.caption2).bold()
-                                    .foregroundColor(.green)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 5)
-                                    .background(Color.green.opacity(0.12))
-                                    .cornerRadius(8)
-                                }
-
-                                // Move back to Overall
-                                Button(action: { moveToOverall(todo.id) }) {
-                                    HStack(spacing: 3) {
-                                        Image(systemName: "arrow.up.circle.fill")
-                                        Text("Back")
-                                    }
-                                    .font(.caption2).bold()
-                                    .foregroundColor(.secondary)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 5)
-                                    .background(Color(.systemGray5))
-                                    .cornerRadius(8)
-                                }
-
-                                Button(action: { deleteTodo(todo.id) }) {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .foregroundColor(.gray.opacity(0.4))
-                                }
-                            }
-                            .padding(14)
-                            .background(Color.green.opacity(0.05))
-                            .cornerRadius(12)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.green.opacity(0.2), lineWidth: 1)
-                            )
                         }
                     }
                 }
