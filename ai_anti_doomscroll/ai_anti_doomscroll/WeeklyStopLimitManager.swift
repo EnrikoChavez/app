@@ -11,7 +11,7 @@ import Foundation
 struct WeeklyStopLimitManager {
     static let shared = WeeklyStopLimitManager()
 
-    private let dailyLimit = 10
+    private let dailyLimit = 5
     private let countKey   = "weeklyStopUsedCount"
     private let dateKey    = "weeklyStopLastResetDate"
 

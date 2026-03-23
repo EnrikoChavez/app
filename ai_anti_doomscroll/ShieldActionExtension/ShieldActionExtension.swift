@@ -40,8 +40,7 @@ class ShieldActionExtension: ShieldActionDelegate {
                 dismissAwarenessShield()
                 return .none
             case .secondaryButtonPressed:
-                // "Don't continue" — close the app
-                dismissAwarenessShield()
+                // "Don't continue" — close the app, shield stays for next open
                 return .close
             @unknown default:
                 return .none

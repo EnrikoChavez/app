@@ -68,20 +68,6 @@ struct TodoSection: View {
                                     .cornerRadius(8)
                                 }
 
-                                // Move back to All Tasks
-                                Button(action: { moveToOverall(todo.id) }) {
-                                    HStack(spacing: 3) {
-                                        Image(systemName: "arrow.down.circle.fill")
-                                        Text("Back")
-                                    }
-                                    .font(.caption2).bold()
-                                    .foregroundColor(.secondary)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 5)
-                                    .background(Color(.systemGray5))
-                                    .cornerRadius(8)
-                                }
-
                                 Button(action: { deleteTodo(todo.id) }) {
                                     Image(systemName: "xmark.circle.fill")
                                         .foregroundColor(.gray.opacity(0.4))

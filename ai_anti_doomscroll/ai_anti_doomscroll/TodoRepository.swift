@@ -51,9 +51,23 @@ class TodoRepository: ObservableObject {
         do {
             let localTodos = try context.fetch(descriptor)
             todos = localTodos.map { $0.toNetworkTodo() }
+            syncTasksToShield()
             print("📱 Loaded \(todos.count) todos from local storage")
         } catch {
             print("❌ Failed to load local todos: \(error)")
+        }
+    }
+
+    /// Writes current focus and all-task lists to the shared App Group UserDefaults
+    /// so the ShieldConfigurationExtension can display them on the awareness shield.
+    private func syncTasksToShield() {
+        let focusTexts = focusTodos.map(\.task)
+        let allTexts   = todos.filter { !$0.isCompleted }.map(\.task)
+        if let focusData = try? JSONEncoder().encode(focusTexts) {
+            Shared.defaults.set(focusData, forKey: Shared.shieldFocusTasksKey)
+        }
+        if let allData = try? JSONEncoder().encode(allTexts) {
+            Shared.defaults.set(allData, forKey: Shared.shieldAllTasksKey)
         }
     }
 
@@ -69,6 +83,7 @@ class TodoRepository: ObservableObject {
             try context.save()
             let newTodo = Todo(id: localTodo.id, task: localTodo.task, phone: localTodo.phone, appleId: localTodo.appleId, isTodaysFocus: false, isCompleted: false)
             todos.insert(newTodo, at: 0)
+            syncTasksToShield()
             print("✅ Todo added: \(task)")
         } catch {
             print("❌ Failed to save todo: \(error)")
@@ -103,6 +118,7 @@ class TodoRepository: ObservableObject {
                 localTodo.isDeleted = true
                 try context.save()
                 todos.removeAll { $0.id == todo.id }
+                syncTasksToShield()
                 print("✅ Todo deleted: \(todo.task)")
             }
         } catch {
@@ -132,6 +148,7 @@ class TodoRepository: ObservableObject {
                 if let index = todos.firstIndex(where: { $0.id == todo.id }) {
                     todos[index].isTodaysFocus = isFocus
                 }
+                syncTasksToShield()
                 print("✅ Todo '\(todo.task)' moved to \(isFocus ? "Today's Focus" : "Overall")")
             }
         } catch {
@@ -155,6 +172,7 @@ class TodoRepository: ObservableObject {
                     todos[index].isCompleted = true
                     todos[index].isTodaysFocus = false
                 }
+                syncTasksToShield()
                 print("✅ Todo completed: \(todo.task)")
             }
         } catch {

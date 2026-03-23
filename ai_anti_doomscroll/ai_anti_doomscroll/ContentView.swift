@@ -162,7 +162,7 @@ struct ContentView: View {
     
     var customTabBar: some View {
         HStack(spacing: 0) {
-            tabBarItem(icon: "brain.head.profile", label: "Unblock",  tag: 0)
+            tabBarItem(icon: "door.right.hand.open", label: "Unblock",  tag: 0)
             tabBarItem(icon: "checklist",           label: "Tasks",    tag: 1)
             tabBarItem(icon: "chart.bar",           label: "Set Timer",tag: 2)
             tabBarItem(icon: "calendar.badge.clock",label: "Schedule", tag: 3)
@@ -284,10 +284,10 @@ struct ContentView: View {
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
-                            .background((callLimitInfo?.canCall ?? true) ? AppTheme.primaryButton : Color(white: 0.55))
+                            .background((callLimitInfo?.canCall ?? true) ? Color.blue : Color.gray)
                             .foregroundColor(.white)
                             .cornerRadius(15)
-                            .shadow(color: AppTheme.primaryButtonShadow, radius: 10, x: 0, y: 5)
+                            .shadow(color: ((callLimitInfo?.canCall ?? true) ? Color.blue : Color.gray).opacity(0.3), radius: 10, x: 0, y: 5)
                         }
                         .disabled(isStartingCall || isCheckingLimit || !(callLimitInfo?.canCall ?? true))
                         
@@ -300,10 +300,10 @@ struct ContentView: View {
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
-                            .background(Color(white: 0.22))
+                            .background(Color.green)
                             .foregroundColor(.white)
                             .cornerRadius(15)
-                            .shadow(color: AppTheme.primaryButtonShadow, radius: 10, x: 0, y: 5)
+                            .shadow(color: Color.green.opacity(0.3), radius: 10, x: 0, y: 5)
                         }
                     }
                 }

@@ -52,6 +52,11 @@ enum Shared {
     static let isWeeklyActiveKey      = "isWeeklyActive"
     static let weeklySelectionKey     = "fc.weeklySelection"   // separate app selection for weekly schedule
     static let isWeeklyShieldKey      = "isWeeklyShield"       // true while a weekly schedule block is active
+
+    // Task lists written by the main app so the ShieldConfigurationExtension can read them
+    // Both are stored as JSON-encoded [String] (task text only, no IDs)
+    static let shieldFocusTasksKey = "shieldFocusTasks"   // tasks currently in Today's Focus
+    static let shieldAllTasksKey   = "shieldAllTasks"     // all non-completed tasks (focus + overall)
 }
 
 // MARK: - Selection persistence (App ↔ Extension via App Group)

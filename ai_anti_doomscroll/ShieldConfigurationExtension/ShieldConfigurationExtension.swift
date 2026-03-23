@@ -78,17 +78,43 @@ class ShieldConfigurationExtension: ShieldConfigurationDataSource {
         return "\(h):\(m) \(period)"
     }
 
+    // MARK: - Task helpers
+
+    private func loadStringArray(forKey key: String) -> [String] {
+        guard let data = defaults?.data(forKey: key),
+              let arr = try? JSONDecoder().decode([String].self, from: data) else {
+            return []
+        }
+        return arr
+    }
+
+    private func awarenessSubtitle() -> String {
+        let base = "Your time on this app is being tracked and will block after some time. Are you sure you want to continue?"
+
+        let focusTasks = loadStringArray(forKey: "shieldFocusTasks")
+        let allTasks   = loadStringArray(forKey: "shieldAllTasks")
+
+        if !focusTasks.isEmpty {
+            let bullet = focusTasks.map { "• \($0)" }.joined(separator: "\n")
+            return "\(base)\n\nToday's Focus:\n\(bullet)"
+        }
+
+        if !allTasks.isEmpty {
+            return "\(base)\n\nYou have stuff to do, but none are in Today's Focus yet."
+        }
+
+        return "\(base)\n\nEven if nothing listed to do — are you sure you have nothing to do right now?"
+    }
+
     private func awarenessConfig() -> ShieldConfiguration {
-        let minutes = defaults?.integer(forKey: "fc.minutes") ?? 0
-        let timeText = minutes > 0 ? "\(minutes) minutes" : "your set time limit"
-        return ShieldConfiguration(
+        ShieldConfiguration(
             backgroundBlurStyle: .systemUltraThinMaterial,
             title: ShieldConfiguration.Label(
                 text: "Opening Doomscroll App",
                 color: .label
             ),
             subtitle: ShieldConfiguration.Label(
-                text: "Your time on this app is being tracked and will block after some time. Are you sure you want to continue?",
+                text: awarenessSubtitle(),
                 color: .secondaryLabel
             ),
             primaryButtonLabel: ShieldConfiguration.Label(
@@ -111,7 +137,7 @@ class ShieldConfigurationExtension: ShieldConfigurationDataSource {
                 color: .label
             ),
             subtitle: ShieldConfiguration.Label(
-                text: "warning that app will block.",
+                text: "warning that app will block soon.",
                 color: .secondaryLabel
             ),
             primaryButtonLabel: ShieldConfiguration.Label(
@@ -125,7 +151,7 @@ class ShieldConfigurationExtension: ShieldConfigurationDataSource {
         ShieldConfiguration(
             backgroundBlurStyle: .systemUltraThinMaterial,
             backgroundColor: .systemBackground,
-            icon: UIImage(systemName: "brain.head.profile"),
+            icon: UIImage(systemName: "leaf"),
             title: ShieldConfiguration.Label(text: "Time to Pause", color: .label),
             subtitle: ShieldConfiguration.Label(
                 text: "Open Anti-Doomscroll to talk to your AI companion and unlock this app.",

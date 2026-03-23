@@ -201,14 +201,14 @@ struct ScreenTimeSection: View {
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 12)
-                                .background(isSelectionEmpty ? Color.gray.opacity(0.2) : Color.green)
+                                .background(isSelectionEmpty ? Color.gray.opacity(0.2) : Color.green.opacity(0.9))
                                 .foregroundColor(.white)
                                 .cornerRadius(12)
+                                .shadow(color: (isSelectionEmpty ? Color.gray : Color.green).opacity(0.35), radius: 6, x: 0, y: 3)
                             }
                             .disabled(starting || stopping || isSelectionEmpty)
-                        
 
-                        Button {
+                            Button {
                                 Task { await startMonitoring(withWarning: true) }
                             } label: {
                                 VStack(spacing: 2) {
@@ -219,19 +219,19 @@ struct ScreenTimeSection: View {
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 12)
-                                .background(isSelectionEmpty ? Color.gray.opacity(0.2) : Color.green)
+                                .background(isSelectionEmpty ? Color.gray.opacity(0.2) : Color.green.opacity(0.9))
                                 .foregroundColor(.white)
                                 .cornerRadius(12)
+                                .shadow(color: (isSelectionEmpty ? Color.gray : Color.green).opacity(0.35), radius: 6, x: 0, y: 3)
                             }
                             .disabled(starting || stopping || isSelectionEmpty)
-
 
                             // Start with awareness only
                             Button {
                                 Task { await startMonitoring(withWarning: false, withAwareness: true) }
                             } label: {
                                 VStack(spacing: 2) {
-                                    Text(isMonitoringActive ? "Restart" : "Start").bold()
+                                    Text(isMonitoringActive ? "Restart (Most Focus Friendly)" : "Start (Most Focus Friendly)").bold()
                                     Text("no block warning with awareness — mutes notifications from app until you first enter and warns before entering").font(.caption2)
                                     .padding(.horizontal, 12)
                                 }
@@ -240,26 +240,25 @@ struct ScreenTimeSection: View {
                                 .background(isSelectionEmpty ? Color.gray.opacity(0.2) : Color.indigo)
                                 .foregroundColor(.white)
                                 .cornerRadius(12)
+                                .shadow(color: (isSelectionEmpty ? Color.gray : Color.indigo).opacity(0.35), radius: 6, x: 0, y: 3)
                             }
                             .disabled(starting || stopping || isSelectionEmpty)
 
-                           
-                        
-
-                         // Start with awareness + 5-min warning
+                            // Start with awareness + 5-min warning
                             Button {
                                 Task { await startMonitoring(withWarning: true, withAwareness: true) }
                             } label: {
                                 VStack(spacing: 2) {
-                                    Text(isMonitoringActive ? "Restart" : "Start").bold()
+                                    Text(isMonitoringActive ? "Restart (Most Doomscrolling Reminders)" : "Start (Most Doomscrolling Reminders)").bold()
                                     Text("5 minute block warning with awareness — mutes notifications before entering and warns before entering and blocking").font(.caption2)
                                     .padding(.horizontal, 12)
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 12)
-                                .background(isSelectionEmpty ? Color.gray.opacity(0.2) : Color.indigo)
+                                .background(isSelectionEmpty ? Color.gray.opacity(0.2) : Color.pink.opacity(0.68))
                                 .foregroundColor(.white)
                                 .cornerRadius(12)
+                                .shadow(color: (isSelectionEmpty ? Color.gray : Color.green).opacity(0.35), radius: 6, x: 0, y: 3)
                             }
                             .disabled(starting || stopping || isSelectionEmpty)
 
@@ -274,11 +273,11 @@ struct ScreenTimeSection: View {
                                     Text("(\(stopRemaining) left today)")
                                         .font(.caption2)
                                 } else {
-                                    Text("(limit reached)")
+                                    Text("(stop limit reached for today)")
                                         .font(.caption2)
                                 }
                             }
-                            .foregroundColor(canStop ? .secondary : .red.opacity(0.7))
+                            .foregroundColor(canStop ? .secondary : .secondary)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 8)
                             .background(Color(.systemGray5))
@@ -353,16 +352,6 @@ struct ScreenTimeSection: View {
                     .font(.caption2)
                     .foregroundColor(.secondary)
                 Text("Time is cumulative across all selected apps. For example, a 15 min limit blocks at 8 total minutes in instagram + 7 total minutes in youtube.")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            HStack(alignment: .top, spacing: 6) {
-                Image(systemName: "info.circle")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-                Text("Tracking runs silently in the background to not mess with the experience of using an app, you won't notice anything while using your apps. However once you hit your time limit, they'll be blocked.")
                     .font(.caption2)
                     .foregroundColor(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
