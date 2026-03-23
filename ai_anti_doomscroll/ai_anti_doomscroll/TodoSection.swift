@@ -88,19 +88,20 @@ struct TodoSection: View {
                                 }
                             }
                             .padding(14)
-                            .background(Color.green.opacity(0.05))
+                            .background(AppTheme.rowBackground)
                             .cornerRadius(12)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.green.opacity(0.2), lineWidth: 1)
+                                    .stroke(Color.green.opacity(0.25), lineWidth: 1)
                             )
                         }
                     }
                 }
             }
             .padding(16)
-            .background(Color(.systemBackground))
+            .background(AppTheme.cardBackground)
             .cornerRadius(20)
+            .shadow(color: AppTheme.cardShadowColor, radius: AppTheme.cardShadowRadius, x: 0, y: AppTheme.cardShadowY)
 
             // ── Divider ──────────────────────────────────────────────
             HStack(spacing: 8) {
@@ -178,7 +179,7 @@ struct TodoSection: View {
                                     .foregroundColor(.blue)
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 5)
-                                    .background(Color.blue.opacity(0.1))
+                                    .background(AppTheme.primaryButton.opacity(0.1))
                                     .cornerRadius(8)
                                 }
 
@@ -188,15 +189,16 @@ struct TodoSection: View {
                                 }
                             }
                             .padding(14)
-                            .background(Color(.secondarySystemBackground))
+                            .background(AppTheme.rowBackground)
                             .cornerRadius(12)
                         }
                     }
                 }
             }
             .padding(16)
-            .background(Color(.systemBackground))
+            .background(AppTheme.cardBackground)
             .cornerRadius(20)
+            .shadow(color: AppTheme.cardShadowColor, radius: AppTheme.cardShadowRadius, x: 0, y: AppTheme.cardShadowY)
         }
     }
 
@@ -215,7 +217,7 @@ struct TodoSection: View {
         .padding(.vertical, 30)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color(.systemGray5), style: StrokeStyle(lineWidth: 1, dash: [5]))
+                .stroke(Color(white: 0.80), style: StrokeStyle(lineWidth: 1, dash: [5]))
         )
     }
 }

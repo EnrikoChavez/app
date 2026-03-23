@@ -58,9 +58,14 @@ struct ScreenTimeSection: View {
         VStack(alignment: .leading, spacing: 20) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Monitoring Dashboard")
+                    HStack{
+                        Image(systemName: "hourglass")
+                        .font(.title2)
+                        .foregroundColor(.primary)
+                        Text("Timer Dashboard")
                         .font(.headline)
-                    Text("Configure your limits")
+                    }
+                    Text("Configure how long to doomscroll for before blocking the app")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -185,14 +190,14 @@ struct ScreenTimeSection: View {
 
                     // Control Buttons
                     VStack(spacing: 10) {
-                        HStack(spacing: 10) {
                             // Start without warning
                             Button {
                                 Task { await startMonitoring(withWarning: false) }
                             } label: {
                                 VStack(spacing: 2) {
                                     Text(isMonitoringActive ? "Restart" : "Start").bold()
-                                    Text("no block warning").font(.caption2)
+                                    Text("no block warning — just an abrupt realization of doomscrolling").font(.caption2)
+                                    .padding(.horizontal, 12)
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 12)
@@ -201,14 +206,16 @@ struct ScreenTimeSection: View {
                                 .cornerRadius(12)
                             }
                             .disabled(starting || stopping || isSelectionEmpty)
+                        
 
-                            Button {
+                        Button {
                                 Task { await startMonitoring(withWarning: true) }
                             } label: {
                                 VStack(spacing: 2) {
                                     if starting { ProgressView().padding(.bottom, 2) }
                                     Text(isMonitoringActive ? "Restart" : "Start").bold()
-                                    Text("with 5 min block warning").font(.caption2)
+                                    Text("5 minute block warning — a soft wake up call").font(.caption2)
+                                    .padding(.horizontal, 12)
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 12)
@@ -217,16 +224,16 @@ struct ScreenTimeSection: View {
                                 .cornerRadius(12)
                             }
                             .disabled(starting || stopping || isSelectionEmpty)
-                        }
 
-                        HStack(spacing: 10) {
+
                             // Start with awareness only
                             Button {
                                 Task { await startMonitoring(withWarning: false, withAwareness: true) }
                             } label: {
                                 VStack(spacing: 2) {
                                     Text(isMonitoringActive ? "Restart" : "Start").bold()
-                                    Text("with awareness").font(.caption2)
+                                    Text("no block warning with awareness — mutes notifications from app until you first enter and warns before entering").font(.caption2)
+                                    .padding(.horizontal, 12)
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 12)
@@ -236,13 +243,17 @@ struct ScreenTimeSection: View {
                             }
                             .disabled(starting || stopping || isSelectionEmpty)
 
-                            // Start with awareness + 5-min warning
+                           
+                        
+
+                         // Start with awareness + 5-min warning
                             Button {
                                 Task { await startMonitoring(withWarning: true, withAwareness: true) }
                             } label: {
                                 VStack(spacing: 2) {
                                     Text(isMonitoringActive ? "Restart" : "Start").bold()
-                                    Text("awareness + block warning").font(.caption2)
+                                    Text("5 minute block warning with awareness — mutes notifications before entering and warns before entering and blocking").font(.caption2)
+                                    .padding(.horizontal, 12)
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 12)
@@ -251,7 +262,6 @@ struct ScreenTimeSection: View {
                                 .cornerRadius(12)
                             }
                             .disabled(starting || stopping || isSelectionEmpty)
-                        }
 
                         let canStop = StopMonitoringLimitManager.shared.canStop
                         Button {

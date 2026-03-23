@@ -84,7 +84,7 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color(.systemGroupedBackground).ignoresSafeArea()
+                AppTheme.backgroundGradient.ignoresSafeArea()
                 
                 // Show paywall if not premium, otherwise show main content
                 if !subscriptionManager.isPremium && !subscriptionManager.isLoading {
@@ -124,8 +124,8 @@ struct ContentView: View {
                     .overlay(alignment: .bottom) {
                         // Custom Tab Bar at bottom
                         customTabBar
-                            .background(Color(.systemBackground))
-                            .shadow(color: Color.black.opacity(0.1), radius: 5, y: -2)
+                            .background(Color.white)
+                            .shadow(color: Color.black.opacity(0.10), radius: 8, y: -3)
                     }
                 }
             }
@@ -162,78 +162,35 @@ struct ContentView: View {
     
     var customTabBar: some View {
         HStack(spacing: 0) {
-            // AI Tab
-            Button(action: { selectedTab = 0 }) {
-                VStack(spacing: 4) {
-                    Image(systemName: "brain.head.profile")
-                        .font(.system(size: 20))
-                    Text("Unblock")
-                        .font(.system(size: 12, weight: .medium))
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
-                .foregroundColor(selectedTab == 0 ? .blue : .gray)
-            }
-
-            // Tasks Tab
-            Button(action: { selectedTab = 1 }) {
-                VStack(spacing: 4) {
-                    Image(systemName: "checklist")
-                        .font(.system(size: 20))
-                    Text("Tasks")
-                        .font(.system(size: 12, weight: .medium))
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
-                .foregroundColor(selectedTab == 1 ? .blue : .gray)
-            }
-
-            // Monitor Tab
-            Button(action: { selectedTab = 2 }) {
-                VStack(spacing: 4) {
-                    Image(systemName: "chart.bar")
-                        .font(.system(size: 20))
-                    Text("Set Timer")
-                        .font(.system(size: 12, weight: .medium))
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
-                .foregroundColor(selectedTab == 2 ? .blue : .gray)
-            }
-
-            // Schedule Tab
-            Button(action: { selectedTab = 3 }) {
-                VStack(spacing: 4) {
-                    Image(systemName: "calendar.badge.clock")
-                        .font(.system(size: 20))
-                    Text("Schedule")
-                        .font(.system(size: 12, weight: .medium))
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
-                .foregroundColor(selectedTab == 3 ? .blue : .gray)
-            }
-
-            // Gallery Tab
-            Button(action: { selectedTab = 4 }) {
-                VStack(spacing: 4) {
-                    Image(systemName: "checkmark.seal")
-                        .font(.system(size: 20))
-                    Text("Gallery")
-                        .font(.system(size: 12, weight: .medium))
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
-                .foregroundColor(selectedTab == 4 ? .blue : .gray)
-            }
+            tabBarItem(icon: "brain.head.profile", label: "Unblock",  tag: 0)
+            tabBarItem(icon: "checklist",           label: "Tasks",    tag: 1)
+            tabBarItem(icon: "chart.bar",           label: "Set Timer",tag: 2)
+            tabBarItem(icon: "calendar.badge.clock",label: "Schedule", tag: 3)
+            tabBarItem(icon: "checkmark.seal",      label: "Gallery",  tag: 4)
         }
-        .background(Color(.systemBackground))
+        .background(Color.white)
         .overlay(
             Rectangle()
                 .frame(height: 0.5)
-                .foregroundColor(Color(.separator)),
+                .foregroundColor(Color(.separator).opacity(0.4)),
             alignment: .top
         )
+    }
+
+    @ViewBuilder
+    private func tabBarItem(icon: String, label: String, tag: Int) -> some View {
+        let isSelected = selectedTab == tag
+        Button(action: { selectedTab = tag }) {
+            VStack(spacing: 5) {
+                Image(systemName: icon)
+                    .font(.system(size: 19, weight: isSelected ? .semibold : .regular))
+                Text(label)
+                    .font(.system(size: 11, weight: isSelected ? .semibold : .regular))
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .foregroundColor(isSelected ? AppTheme.tabActive : AppTheme.tabInactive)
+        }
     }
     
     var headerSection: some View {
@@ -327,10 +284,10 @@ struct ContentView: View {
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
-                            .background((callLimitInfo?.canCall ?? true) ? Color.blue : Color.gray)
+                            .background((callLimitInfo?.canCall ?? true) ? AppTheme.primaryButton : Color(white: 0.55))
                             .foregroundColor(.white)
                             .cornerRadius(15)
-                            .shadow(color: ((callLimitInfo?.canCall ?? true) ? Color.blue : Color.gray).opacity(0.3), radius: 10, x: 0, y: 5)
+                            .shadow(color: AppTheme.primaryButtonShadow, radius: 10, x: 0, y: 5)
                         }
                         .disabled(isStartingCall || isCheckingLimit || !(callLimitInfo?.canCall ?? true))
                         
@@ -343,10 +300,10 @@ struct ContentView: View {
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
-                            .background(Color.green)
+                            .background(Color(white: 0.22))
                             .foregroundColor(.white)
                             .cornerRadius(15)
-                            .shadow(color: Color.green.opacity(0.3), radius: 10, x: 0, y: 5)
+                            .shadow(color: AppTheme.primaryButtonShadow, radius: 10, x: 0, y: 5)
                         }
                     }
                 }
@@ -410,9 +367,9 @@ struct ContentView: View {
             .disabled(manualUnblockLimitInfo?.canUnblock == false && isBlocked)
         }
         .padding(24)
-        .background(Color(.systemBackground))
+        .background(AppTheme.cardBackground)
         .cornerRadius(24)
-        .shadow(color: Color.black.opacity(0.05), radius: 15, x: 0, y: 5)
+        .shadow(color: AppTheme.cardShadowColor, radius: AppTheme.cardShadowRadius, x: 0, y: AppTheme.cardShadowY)
     }
     
     // Tab 1: Calls & Chats
@@ -450,14 +407,14 @@ struct ContentView: View {
                     }
                 }
                 .padding(20)
-                .background(Color(.systemBackground))
+                .background(AppTheme.cardBackground)
                 .cornerRadius(20)
-                .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 4)
+                .shadow(color: AppTheme.cardShadowColor, radius: AppTheme.cardShadowRadius, x: 0, y: AppTheme.cardShadowY)
                 .padding(.horizontal)
             }
             .padding(.bottom, 100)
         }
-        .background(Color(.systemGroupedBackground).ignoresSafeArea())
+        .background(Color.clear.ignoresSafeArea())
     }
 
     @ViewBuilder
@@ -489,7 +446,7 @@ struct ContentView: View {
             }
         }
         .padding(12)
-        .background(Color(.secondarySystemBackground))
+        .background(AppTheme.rowBackground)
         .cornerRadius(12)
 
         if let action = action {
@@ -517,7 +474,7 @@ struct ContentView: View {
             .padding(.top, 20)
             .padding(.bottom, 100)
         }
-        .background(Color(.systemGroupedBackground).ignoresSafeArea())
+        .background(Color.clear.ignoresSafeArea())
     }
 
     // Tab 4: Gallery (completed tasks)
@@ -538,8 +495,8 @@ struct ContentView: View {
                             .font(.caption).bold()
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(Color.blue.opacity(0.1))
-                            .foregroundColor(.blue)
+                            .background(Color.gray.opacity(0.1))
+                            .foregroundColor(.gray)
                             .clipShape(Capsule())
                     }
 
@@ -559,11 +516,6 @@ struct ContentView: View {
                         VStack(spacing: 8) {
                             ForEach(todoRepository.completedTodos) { todo in
                                 HStack(alignment: .top, spacing: 12) {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .foregroundColor(.green)
-                                        .font(.system(size: 16))
-                                        .padding(.top, 2)
-
                                     Text(todo.task)
                                         .font(.body)
                                         .foregroundColor(.secondary)
@@ -577,21 +529,22 @@ struct ContentView: View {
                                     }
                                 }
                                 .padding(14)
-                                .background(Color(.secondarySystemBackground))
+                                .background(AppTheme.rowBackground)
                                 .cornerRadius(12)
                             }
                         }
                     }
                 }
                 .padding(16)
-                .background(Color(.systemBackground))
+                .background(AppTheme.cardBackground)
                 .cornerRadius(20)
+                .shadow(color: AppTheme.cardShadowColor, radius: AppTheme.cardShadowRadius, x: 0, y: AppTheme.cardShadowY)
                 .padding(.horizontal)
                 .padding(.top, 20)
             }
             .padding(.bottom, 100)
         }
-        .background(Color(.systemGroupedBackground).ignoresSafeArea())
+        .background(Color.clear.ignoresSafeArea())
     }
     
     // Tab 3: Monitoring Dashboard
@@ -611,7 +564,7 @@ struct ContentView: View {
             }
             .padding(.bottom, 100)
         }
-        .background(Color(.systemGroupedBackground).ignoresSafeArea())
+        .background(Color.clear.ignoresSafeArea())
     }
 
     // Tab 4: Weekly Schedule
@@ -624,7 +577,7 @@ struct ContentView: View {
             }
             .padding(.bottom, 100)
         }
-        .background(Color(.systemGroupedBackground).ignoresSafeArea())
+        .background(Color.clear.ignoresSafeArea())
     }
     
     // MARK: - Logic
