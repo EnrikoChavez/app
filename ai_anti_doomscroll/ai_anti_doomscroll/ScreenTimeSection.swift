@@ -201,7 +201,7 @@ struct ScreenTimeSection: View {
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 12)
-                                .background(isSelectionEmpty ? Color.gray.opacity(0.2) : Color.green.opacity(0.9))
+                                .background(isSelectionEmpty ? Color.gray.opacity(0.2) : Color.green.opacity(0.65))
                                 .foregroundColor(.white)
                                 .cornerRadius(12)
                                 .shadow(color: (isSelectionEmpty ? Color.gray : Color.green).opacity(0.35), radius: 6, x: 0, y: 3)
@@ -219,7 +219,7 @@ struct ScreenTimeSection: View {
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 12)
-                                .background(isSelectionEmpty ? Color.gray.opacity(0.2) : Color.green.opacity(0.9))
+                                .background(isSelectionEmpty ? Color.gray.opacity(0.2) : Color.green.opacity(0.65))
                                 .foregroundColor(.white)
                                 .cornerRadius(12)
                                 .shadow(color: (isSelectionEmpty ? Color.gray : Color.green).opacity(0.35), radius: 6, x: 0, y: 3)

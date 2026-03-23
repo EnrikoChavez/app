@@ -54,15 +54,14 @@ struct PaywallView: View {
                                 handlePurchaseResult(product: product, result: result)
                             }
                     }
-                }
-
-                // Required by App Store: links to Privacy Policy and Terms of Use
+                    // Required by App Store: links to Privacy Policy and Terms of Use
                 HStack(spacing: 24) {
                     Link("Privacy Policy", destination: URL(string: "https://www.notion.so/AI-Anti-Doomscroll-Privacy-Policy-325a5fecb17980f4ba34dd163b656826")!)
                     Link("Terms of Use", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
                 }
                 .foregroundColor(.secondary)
                 .font(.footnote)
+                }
     
             }
             .navigationBarTitleDisplayMode(.inline)

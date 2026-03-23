@@ -31,7 +31,7 @@ struct OnboardingView: View {
 
     var body: some View {
         ZStack {
-            Color(red: 1.0, green: 0.88, blue: 0.88, opacity: 0.6).ignoresSafeArea()
+            Color(red: 1.0, green: 0.88, blue: 0.88, opacity: 0.4).ignoresSafeArea()
 
             VStack(spacing: 0) {
                 progressBar
@@ -54,7 +54,7 @@ struct OnboardingView: View {
             }
         }
         .preferredColorScheme(.light)
-        .animation(.easeInOut(duration: 0.38), value: step)
+        .animation(.easeInOut(duration: 0.6), value: step)
     }
 
     // MARK: - Progress Bar
@@ -93,9 +93,10 @@ struct OnboardingView: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
-                    .background(AppTheme.primaryButton)
+                    .background(Color.black.opacity(2.0))
                     .cornerRadius(14)
-                    .shadow(color: AppTheme.primaryButtonShadow, radius: 10, x: 0, y: 5)
+                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.black.opacity(0.6), lineWidth: 1.2))
+                    .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 3)
                 }
                 .disabled(isRequestingPermission)
 
@@ -111,9 +112,18 @@ struct OnboardingView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
-                        .background(AppTheme.primaryButton)
+                        .background(Color.black.opacity(0.9))
                         .cornerRadius(14)
-                        .shadow(color: AppTheme.primaryButtonShadow, radius: 10, x: 0, y: 5)
+                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.black.opacity(0.6), lineWidth: 1.2))
+                        .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 3)
+                }
+
+                if step.rawValue > 0 {
+                    Button("← Back") { goBack() }
+                        .font(.subheadline)
+                        .foregroundColor(Color.primary.opacity(0.3))
+                } else {
+                    Color.clear.frame(height: 20)
                 }
             }
         }
@@ -289,8 +299,17 @@ struct OnboardingView: View {
         let nextRaw = step.rawValue + 1
         guard nextRaw < OnboardingStep.allCases.count,
               let next = OnboardingStep(rawValue: nextRaw) else { return }
-        withAnimation(.easeInOut(duration: 0.38)) {
+        withAnimation(.easeInOut(duration: 0.6)) {
             step = next
+        }
+    }
+
+    private func goBack() {
+        taskFieldFocused = false
+        let prevRaw = step.rawValue - 1
+        guard prevRaw >= 0, let prev = OnboardingStep(rawValue: prevRaw) else { return }
+        withAnimation(.easeInOut(duration: 0.6)) {
+            step = prev
         }
     }
 
