@@ -386,6 +386,13 @@ struct WeeklyScheduleSection: View {
 
         if !failed {
             Shared.defaults.set(true, forKey: Shared.isWeeklyActiveKey)
+            Analytics.weeklyScheduleStarted(
+                days: selectedDays.count,
+                startHour: cal.component(.hour, from: startTime),
+                endHour: cal.component(.hour, from: endTime),
+                appCount: store.selection.applicationTokens.count,
+                categoryCount: store.selection.categoryTokens.count
+            )
             await MainActor.run { isActive = true; statusMessage = "" }
         }
     }
@@ -407,6 +414,7 @@ struct WeeklyScheduleSection: View {
         #endif
 
         Shared.defaults.set(false, forKey: Shared.isWeeklyActiveKey)
+        Analytics.weeklyScheduleStopped()
         await MainActor.run { isActive = false; statusMessage = "" }
     }
     #endif

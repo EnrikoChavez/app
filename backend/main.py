@@ -2,6 +2,7 @@
 import os
 import base64
 import httpx
+from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException, Depends
 from otp import verify_token, get_user_identifier
@@ -16,7 +17,7 @@ from account import router as account_router
 from manual_unblock import router as manual_unblock_router
 from apple_auth import router as apple_auth_router
 from db import init_db, get_db
-from models import Base, User, Profile
+from models import Base, User, Profile, CallSession, CallUsage
 
 
 
@@ -194,6 +195,44 @@ async def get_hume_access_token():
             detail=f"Hume token exchange HTTP error: {str(e)}"
         )
 
+def _close_open_session(db, phone: str, now: datetime) -> float:
+    """
+    Close any open CallSession for this phone, recording its duration into CallUsage.
+    Returns the number of seconds recorded (0 if nothing was open).
+    """
+    from zoneinfo import ZoneInfo
+    from call_usage import DAILY_LIMIT_SECONDS, EASTERN
+
+    open_session = (
+        db.query(CallSession)
+        .filter(CallSession.phone == phone, CallSession.ended_at.is_(None))
+        .order_by(CallSession.started_at.desc())
+        .first()
+    )
+    if not open_session:
+        return 0.0
+
+    raw_duration = (now - open_session.started_at).total_seconds()
+    duration = min(raw_duration, DAILY_LIMIT_SECONDS)
+
+    open_session.ended_at = now
+    open_session.duration_seconds = duration
+
+    today = now.astimezone(EASTERN).date()
+    usage = db.query(CallUsage).filter(
+        CallUsage.phone == phone, CallUsage.usage_date == today
+    ).first()
+    if not usage:
+        usage = CallUsage(phone=phone, usage_date=today, seconds_used=0.0)
+        db.add(usage)
+    usage.seconds_used += duration
+    usage.updated_at = now
+
+    db.commit()
+    print(f"⚠️  Auto-closed orphan session for {phone}: recorded {duration:.1f}s")
+    return duration
+
+
 @app.post("/hume/create-session")
 async def create_hume_session(payload: dict, user_id: str = Depends(verify_token)):
     print("📥 Received request for /hume/create-session")
@@ -201,9 +240,14 @@ async def create_hume_session(payload: dict, user_id: str = Depends(verify_token
     from sqlalchemy.orm import Session as SA_Session
     from call_usage import _check_limit_by_phone
 
+    now = datetime.now(timezone.utc)
     db = next(get_db())
     try:
         phone = get_user_identifier(user_id, db)
+
+        # Auto-close any orphaned session from a crash / missed end-session call
+        _close_open_session(db, phone, now)
+
         limit_info = _check_limit_by_phone(db, phone)
         if not limit_info.can_call:
             raise HTTPException(
@@ -211,6 +255,12 @@ async def create_hume_session(payload: dict, user_id: str = Depends(verify_token
                 detail=f"Daily call limit reached. You've used {limit_info.used_seconds:.1f}s of {limit_info.limit_seconds:.0f}s today."
             )
         print(f"✅ Call limit check passed: {limit_info.remaining_seconds:.1f}s remaining")
+
+        # Record session start server-side so duration is measured here, not by the client
+        session_row = CallSession(phone=phone, started_at=now)
+        db.add(session_row)
+        db.commit()
+        print(f"🕐 Call session started for {phone} at {now.isoformat()}")
     finally:
         db.close()
     
@@ -242,9 +292,71 @@ async def create_hume_session(payload: dict, user_id: str = Depends(verify_token
                 "minutes": str(minutes)
             }
         }
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"❌ Error creating Hume session: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/hume/end-session")
+async def end_hume_session(user_id: str = Depends(verify_token)):
+    """
+    Called by the iOS app when a Hume call ends.
+    Duration is computed server-side (now - started_at), so the client cannot
+    report a fake duration to inflate or reduce their usage counter.
+    """
+    from call_usage import DAILY_LIMIT_SECONDS, EASTERN
+
+    now = datetime.now(timezone.utc)
+    db = next(get_db())
+    try:
+        phone = get_user_identifier(user_id, db)
+
+        open_session = (
+            db.query(CallSession)
+            .filter(CallSession.phone == phone, CallSession.ended_at.is_(None))
+            .order_by(CallSession.started_at.desc())
+            .first()
+        )
+        if not open_session:
+            raise HTTPException(status_code=404, detail="No active call session found")
+
+        raw_duration = (now - open_session.started_at).total_seconds()
+        duration = min(raw_duration, DAILY_LIMIT_SECONDS)
+
+        open_session.ended_at = now
+        open_session.duration_seconds = duration
+
+        today = now.astimezone(EASTERN).date()
+        usage = db.query(CallUsage).filter(
+            CallUsage.phone == phone, CallUsage.usage_date == today
+        ).first()
+        if not usage:
+            usage = CallUsage(phone=phone, usage_date=today, seconds_used=0.0)
+            db.add(usage)
+        old_used = usage.seconds_used
+        usage.seconds_used += duration
+        usage.updated_at = now
+
+        db.commit()
+        db.refresh(usage)
+
+        remaining = max(0.0, DAILY_LIMIT_SECONDS - usage.seconds_used)
+        print(
+            f"✅ Call ended for {phone}: {duration:.1f}s recorded. "
+            f"Total today: {old_used:.1f}s → {usage.seconds_used:.1f}s. Remaining: {remaining:.1f}s"
+        )
+
+        return {
+            "message": "Call duration recorded",
+            "duration_seconds": duration,
+            "used_seconds": usage.seconds_used,
+            "remaining_seconds": remaining,
+            "limit_seconds": DAILY_LIMIT_SECONDS,
+        }
+    finally:
+        db.close()
 
 
 

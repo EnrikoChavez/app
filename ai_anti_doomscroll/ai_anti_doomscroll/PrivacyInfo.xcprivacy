@@ -8,22 +8,14 @@
     <key>NSPrivacyTrackingDomains</key>
     <array/>
 
-    <!-- Data types your app collects -->
+    <!-- Data types your app collects.
+         Phone number is used only transiently during OTP verification to obtain a
+         session token. After login the app stores only an opaque numeric user ID —
+         no phone number or other identifying information is retained on-device or
+         sent to third-party analytics services. Apple Sign In similarly results in
+         only a numeric user ID being stored. -->
     <key>NSPrivacyCollectedDataTypes</key>
     <array>
-        <!-- Phone number: used as the login identifier -->
-        <dict>
-            <key>NSPrivacyCollectedDataType</key>
-            <string>NSPrivacyCollectedDataTypePhoneNumber</string>
-            <key>NSPrivacyCollectedDataTypeLinked</key>
-            <true/>
-            <key>NSPrivacyCollectedDataTypeTracking</key>
-            <false/>
-            <key>NSPrivacyCollectedDataTypePurposes</key>
-            <array>
-                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
-            </array>
-        </dict>
         <!-- Audio data: voice conversations with the AI agent -->
         <dict>
             <key>NSPrivacyCollectedDataType</key>
@@ -42,7 +34,8 @@
     <!-- Required reason APIs your app uses -->
     <key>NSPrivacyAccessedAPITypes</key>
     <array>
-        <!-- UserDefaults: stores app state, phone, block status -->
+        <!-- UserDefaults: stores app state (block status, monitoring settings, opaque user ID).
+             No phone number or personally identifiable information is stored. -->
         <dict>
             <key>NSPrivacyAccessedAPIType</key>
             <string>NSPrivacyAccessedAPICategoryUserDefaults</string>

@@ -75,6 +75,17 @@ class ChatUsage(Base):
     )
 
 
+# Hume call session tracking for server-side duration measurement
+class CallSession(Base):
+    __tablename__ = "call_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    phone = Column(String, index=True, nullable=False)
+    started_at = Column(DateTime(timezone=True), nullable=False)
+    ended_at = Column(DateTime(timezone=True), nullable=True)
+    duration_seconds = Column(Float, nullable=True)
+
+
 # Manual unblock usage tracking for daily limits
 class ManualUnblockUsage(Base):
     __tablename__ = "manual_unblock_usage"

@@ -683,6 +683,7 @@ struct ContentView: View {
     func moveToOverall(id: Int) {
         if let todo = todoRepository.todos.first(where: { $0.id == id }) {
             todoRepository.moveToOverall(todo)
+            Analytics.todoRemovedFromFocus()
         }
     }
 
@@ -871,18 +872,16 @@ struct ContentView: View {
         
         callManager.stopCall()
         
-        // Record call duration
-        print("📱 iOS: Sending call duration to backend: \(callDuration)s")
-        networkManager.recordCallDuration(durationSeconds: callDuration) { result in
+        // Tell the server the call ended; duration is measured server-side.
+        networkManager.endHumeSession { result in
             switch result {
             case .success:
-                print("✅ iOS: Call duration recorded successfully: \(callDuration)s")
-                // Refresh limit info
+                print("✅ iOS: Call session ended on server")
                 DispatchQueue.main.async {
                     self.checkCallLimit()
                 }
             case .failure(let error):
-                print("❌ iOS: Failed to record call duration: \(error.localizedDescription)")
+                print("❌ iOS: Failed to end call session: \(error.localizedDescription)")
             }
         }
         

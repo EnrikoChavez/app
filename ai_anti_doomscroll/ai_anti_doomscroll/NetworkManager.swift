@@ -208,8 +208,12 @@ final class NetworkManager {
     }
     
     // Premium Status Sync
-    func syncPremiumStatus(isPremium: Bool, completion: @escaping (Result<Bool, Error>) -> Void) {
-        guard let req = makeRequest(path: "/profile/sync-premium", method: "POST", jsonBody: ["is_premium": isPremium]) else {
+    func syncPremiumStatus(isPremium: Bool, transactionJWS: String? = nil, completion: @escaping (Result<Bool, Error>) -> Void) {
+        var body: [String: Any] = ["is_premium": isPremium]
+        if let jws = transactionJWS {
+            body["transaction_jws"] = jws
+        }
+        guard let req = makeRequest(path: "/profile/sync-premium", method: "POST", jsonBody: body) else {
             completion(.failure(NSError(domain: "NetworkManager", code: 400, userInfo: [NSLocalizedDescriptionKey: "Request build failed"])))
             return
         }
@@ -270,14 +274,20 @@ final class NetworkManager {
         }.resume()
     }
     
-    func recordCallDuration(durationSeconds: Double, completion: @escaping (Result<Void, Error>) -> Void) {
-        guard let req = makeRequest(path: "/call-usage/record-duration", method: "POST", jsonBody: ["duration_seconds": durationSeconds]) else {
+    func endHumeSession(completion: @escaping (Result<Void, Error>) -> Void) {
+        guard let req = makeRequest(path: "/hume/end-session", method: "POST") else {
             completion(.failure(NSError(domain: "NetworkManager", code: 400, userInfo: [NSLocalizedDescriptionKey: "Request build failed"])))
             return
         }
-        session.dataTask(with: req) { data, _, error in
+        session.dataTask(with: req) { data, response, error in
             if let error = error {
                 completion(.failure(error))
+                return
+            }
+            if let http = response as? HTTPURLResponse, http.statusCode == 404 {
+                // No active session found — non-fatal, just log it
+                print("⚠️ endHumeSession: no active session found on server (404)")
+                completion(.success(()))
                 return
             }
             completion(.success(()))

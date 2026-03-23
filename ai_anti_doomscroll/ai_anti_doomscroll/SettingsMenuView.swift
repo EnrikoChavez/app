@@ -212,12 +212,14 @@ struct PrivacyPolicyView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         SectionView(title: "1. Information We Collect", content: """
                         We collect minimal information necessary for app functionality:
-                        - Phone number (for account identification and authentication)
-                        - Apple ID (optional, for account linking)
+                        - An opaque numeric user ID (generated at login — no name, phone number, or email is stored)
                         - Voice call transcripts (temporarily processed for AI evaluation, then discarded)
                         - Text chat messages (temporarily processed for AI evaluation, then discarded)
                         
+                        During login, your phone number is used transiently only to verify your identity via OTP. It is not stored after a session token is issued. Apple Sign In similarly results only in an opaque user ID being retained — no email or name is kept.
+                        
                         We do NOT collect or store:
+                        - Your phone number (beyond the transient OTP verification step)
                         - Your task lists (todos) - these are stored exclusively on your device
                         - Personal notes or sensitive information
                         - Screen time monitoring data - stored locally only
@@ -234,7 +236,7 @@ struct PrivacyPolicyView: View {
                         
                         SectionView(title: "3. How We Use Your Information", content: """
                         We use your information solely to:
-                        - Authenticate your account (phone number)
+                        - Authenticate your account via an opaque numeric user ID
                         - Process AI voice calls and text chats for app unblocking
                         - Evaluate conversations to determine if apps should be unblocked
                         - Track usage limits (call duration) for daily limits
@@ -248,7 +250,7 @@ struct PrivacyPolicyView: View {
                         
                         SectionView(title: "4. Data Storage", content: """
                         We store minimal data on our servers:
-                        - Phone number (for authentication)
+                        - An opaque numeric user ID (no phone number or identifying information)
                         - Premium subscription status
                         - Daily usage limits (call duration)
                         
@@ -268,7 +270,7 @@ struct PrivacyPolicyView: View {
                         
                         SectionView(title: "6. Your Rights", content: """
                         You have the right to:
-                        - Access your account data (phone number, subscription status)
+                        - Access your account data (subscription status, usage limits)
                         - Request deletion of your account and all server-stored data
                         - Delete local data by uninstalling the app
                         - Export your local data (todos are stored in iOS SwiftData, accessible through device backups)

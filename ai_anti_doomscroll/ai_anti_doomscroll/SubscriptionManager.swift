@@ -82,8 +82,9 @@ class SubscriptionManager: ObservableObject {
                     isPremium = true
                     print("✅ Active subscription: \(product.displayName)")
                     
-                    // Sync premium status to Postgres
-                    await syncPremiumStatusToBackend(isPremium: true)
+                    // Send the signed JWS so the backend can verify with Apple.
+                    let jws = String(data: transaction.jsonRepresentation, encoding: .utf8)
+                    await syncPremiumStatusToBackend(isPremium: true, transactionJWS: jws)
                     return
                 }
             } catch {
@@ -94,8 +95,6 @@ class SubscriptionManager: ObservableObject {
         // No active subscription found
         isPremium = false
         currentSubscription = nil
-        
-        // Sync premium status to Postgres
         await syncPremiumStatusToBackend(isPremium: false)
     }
     
@@ -135,16 +134,17 @@ class SubscriptionManager: ObservableObject {
                 isPremium = true
                 print("✅ Subscription activated: \(product.displayName)")
                 Analytics.subscriptionStarted(productId: transaction.productID)
-                await syncPremiumStatusToBackend(isPremium: true)
+                let jws = String(data: transaction.jsonRepresentation, encoding: .utf8)
+                await syncPremiumStatusToBackend(isPremium: true, transactionJWS: jws)
             }
         } catch {
             print("❌ Failed to look up product: \(error)")
         }
     }
     
-    private func syncPremiumStatusToBackend(isPremium: Bool) async {
+    private func syncPremiumStatusToBackend(isPremium: Bool, transactionJWS: String? = nil) async {
         let networkManager = NetworkManager()
-        networkManager.syncPremiumStatus(isPremium: isPremium) { result in
+        networkManager.syncPremiumStatus(isPremium: isPremium, transactionJWS: transactionJWS) { result in
             switch result {
             case .success:
                 print("✅ Premium status synced to backend: \(isPremium)")

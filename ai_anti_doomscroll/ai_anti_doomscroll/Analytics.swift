@@ -76,6 +76,10 @@ enum Analytics {
         PostHogSDK.shared.capture("todo_set_as_focus")
     }
 
+    static func todoRemovedFromFocus() {
+        PostHogSDK.shared.capture("todo_removed_from_focus")
+    }
+
     // MARK: - Monitoring
 
     static func monitoringStarted(minutes: Int, withWarning: Bool, appCount: Int, categoryCount: Int) {
@@ -89,6 +93,22 @@ enum Analytics {
 
     static func monitoringStopped() {
         PostHogSDK.shared.capture("monitoring_stopped")
+    }
+
+    // MARK: - Weekly Schedule
+
+    static func weeklyScheduleStarted(days: Int, startHour: Int, endHour: Int, appCount: Int, categoryCount: Int) {
+        PostHogSDK.shared.capture("weekly_schedule_started", properties: [
+            "day_count": days,
+            "start_hour": startHour,
+            "end_hour": endHour,
+            "app_count": appCount,
+            "category_count": categoryCount
+        ])
+    }
+
+    static func weeklyScheduleStopped() {
+        PostHogSDK.shared.capture("weekly_schedule_stopped")
     }
 
     static func appsBlocked(minutes: Int) {
