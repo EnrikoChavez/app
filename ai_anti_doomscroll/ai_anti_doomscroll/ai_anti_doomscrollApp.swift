@@ -13,6 +13,7 @@ import PostHog
 struct ai_anti_doomscrollApp: App {
     @AppStorage("isLoggedIn") private var isLoggedIn = false
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
+    @AppStorage("hasSkippedSignup") private var hasSkippedSignup = false
     
     // SwiftData container for local storage
     let container: ModelContainer
@@ -67,12 +68,12 @@ struct ai_anti_doomscrollApp: App {
             if !hasSeenOnboarding {
                 OnboardingView()
                     .modelContainer(container)
-            } else if isLoggedIn {
-                ContentView()
+            } else if !isLoggedIn && !hasSkippedSignup {
+                SignupPromptView()
                     .modelContainer(container)
                     .preferredColorScheme(.light)
             } else {
-                LoginView()
+                ContentView()
                     .modelContainer(container)
                     .preferredColorScheme(.light)
             }

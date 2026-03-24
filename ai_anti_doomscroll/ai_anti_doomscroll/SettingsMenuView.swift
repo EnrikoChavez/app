@@ -10,6 +10,9 @@ import MessageUI
 struct SettingsMenuView: View {
     @Binding var isPresented: Bool
     var onLogout: () -> Void
+    @AppStorage("isLoggedIn") private var isLoggedIn = false
+    @AppStorage("hasSkippedSignup") private var hasSkippedSignup = false
+    @State private var showSignup = false
     @State private var showTerms = false
     @State private var showPrivacy = false
     @State private var showDeleteConfirmation = false
@@ -57,28 +60,42 @@ struct SettingsMenuView: View {
                     }
                 }
                 
-                Section {
-                    Button(action: {
-                        onLogout()
-                        isPresented = false
-                    }) {
-                        HStack {
-                            Image(systemName: "arrow.right.square")
-                            Text("Logout")
+                if isLoggedIn {
+                    Section {
+                        Button(action: {
+                            onLogout()
+                            isPresented = false
+                        }) {
+                            HStack {
+                                Image(systemName: "arrow.right.square")
+                                Text("Logout")
+                            }
                         }
                     }
-                }
-                
-                Section {
-                    Button(role: .destructive, action: {
-                        showDeleteConfirmation = true
-                    }) {
-                        HStack {
-                            Image(systemName: "trash")
-                            Text("Delete Account")
+
+                    Section {
+                        Button(role: .destructive, action: {
+                            showDeleteConfirmation = true
+                        }) {
+                            HStack {
+                                Image(systemName: "trash")
+                                Text("Delete Account")
+                            }
+                        }
+                        .disabled(isDeleting)
+                    }
+                } else {
+                    Section {
+                        Button(action: {
+                            isPresented = false
+                            hasSkippedSignup = false
+                        }) {
+                            HStack {
+                                Image(systemName: "person.circle")
+                                Text("Sign In / Create Account")
+                            }
                         }
                     }
-                    .disabled(isDeleting)
                 }
             }
             .navigationTitle("Settings")

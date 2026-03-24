@@ -66,6 +66,9 @@ struct ContentView: View {
         }
     }
     
+    @AppStorage("hasSkippedSignup") private var hasSkippedSignup = false
+    @State private var showPaywall = false
+    @State private var showSignup = false
     @State private var isEvaluating = false
     @State private var isStartingCall = false
     @State private var callLimitInfo: CallLimitInfo? = nil
@@ -94,20 +97,16 @@ struct ContentView: View {
         NavigationView {
             ZStack {
                 AppTheme.backgroundGradient.ignoresSafeArea()
-                
-                // Show paywall if not premium, otherwise show main content
-                if !subscriptionManager.isPremium && !subscriptionManager.isLoading {
-                    PaywallView(subscriptionManager: subscriptionManager)
-                } else {
-                    VStack(spacing: 0) {
-                        // Header at top (fixed)
-                        headerSection
-                            .padding(.horizontal)
-                            .padding(.top, 20)
-                            .padding(.bottom, 12)
-                        
-                        // Tab Content
-                        TabView(selection: $selectedTab) {
+
+                VStack(spacing: 0) {
+                    // Header at top (fixed)
+                    headerSection
+                        .padding(.horizontal)
+                        .padding(.top, 20)
+                        .padding(.bottom, 12)
+
+                    // Tab Content
+                    TabView(selection: $selectedTab) {
                             // Tab 1: Calls & Chats
                             callsChatsTab
                                 .tag(0)
@@ -133,9 +132,22 @@ struct ContentView: View {
                             .shadow(color: Color.black.opacity(0.10), radius: 8, y: -3)
                     }
                 }
-            }
             .navigationBarHidden(true)
             .onAppear(perform: onAppAppear)
+            .onChange(of: subscriptionManager.isPremium) { isPremium in
+                if isPremium { showPaywall = false }
+            }
+            .onChange(of: subscriptionManager.isLoading) { isLoading in
+                if !isLoading && isLoggedIn && !subscriptionManager.isPremium { showPaywall = true }
+            }
+            .fullScreenCover(isPresented: $showPaywall) {
+                PaywallView(subscriptionManager: subscriptionManager, onSkip: {
+                    showPaywall = false
+                })
+            }
+            .fullScreenCover(isPresented: $showSignup) {
+                SignupPromptView()
+            }
                 .sheet(isPresented: $showingCallView) {
                     VoiceCallView(callManager: callManager, accessToken: nil) {
                         handleCallEnd()
@@ -214,6 +226,7 @@ struct ContentView: View {
                 // #if DEBUG
                 Button("Rewatch\nonboarding") {
                     UserDefaults.standard.set(false, forKey: "hasSeenOnboarding")
+                    UserDefaults.standard.set(false, forKey: "hasSkippedSignup")
                     UserDefaults.standard.removeObject(forKey: "onboardingPendingFocusTask")
                 }
                 .font(.system(size: 9, weight: .bold))
@@ -314,8 +327,7 @@ struct ContentView: View {
             }
             
             if isBlocked {
-                // AI Interaction Buttons (only visible when premium)
-                if subscriptionManager.isPremium {
+                ZStack {
                     VStack(spacing: 12) {
                         Button(action: { startVoiceCall(companion: selectedCompanion) }) {
                             HStack {
@@ -336,7 +348,6 @@ struct ContentView: View {
                         }
                         .disabled(isStartingCall || isCheckingLimit || !(callLimitInfo?.canCall ?? true))
 
-                        // Text Chat Button
                         Button(action: startTextChat) {
                             HStack {
                                 Image(systemName: "message.fill")
@@ -351,10 +362,12 @@ struct ContentView: View {
                             .shadow(color: Color.green.opacity(0.3), radius: 10, x: 0, y: 5)
                         }
                     }
+                    if !isLoggedIn || !subscriptionManager.isPremium {
+                        SubscriptionGateOverlay(cornerRadius: 15, isLoggedIn: isLoggedIn) { handleGateTap() }
+                    }
                 }
             } else {
-                // Test Buttons (only visible when premium)
-                if subscriptionManager.isPremium {
+                ZStack {
                     HStack(spacing: 12) {
                         Button(action: { startVoiceCall(companion: selectedCompanion) }) {
                             HStack {
@@ -382,6 +395,9 @@ struct ContentView: View {
                             .background(Color.green.opacity(0.1))
                             .cornerRadius(10)
                         }
+                    }
+                    if !isLoggedIn || !subscriptionManager.isPremium {
+                        SubscriptionGateOverlay(cornerRadius: 10, isLoggedIn: isLoggedIn) { handleGateTap() }
                     }
                 }
             }
@@ -603,13 +619,20 @@ struct ContentView: View {
                     minutesText: $minutesText,
                     starting: $starting,
                     store: store,
-                    updateAuthStatus: updateAuthStatus
+                    updateAuthStatus: updateAuthStatus,
+                    isPremium: subscriptionManager.isPremium,
+                    isLoggedIn: isLoggedIn,
+                    onSubscribeTap: handleGateTap
                 )
                 .padding(.horizontal)
                 .padding(.top, 20)
 
-                WeeklyScheduleSection()
-                    .padding(.horizontal)
+                WeeklyScheduleSection(
+                    isPremium: subscriptionManager.isPremium,
+                    isLoggedIn: isLoggedIn,
+                    onSubscribeTap: handleGateTap
+                )
+                .padding(.horizontal)
             }
             .padding(.bottom, 100)
         }
@@ -618,6 +641,14 @@ struct ContentView: View {
     
     // MARK: - Logic
     
+    func handleGateTap() {
+        if isLoggedIn {
+            showPaywall = true
+        } else {
+            showSignup = true
+        }
+    }
+
     func onAppAppear() {
         Shared.defaults.set(APIConfig.baseURL, forKey: Shared.baseURLKey)
         Shared.defaults.set(phone, forKey: Shared.phoneKey)
@@ -633,6 +664,10 @@ struct ContentView: View {
             UserDefaults.standard.removeObject(forKey: "onboardingPendingFocusTask")
         }
         
+        if isLoggedIn && !subscriptionManager.isPremium && !subscriptionManager.isLoading {
+            showPaywall = true
+        }
+
         #if canImport(FamilyControls)
         Task { await updateAuthStatus() }
         #endif

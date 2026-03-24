@@ -9,6 +9,7 @@ import StoreKit
 struct PaywallView: View {
     @Environment(\.dismiss) var dismiss
     @ObservedObject var subscriptionManager: SubscriptionManager
+    var onSkip: (() -> Void)? = nil
     @State private var showError = false
     @State private var errorMessage = ""
     @State private var showTerms = false
@@ -42,6 +43,7 @@ struct PaywallView: View {
                             .subscriptionStoreControlStyle(.prominentPicker)
                             .subscriptionStoreButtonLabel(.multiline)
                             .storeButton(.visible, for: .restorePurchases)
+                        .storeButton(.hidden, for: .cancellation)
                             .onInAppPurchaseCompletion { product, result in
                                 handlePurchaseResult(product: product, result: result)
                             }
@@ -50,6 +52,7 @@ struct PaywallView: View {
                             .subscriptionStoreControlStyle(.prominentPicker)
                             .subscriptionStoreButtonLabel(.multiline)
                             .storeButton(.visible, for: .restorePurchases)
+                            .storeButton(.hidden, for: .cancellation)
                             .onInAppPurchaseCompletion { product, result in
                                 handlePurchaseResult(product: product, result: result)
                             }
@@ -66,7 +69,14 @@ struct PaywallView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                if let onSkip {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(action: onSkip) {
+                            Image(systemName: "xmark")
+                                .font(.body)
+                                .foregroundColor(.secondary.opacity(0.5))
+                        }
+                    }
                 }
             }
             .alert("Purchase Error", isPresented: $showError) {

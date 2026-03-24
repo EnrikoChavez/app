@@ -26,6 +26,9 @@ struct ScreenTimeSection: View {
     @State private var stopRemaining = StopMonitoringLimitManager.shared.remainingCount
     @ObservedObject var store: SelectionStore
     var updateAuthStatus: () async -> Void
+    var isPremium: Bool = true
+    var isLoggedIn: Bool = true
+    var onSubscribeTap: () -> Void = {}
 
     private var isAuthorized: Bool { authorized }
 
@@ -190,77 +193,84 @@ struct ScreenTimeSection: View {
 
                     // Control Buttons
                     VStack(spacing: 10) {
-                            // Start without warning
-                            Button {
-                                Task { await startMonitoring(withWarning: false) }
-                            } label: {
-                                VStack(spacing: 2) {
-                                    Text(isMonitoringActive ? "Restart" : "Start").bold()
-                                    Text("no block warning — just an abrupt realization of doomscrolling").font(.caption2)
-                                    .padding(.horizontal, 12)
+                        ZStack {
+                            VStack(spacing: 10) {
+                                // Start without warning
+                                Button {
+                                    Task { await startMonitoring(withWarning: false) }
+                                } label: {
+                                    VStack(spacing: 2) {
+                                        Text(isMonitoringActive ? "Restart" : "Start").bold()
+                                        Text("no block warning — just an abrupt realization of doomscrolling").font(.caption2)
+                                        .padding(.horizontal, 12)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .background(isSelectionEmpty ? Color.gray.opacity(0.2) : Color.green.opacity(0.65))
+                                    .foregroundColor(.white)
+                                    .cornerRadius(12)
+                                    .shadow(color: (isSelectionEmpty ? Color.gray : Color.green).opacity(0.35), radius: 6, x: 0, y: 3)
                                 }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
-                                .background(isSelectionEmpty ? Color.gray.opacity(0.2) : Color.green.opacity(0.65))
-                                .foregroundColor(.white)
-                                .cornerRadius(12)
-                                .shadow(color: (isSelectionEmpty ? Color.gray : Color.green).opacity(0.35), radius: 6, x: 0, y: 3)
-                            }
-                            .disabled(starting || stopping || isSelectionEmpty)
+                                .disabled(starting || stopping || isSelectionEmpty)
 
-                            Button {
-                                Task { await startMonitoring(withWarning: true) }
-                            } label: {
-                                VStack(spacing: 2) {
-                                    if starting { ProgressView().padding(.bottom, 2) }
-                                    Text(isMonitoringActive ? "Restart" : "Start").bold()
-                                    Text("5 minute block warning — a soft wake up call").font(.caption2)
-                                    .padding(.horizontal, 12)
+                                Button {
+                                    Task { await startMonitoring(withWarning: true) }
+                                } label: {
+                                    VStack(spacing: 2) {
+                                        if starting { ProgressView().padding(.bottom, 2) }
+                                        Text(isMonitoringActive ? "Restart" : "Start").bold()
+                                        Text("5 minute block warning — a soft wake up call").font(.caption2)
+                                        .padding(.horizontal, 12)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .background(isSelectionEmpty ? Color.gray.opacity(0.2) : Color.green.opacity(0.65))
+                                    .foregroundColor(.white)
+                                    .cornerRadius(12)
+                                    .shadow(color: (isSelectionEmpty ? Color.gray : Color.green).opacity(0.35), radius: 6, x: 0, y: 3)
                                 }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
-                                .background(isSelectionEmpty ? Color.gray.opacity(0.2) : Color.green.opacity(0.65))
-                                .foregroundColor(.white)
-                                .cornerRadius(12)
-                                .shadow(color: (isSelectionEmpty ? Color.gray : Color.green).opacity(0.35), radius: 6, x: 0, y: 3)
-                            }
-                            .disabled(starting || stopping || isSelectionEmpty)
+                                .disabled(starting || stopping || isSelectionEmpty)
 
-                            // Start with awareness only
-                            Button {
-                                Task { await startMonitoring(withWarning: false, withAwareness: true) }
-                            } label: {
-                                VStack(spacing: 2) {
-                                    Text(isMonitoringActive ? "Restart (Most Focus Friendly)" : "Start (Most Focus Friendly)").bold()
-                                    Text("no block warning with awareness — mutes notifications from app until you first enter and warns before entering").font(.caption2)
-                                    .padding(.horizontal, 12)
+                                // Start with awareness only
+                                Button {
+                                    Task { await startMonitoring(withWarning: false, withAwareness: true) }
+                                } label: {
+                                    VStack(spacing: 2) {
+                                        Text(isMonitoringActive ? "Restart (Most Focus Friendly)" : "Start (Most Focus Friendly)").bold()
+                                        Text("no block warning with awareness — mutes notifications from app until you first enter and warns before entering").font(.caption2)
+                                        .padding(.horizontal, 12)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .background(isSelectionEmpty ? Color.gray.opacity(0.2) : Color.indigo)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(12)
+                                    .shadow(color: (isSelectionEmpty ? Color.gray : Color.indigo).opacity(0.35), radius: 6, x: 0, y: 3)
                                 }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
-                                .background(isSelectionEmpty ? Color.gray.opacity(0.2) : Color.indigo)
-                                .foregroundColor(.white)
-                                .cornerRadius(12)
-                                .shadow(color: (isSelectionEmpty ? Color.gray : Color.indigo).opacity(0.35), radius: 6, x: 0, y: 3)
-                            }
-                            .disabled(starting || stopping || isSelectionEmpty)
+                                .disabled(starting || stopping || isSelectionEmpty)
 
-                            // Start with awareness + 5-min warning
-                            Button {
-                                Task { await startMonitoring(withWarning: true, withAwareness: true) }
-                            } label: {
-                                VStack(spacing: 2) {
-                                    Text(isMonitoringActive ? "Restart (Most Doomscrolling Reminders)" : "Start (Most Doomscrolling Reminders)").bold()
-                                    Text("5 minute block warning with awareness — mutes notifications before entering and warns before entering and blocking").font(.caption2)
-                                    .padding(.horizontal, 12)
+                                // Start with awareness + 5-min warning
+                                Button {
+                                    Task { await startMonitoring(withWarning: true, withAwareness: true) }
+                                } label: {
+                                    VStack(spacing: 2) {
+                                        Text(isMonitoringActive ? "Restart (Most Doomscrolling Reminders)" : "Start (Most Doomscrolling Reminders)").bold()
+                                        Text("5 minute block warning with awareness — mutes notifications before entering and warns before entering and blocking").font(.caption2)
+                                        .padding(.horizontal, 12)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .background(isSelectionEmpty ? Color.gray.opacity(0.2) : Color.pink.opacity(0.68))
+                                    .foregroundColor(.white)
+                                    .cornerRadius(12)
+                                    .shadow(color: (isSelectionEmpty ? Color.gray : Color.green).opacity(0.35), radius: 6, x: 0, y: 3)
                                 }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
-                                .background(isSelectionEmpty ? Color.gray.opacity(0.2) : Color.pink.opacity(0.68))
-                                .foregroundColor(.white)
-                                .cornerRadius(12)
-                                .shadow(color: (isSelectionEmpty ? Color.gray : Color.green).opacity(0.35), radius: 6, x: 0, y: 3)
+                                .disabled(starting || stopping || isSelectionEmpty)
                             }
-                            .disabled(starting || stopping || isSelectionEmpty)
+                            if !isLoggedIn || !isPremium {
+                                SubscriptionGateOverlay(cornerRadius: 12, isLoggedIn: isLoggedIn, onTap: onSubscribeTap)
+                            }
+                        }
 
                         let canStop = StopMonitoringLimitManager.shared.canStop
                         Button {

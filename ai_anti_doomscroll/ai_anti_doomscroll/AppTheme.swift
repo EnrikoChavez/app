@@ -71,3 +71,28 @@ extension View {
     func primaryButtonStyle() -> some View { modifier(PrimaryButtonStyle()) }
     func cardStyle(cornerRadius: CGFloat = 20) -> some View { modifier(CardStyle(cornerRadius: cornerRadius)) }
 }
+
+// MARK: - Subscription Gate Overlay
+
+struct SubscriptionGateOverlay: View {
+    var cornerRadius: CGFloat = 15
+    var isLoggedIn: Bool = true
+    var onTap: () -> Void = {}
+
+    var body: some View {
+        Button(action: onTap) {
+            VStack(spacing: 6) {
+                Image(systemName: "lock.fill")
+                    .font(.caption)
+                Text(isLoggedIn ? "Subscription feature" : "Sign in required")
+                    .font(.caption2).bold()
+                    .multilineTextAlignment(.center)
+            }
+            .foregroundColor(Color(white: 0.35))
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(white: 0.82).opacity(0.92))
+            .cornerRadius(cornerRadius)
+        }
+        .buttonStyle(.plain)
+    }
+}

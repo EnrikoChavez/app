@@ -21,6 +21,10 @@ private let allDays: [(Int, String)] = [
 ]
 
 struct WeeklyScheduleSection: View {
+    var isPremium: Bool = true
+    var isLoggedIn: Bool = true
+    var onSubscribeTap: () -> Void = {}
+
     @StateObject private var store = SelectionStore(storageKey: Shared.weeklySelectionKey)
 
     @State private var selectedDays: Set<Int> = []
@@ -39,7 +43,7 @@ struct WeeklyScheduleSection: View {
             // ── Header ──────────────────────────────────────────────
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("(Hidden Bonus Feature)")
+                    Text("(Hidden Bonus Feature, in beta)")
                         .font(.caption)
                     Text("Weekly Block Schedule")
                         .font(.headline)
@@ -173,24 +177,29 @@ struct WeeklyScheduleSection: View {
                 // ── Control buttons ─────────────────────────────────
                 let canStart = !selectedDays.isEmpty && !isSelectionEmpty
 
-                Button {
-                    Task { await startWeeklySchedule() }
-                } label: {
-                    HStack {
-                        if starting { ProgressView().tint(.white) }
-                        VStack(spacing: 2) {
-                            Text(isActive ? "Restart Schedule" : "Start Schedule").bold()
-                            Text(canStart ? timeRangeLabel : "select days & apps first")
-                                .font(.caption2)
+                ZStack {
+                    Button {
+                        Task { await startWeeklySchedule() }
+                    } label: {
+                        HStack {
+                            if starting { ProgressView().tint(.white) }
+                            VStack(spacing: 2) {
+                                Text(isActive ? "Restart Schedule" : "Start Schedule").bold()
+                                Text(canStart ? timeRangeLabel : "select days & apps first")
+                                    .font(.caption2)
+                            }
                         }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(canStart ? Color.blue : Color.gray.opacity(0.4))
+                        .cornerRadius(12)
                     }
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(canStart ? Color.blue : Color.gray.opacity(0.4))
-                    .cornerRadius(12)
+                    .disabled(starting || !canStart)
+                    if !isLoggedIn || !isPremium {
+                        SubscriptionGateOverlay(cornerRadius: 12, isLoggedIn: isLoggedIn, onTap: onSubscribeTap)
+                    }
                 }
-                .disabled(starting || !canStart)
 
                 if isActive {
                     let canStop = WeeklyStopLimitManager.shared.canStop
