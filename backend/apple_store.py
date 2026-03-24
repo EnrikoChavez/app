@@ -19,6 +19,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric.ec import ECDSA
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
+from cryptography.hazmat.primitives.asymmetric.utils import encode_dss_signature
 from cryptography.hazmat.primitives.hashes import SHA256
 from cryptography.exceptions import InvalidSignature
 
@@ -126,11 +127,19 @@ def verify_app_store_jws(jws_token: str) -> dict:
                 raise ValueError(f"Certificate chain verification error: {e}")
 
         # ── 6. Verify JWS signature with leaf cert's public key ───────────
+        # JWS ES256 uses raw format (r||s, 64 bytes). cryptography's verify()
+        # requires DER-encoded format, so convert before verifying.
         leaf_public_key = certs[0].public_key()
         signing_input = f"{header_b64}.{payload_b64}".encode("utf-8")
         try:
-            signature_bytes = _b64url_decode(signature_b64)
-            leaf_public_key.verify(signature_bytes, signing_input, ECDSA(SHA256()))
+            raw_sig = _b64url_decode(signature_b64)
+            if len(raw_sig) == 64:
+                r = int.from_bytes(raw_sig[:32], "big")
+                s = int.from_bytes(raw_sig[32:], "big")
+                der_sig = encode_dss_signature(r, s)
+            else:
+                der_sig = raw_sig
+            leaf_public_key.verify(der_sig, signing_input, ECDSA(SHA256()))
         except InvalidSignature:
             raise ValueError("JWS signature is invalid — token has been tampered with")
         except Exception as e:
