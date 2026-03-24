@@ -19,7 +19,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric.ec import ECDSA
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
-from cryptography.hazmat.primitives.hashes import SHA256, SHA384, SHA512
+from cryptography.hazmat.primitives.hashes import SHA256
 from cryptography.exceptions import InvalidSignature
 
 
@@ -98,22 +98,14 @@ def verify_app_store_jws(jws_token: str) -> dict:
             raise ValueError(f"Root certificate is not an Apple CA: '{root_cn}'")
 
         # ── 5. Verify each cert is signed by the next in the chain ────────
-        # Apple Sandbox uses RSA-signed intermediates; Production uses ECDSA.
-        # We detect the parent key type and pick the right verifier.
-        def _hash_for_algo(algo_oid):
-            """Map signature algorithm OID to a hash object."""
-            oid_str = algo_oid.dotted_string
-            if "384" in oid_str:
-                return SHA384()
-            if "512" in oid_str:
-                return SHA512()
-            return SHA256()
-
+        # Apple Sandbox intermediates may use RSA or ECDSA with SHA-256/384/512.
+        # Use certificate.signature_hash_algorithm (the authoritative API) rather
+        # than trying to parse OID strings, and branch on the parent key type.
         for i in range(len(certs) - 1):
             child = certs[i]
             parent = certs[i + 1]
             parent_key = parent.public_key()
-            hash_algo = _hash_for_algo(child.signature_algorithm_oid)
+            hash_algo = child.signature_hash_algorithm or SHA256()
             try:
                 if isinstance(parent_key, RSAPublicKey):
                     parent_key.verify(
