@@ -916,7 +916,9 @@ struct ContentView: View {
         }
         
         if !finalTranscript.isEmpty {
-            evaluateCall(transcript: finalTranscript)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                self.evaluateCall(transcript: finalTranscript)
+            }
         }
     }
     
@@ -940,7 +942,9 @@ struct ContentView: View {
                 case .success(let transcript):
                     print("📱 Chat transcript received: \(transcript.prefix(100))...")
                     if !transcript.isEmpty {
-                        evaluateCall(transcript: transcript, isChat: true)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                            self.evaluateCall(transcript: transcript, isChat: true)
+                        }
                     } else {
                         // If transcript is empty, user might have cancelled
                         print("⚠️ Chat transcript is empty")
