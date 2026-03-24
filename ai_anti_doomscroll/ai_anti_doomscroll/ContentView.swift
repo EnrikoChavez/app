@@ -362,7 +362,7 @@ struct ContentView: View {
                             .shadow(color: Color.green.opacity(0.3), radius: 10, x: 0, y: 5)
                         }
                     }
-                    if !isLoggedIn || !subscriptionManager.isPremium {
+                    if !subscriptionManager.isLoading && (!isLoggedIn || !subscriptionManager.isPremium) {
                         SubscriptionGateOverlay(cornerRadius: 15, isLoggedIn: isLoggedIn) { handleGateTap() }
                     }
                 }
@@ -396,7 +396,7 @@ struct ContentView: View {
                             .cornerRadius(10)
                         }
                     }
-                    if !isLoggedIn || !subscriptionManager.isPremium {
+                    if !subscriptionManager.isLoading && (!isLoggedIn || !subscriptionManager.isPremium) {
                         SubscriptionGateOverlay(cornerRadius: 10, isLoggedIn: isLoggedIn) { handleGateTap() }
                     }
                 }
@@ -620,16 +620,16 @@ struct ContentView: View {
                     starting: $starting,
                     store: store,
                     updateAuthStatus: updateAuthStatus,
-                    isPremium: subscriptionManager.isPremium,
-                    isLoggedIn: isLoggedIn,
+                    isPremium: subscriptionManager.isLoading || subscriptionManager.isPremium,
+                    isLoggedIn: subscriptionManager.isLoading || isLoggedIn,
                     onSubscribeTap: handleGateTap
                 )
                 .padding(.horizontal)
                 .padding(.top, 20)
 
                 WeeklyScheduleSection(
-                    isPremium: subscriptionManager.isPremium,
-                    isLoggedIn: isLoggedIn,
+                    isPremium: subscriptionManager.isLoading || subscriptionManager.isPremium,
+                    isLoggedIn: subscriptionManager.isLoading || isLoggedIn,
                     onSubscribeTap: handleGateTap
                 )
                 .padding(.horizontal)
