@@ -73,12 +73,12 @@ struct ContentView: View {
     @State private var manualUnblockLimitInfo: ManualUnblockLimitInfo? = nil
     @State private var selectedCompanion = "1"
     private let companionNames = [
-        "1": "Companion 1",
-        "2": "Companion 2",
-        "3": "Companion 3",
-        "4": "Companion 4",
-        "5": "Companion 5",
-        "6": "Companion 6"
+        "1": "Voice 1",
+        "2": "Voice 2",
+        "3": "Voice 3",
+        "4": "Voice 4",
+        "5": "Voice 5",
+        "6": "Voice 6"
     ]
 
     let networkManager = NetworkManager()
@@ -266,70 +266,75 @@ struct ContentView: View {
                 Spacer()
             }
             
-            // Call Limit Info
-            if let limitInfo = callLimitInfo {
-                HStack(spacing: 8) {
-                    Image(systemName: "clock.fill")
-                        .foregroundColor(limitInfo.canCall ? .blue : .orange)
-                    Text("\(Int(limitInfo.remainingSeconds))s remaining today for calling")
-                        .font(.caption)
-                        .foregroundColor(limitInfo.canCall ? .blue : .orange)
-                    if !limitInfo.canCall {
-                        Text("(Limit reached)")
-                            .font(.caption2)
-                            .foregroundColor(.orange)
+            // Companion picker + Call Limit Info
+            HStack(spacing: 8) {
+                Menu {
+                    ForEach(["1", "2", "3", "4", "5", "6"], id: \.self) { key in
+                        Button(action: { selectedCompanion = key }) {
+                            if key == selectedCompanion {
+                                Label(companionNames[key] ?? key, systemImage: "checkmark")
+                            } else {
+                                Text(companionNames[key] ?? key)
+                            }
+                        }
                     }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(companionNames[selectedCompanion] ?? "Voice")
+                            .font(.caption).bold()
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.caption2)
+                    }
+                    .foregroundColor(.primary)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 12)
+                    .background(Color.white)
+                    .cornerRadius(8)
+                    .shadow(color: Color.black.opacity(0.06), radius: 4, x: 0, y: 2)
                 }
-                .padding(.vertical, 8)
-                .padding(.horizontal, 12)
-                .background((limitInfo.canCall ? Color.blue : Color.orange).opacity(0.1))
-                .cornerRadius(8)
+
+                if let limitInfo = callLimitInfo {
+                    HStack(spacing: 8) {
+                        Image(systemName: "clock.fill")
+                            .foregroundColor(limitInfo.canCall ? .blue : .orange)
+                        Text("\(Int(limitInfo.remainingSeconds))s remaining today for calling")
+                            .font(.caption)
+                            .foregroundColor(limitInfo.canCall ? .blue : .orange)
+                        if !limitInfo.canCall {
+                            Text("(Limit reached)")
+                                .font(.caption2)
+                                .foregroundColor(.orange)
+                        }
+                    }
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 12)
+                    .background((limitInfo.canCall ? Color.blue : Color.orange).opacity(0.1))
+                    .cornerRadius(8)
+                }
             }
             
             if isBlocked {
                 // AI Interaction Buttons (only visible when premium)
                 if subscriptionManager.isPremium {
                     VStack(spacing: 12) {
-                        HStack(spacing: 10) {
-                            Button(action: { startVoiceCall(companion: selectedCompanion) }) {
-                                HStack {
-                                    if isStartingCall || isCheckingLimit {
-                                        ProgressView().tint(.white).padding(.trailing, 8)
-                                    } else {
-                                        Image(systemName: "mic.fill")
-                                    }
-                                    Text(isStartingCall ? "Connecting..." : isCheckingLimit ? "Checking..." : "Call \(companionNames[selectedCompanion] ?? "Companion")")
-                                        .bold()
+                        Button(action: { startVoiceCall(companion: selectedCompanion) }) {
+                            HStack {
+                                if isStartingCall || isCheckingLimit {
+                                    ProgressView().tint(.white).padding(.trailing, 8)
+                                } else {
+                                    Image(systemName: "mic.fill")
                                 }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 16)
-                                .background((callLimitInfo?.canCall ?? true) ? Color.blue : Color.gray)
-                                .foregroundColor(.white)
-                                .cornerRadius(15)
-                                .shadow(color: ((callLimitInfo?.canCall ?? true) ? Color.blue : Color.gray).opacity(0.3), radius: 10, x: 0, y: 5)
+                                Text(isStartingCall ? "Connecting..." : isCheckingLimit ? "Checking..." : "Call \(companionNames[selectedCompanion] ?? "Companion")")
+                                    .bold()
                             }
-                            .disabled(isStartingCall || isCheckingLimit || !(callLimitInfo?.canCall ?? true))
-
-                            Menu {
-                                ForEach(["1", "2", "3", "4", "5", "6"], id: \.self) { key in
-                                    Button(action: { selectedCompanion = key }) {
-                                        if key == selectedCompanion {
-                                            Label(companionNames[key] ?? key, systemImage: "checkmark")
-                                        } else {
-                                            Text(companionNames[key] ?? key)
-                                        }
-                                    }
-                                }
-                            } label: {
-                                Image(systemName: "chevron.up.chevron.down")
-                                    .font(.body.bold())
-                                    .foregroundColor(.white)
-                                    .frame(width: 48, height: 48)
-                                    .background((callLimitInfo?.canCall ?? true) ? Color.blue : Color.gray)
-                                    .cornerRadius(15)
-                                    .shadow(color: ((callLimitInfo?.canCall ?? true) ? Color.blue : Color.gray).opacity(0.3), radius: 10, x: 0, y: 5)
-                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background((callLimitInfo?.canCall ?? true) ? Color.blue : Color.gray)
+                            .foregroundColor(.white)
+                            .cornerRadius(15)
+                            .shadow(color: ((callLimitInfo?.canCall ?? true) ? Color.blue : Color.gray).opacity(0.3), radius: 10, x: 0, y: 5)
                         }
+                        .disabled(isStartingCall || isCheckingLimit || !(callLimitInfo?.canCall ?? true))
 
                         // Text Chat Button
                         Button(action: startTextChat) {
@@ -350,57 +355,32 @@ struct ContentView: View {
             } else {
                 // Test Buttons (only visible when premium)
                 if subscriptionManager.isPremium {
-                    VStack(spacing: 8) {
-                        HStack(spacing: 8) {
-                            Button(action: { startVoiceCall(companion: selectedCompanion) }) {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "testtube.2")
-                                    Text("Practice Call")
-                                }
-                                .font(.footnote).bold()
-                                .foregroundColor((callLimitInfo?.canCall ?? true) ? .blue : .gray)
-                                .padding(.vertical, 8)
-                                .padding(.horizontal, 16)
-                                .background((callLimitInfo?.canCall ?? true) ? Color.blue.opacity(0.1) : Color.gray.opacity(0.1))
-                                .cornerRadius(10)
+                    HStack(spacing: 12) {
+                        Button(action: { startVoiceCall(companion: selectedCompanion) }) {
+                            HStack {
+                                Image(systemName: "testtube.2")
+                                Text("Practice Call")
                             }
-                            .disabled(!(callLimitInfo?.canCall ?? true))
+                            .font(.footnote).bold()
+                            .foregroundColor((callLimitInfo?.canCall ?? true) ? .blue : .gray)
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 16)
+                            .background((callLimitInfo?.canCall ?? true) ? Color.blue.opacity(0.1) : Color.gray.opacity(0.1))
+                            .cornerRadius(10)
+                        }
+                        .disabled(!(callLimitInfo?.canCall ?? true))
 
-                            Menu {
-                                ForEach(["1", "2", "3", "4", "5", "6"], id: \.self) { key in
-                                    Button(action: { selectedCompanion = key }) {
-                                        if key == selectedCompanion {
-                                            Label(companionNames[key] ?? key, systemImage: "checkmark")
-                                        } else {
-                                            Text(companionNames[key] ?? key)
-                                        }
-                                    }
-                                }
-                            } label: {
-                                HStack(spacing: 4) {
-                                    Text(companionNames[selectedCompanion] ?? "Voice")
-                                    Image(systemName: "chevron.up.chevron.down")
-                                }
-                                .font(.caption2).bold()
-                                .foregroundColor(.blue)
-                                .padding(.vertical, 8)
-                                .padding(.horizontal, 10)
-                                .background(Color.blue.opacity(0.1))
-                                .cornerRadius(10)
+                        Button(action: startTextChat) {
+                            HStack {
+                                Image(systemName: "message")
+                                Text("Practice Chat")
                             }
-
-                            Button(action: startTextChat) {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "message")
-                                    Text("Practice Chat")
-                                }
-                                .font(.footnote).bold()
-                                .foregroundColor(.green)
-                                .padding(.vertical, 8)
-                                .padding(.horizontal, 16)
-                                .background(Color.green.opacity(0.1))
-                                .cornerRadius(10)
-                            }
+                            .font(.footnote).bold()
+                            .foregroundColor(.green)
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 16)
+                            .background(Color.green.opacity(0.1))
+                            .cornerRadius(10)
                         }
                     }
                 }
