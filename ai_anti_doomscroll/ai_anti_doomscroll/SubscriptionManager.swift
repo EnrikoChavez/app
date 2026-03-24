@@ -10,7 +10,7 @@ import Combine
 @MainActor
 class SubscriptionManager: ObservableObject {
     @Published var isPremium = false
-    @Published var isLoading = false
+    @Published var isLoading = true
     @Published var currentSubscription: Product?
     
     private var updateListenerTask: Task<Void, Error>?

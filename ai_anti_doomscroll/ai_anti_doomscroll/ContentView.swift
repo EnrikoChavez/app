@@ -677,7 +677,8 @@ struct ContentView: View {
         // Pre-activate audio session so the first call works reliably
         callManager.activateAudioSession()
 
-        // Check call limit on load
+        // Show cached call limit instantly, then refresh from server
+        loadCachedCallLimit()
         checkCallLimit()
         checkManualUnblockLimit()
         
@@ -822,6 +823,35 @@ struct ContentView: View {
         print("📊 Manual unblock limit: \(mgr.remainingCount)/\(mgr.limitCount) remaining")
     }
 
+    private static let callLimitCacheKey = "callLimitCache"
+
+    func loadCachedCallLimit() {
+        guard let dict = UserDefaults.standard.dictionary(forKey: Self.callLimitCacheKey),
+              let dateStr = dict["date"] as? String,
+              dateStr == Self.todayString(),
+              let canCall = dict["canCall"] as? Bool,
+              let remaining = dict["remainingSeconds"] as? Double,
+              let used = dict["usedSeconds"] as? Double,
+              let limit = dict["limitSeconds"] as? Double else { return }
+        callLimitInfo = CallLimitInfo(canCall: canCall, remainingSeconds: remaining, usedSeconds: used, limitSeconds: limit)
+    }
+
+    func saveCallLimitCache(_ info: CallLimitInfo) {
+        UserDefaults.standard.set([
+            "date": Self.todayString(),
+            "canCall": info.canCall,
+            "remainingSeconds": info.remainingSeconds,
+            "usedSeconds": info.usedSeconds,
+            "limitSeconds": info.limitSeconds
+        ], forKey: Self.callLimitCacheKey)
+    }
+
+    private static func todayString() -> String {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        return f.string(from: Date())
+    }
+
     func checkCallLimit() {
         isCheckingLimit = true
         networkManager.checkCallLimit { result in
@@ -830,6 +860,7 @@ struct ContentView: View {
                 switch result {
                 case .success(let info):
                     self.callLimitInfo = info
+                    self.saveCallLimitCache(info)
                 case .failure(let error):
                     print("⚠️ Failed to check call limit: \(error.localizedDescription)")
                 }
