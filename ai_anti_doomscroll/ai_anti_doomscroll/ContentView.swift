@@ -124,6 +124,29 @@ struct ContentView: View {
                             .shadow(color: Color.black.opacity(0.10), radius: 8, y: -3)
                             .environment(\.colorScheme, .light)
                     }
+                // Evaluating loading popup
+                if isEvaluating {
+                    Color.black.opacity(0.35)
+                        .ignoresSafeArea()
+                        .transition(.opacity)
+                        .animation(.easeInOut(duration: 0.25), value: isEvaluating)
+
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .scaleEffect(1.3)
+                            .tint(.primary)
+                        Text("Evaluating...")
+                            .font(.headline)
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 28)
+                    .frame(width: 270)
+                    .background(Color(.systemBackground))
+                    .cornerRadius(14)
+                    .shadow(color: Color.black.opacity(0.18), radius: 20, x: 0, y: 8)
+                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                    .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isEvaluating)
+                }
                 }
             .navigationBarHidden(true)
             .onAppear(perform: onAppAppear)
@@ -214,7 +237,7 @@ struct ContentView: View {
                     Text("Anti-Doomscroll")
                         .font(.system(size: 28, weight: .black, design: .rounded))
                 }
-                Text("Stay focused when having tasks.")
+                Text("Time Limit your doomscrolling.")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
@@ -269,7 +292,7 @@ struct ContentView: View {
                             .font(.caption)
                             .foregroundColor(.secondary)
                     } else {
-                        Text("AI companion is still available to chat while apps are not blocked")
+                        Text("AI doesn't need convincing while apps are open, mock chat still available")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -1063,7 +1086,12 @@ struct ContentView: View {
                         Analytics.voiceCallEnded(durationSeconds: self.callManager.callDuration, unblocked: unblock)
                     }
                     if grantExtraStop {
-                        if unblock { StopMonitoringLimitManager.shared.grantExtraStop() }
+                        if unblock {
+                            StopMonitoringLimitManager.shared.grantExtraStop()
+                            Analytics.extraStopGranted()
+                        } else {
+                            Analytics.extraStopDenied()
+                        }
                     } else {
                         if unblock { self.performUnblock() }
                     }

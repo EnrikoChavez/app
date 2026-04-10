@@ -336,7 +336,7 @@ struct OnboardingView: View {
                     .font(.title).bold()
                     .multilineTextAlignment(.center)
 
-                Text("To block distracting apps, we need Screen Time access. Tap the button below, then tap **Allow** on the dialog that appears.")
+                Text("To block distracting apps, we need Screen Time access. Tap the **Allow Screen Time** button below, then tap **Continue** on the dialog that appears.")
                     .font(.body)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)

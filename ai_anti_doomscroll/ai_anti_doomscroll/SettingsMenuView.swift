@@ -30,7 +30,10 @@ struct SettingsMenuView: View {
         NavigationView {
             List {
                 Section {
-                    Toggle(isOn: $isDarkMode) {
+                    Toggle(isOn: Binding(
+                        get: { isDarkMode },
+                        set: { isDarkMode = $0; Analytics.darkModeToggled(isDark: $0) }
+                    )) {
                         HStack {
                             Image(systemName: isDarkMode ? "moon.fill" : "sun.max.fill")
                             Text(isDarkMode ? "Dark Mode" : "Light Mode")
@@ -460,7 +463,7 @@ struct HowItWorksView: View {
 
                     howItWorksRow(icon: "phone", color: .purple,
                         title: "Call or chat the AI to unblock",
-                        detail: "Tap Call or Text AI and tell it what you've been working on. If it's satisfied, your apps unlock.")
+                        detail: "Tap Call or Text AI and tell it what you've been working on. If you manage to be convincing, your apps unlock.")
 
                     howItWorksRow(icon: "hand.tap", color: .gray,
                         title: "Manual unblock",

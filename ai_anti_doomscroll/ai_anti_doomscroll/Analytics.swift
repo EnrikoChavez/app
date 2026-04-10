@@ -164,6 +164,44 @@ enum Analytics {
         PostHogSDK.shared.capture("chat_ended", properties: ["unblocked": unblocked])
     }
 
+    // MARK: - Timed Block
+
+    static func timedBlockStarted(minutes: Int, appCount: Int, categoryCount: Int) {
+        PostHogSDK.shared.capture("timed_block_started", properties: [
+            "minutes": minutes,
+            "app_count": appCount,
+            "category_count": categoryCount
+        ])
+    }
+
+    static func timedBlockEnded(wasManual: Bool) {
+        PostHogSDK.shared.capture("timed_block_ended", properties: ["was_manual": wasManual])
+    }
+
+    // MARK: - Extra Stop
+
+    static func extraStopRequested(via method: String) {
+        PostHogSDK.shared.capture("extra_stop_requested", properties: ["method": method])
+    }
+
+    static func extraStopGranted() {
+        PostHogSDK.shared.capture("extra_stop_granted")
+    }
+
+    static func extraStopDenied() {
+        PostHogSDK.shared.capture("extra_stop_denied")
+    }
+
+    static func stopMonitoringLimitReached() {
+        PostHogSDK.shared.capture("stop_monitoring_limit_reached")
+    }
+
+    // MARK: - Appearance
+
+    static func darkModeToggled(isDark: Bool) {
+        PostHogSDK.shared.capture("appearance_toggled", properties: ["dark_mode": isDark])
+    }
+
     // MARK: - Paywall
 
     static func paywallShown() {

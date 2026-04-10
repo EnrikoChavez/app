@@ -372,7 +372,7 @@ struct ScreenTimeSection: View {
                     .font(.caption2)
                     .foregroundColor(.secondary)
                 HStack(spacing: 8) {
-                    Button(action: onCallForExtraStop) {
+                    Button(action: { Analytics.extraStopRequested(via: "call"); onCallForExtraStop() }) {
                         HStack(spacing: 4) {
                             Image(systemName: "mic.fill")
                             Text("Call AI")
@@ -384,7 +384,7 @@ struct ScreenTimeSection: View {
                         .background(Color.purple)
                         .cornerRadius(10)
                     }
-                    Button(action: onChatForExtraStop) {
+                    Button(action: { Analytics.extraStopRequested(via: "chat"); onChatForExtraStop() }) {
                         HStack(spacing: 4) {
                             Image(systemName: "message.fill")
                             Text("Chat AI")
@@ -469,7 +469,7 @@ struct ScreenTimeSection: View {
                         .stroke(Color.orange.opacity(0.25), lineWidth: 1)
                 )
 
-                Text("Go to the Unblock tab to end the block early via AI call, chat, or manual unblock.")
+                Text("If you want to end the block early, call AI call, chat, or manual unblock.")
                     .font(.caption2)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -709,6 +709,11 @@ struct ScreenTimeSection: View {
             updateCountdown()
             onBlockStateChanged()
         }
+        Analytics.timedBlockStarted(
+            minutes: minutes,
+            appCount: store.selection.applicationTokens.count,
+            categoryCount: store.selection.categoryTokens.count
+        )
     }
 
     private func autoExpireTimedBlock() async {
@@ -729,6 +734,7 @@ struct ScreenTimeSection: View {
             timedBlockEndTime = nil
             timedBlockCountdown = ""
         }
+        Analytics.timedBlockEnded(wasManual: false)
     }
 
     // MARK: - Usage Limit Logic
@@ -762,6 +768,7 @@ struct ScreenTimeSection: View {
                     statusMessage = "Daily restart limit reached. Try again tomorrow."
                     isStatusError = true
                 }
+                Analytics.stopMonitoringLimitReached()
                 return
             }
             StopMonitoringLimitManager.shared.recordStop()

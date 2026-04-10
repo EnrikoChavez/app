@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(grep -E \"\\\\.swift$|^d\")",
-      "Bash(grep -E \"\\\\.swift$\")"
+      "Bash(grep -E \"\\\\.swift$\")",
+      "Bash(xcodebuild -scheme ai_anti_doomscroll -destination 'platform=iOS Simulator,name=iPhone 16' build)"
     ]
   }
 }

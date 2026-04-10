@@ -5,116 +5,81 @@
 
 import SwiftUI
 
+// Isolated subview so message list doesn't re-render on every keystroke in the input field.
+private struct ChatMessageList: View {
+    @ObservedObject var chatManager: ChatManager
+
+    var body: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 12) {
+                    ForEach(chatManager.messages) { message in
+                        MessageBubble(message: message)
+                            .id(message.id)
+                    }
+
+                    if chatManager.isLoading {
+                        HStack {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                            Text("AI is thinking...")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                        }
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
+                    }
+                }
+                .padding()
+            }
+            .onChange(of: chatManager.messages.count) { _ in
+                if let lastMessage = chatManager.messages.last {
+                    withAnimation {
+                        proxy.scrollTo(lastMessage.id, anchor: .bottom)
+                    }
+                }
+            }
+        }
+    }
+}
+
 struct ChatView: View {
     @ObservedObject var chatManager: ChatManager
     var todos: [Todo]
     var onEndChat: () -> Void
-    
+
     @State private var messageText = ""
     @State private var wasCancelled = false
     @FocusState private var isTextFieldFocused: Bool
-    
+
+    private var trimmedText: String { messageText.trimmingCharacters(in: .whitespacesAndNewlines) }
+
     var body: some View {
         VStack(spacing: 0) {
             // Header
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("AI Chat")
-                        .font(.headline)
-                    Text("Convince me you finished your tasks")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                Spacer()
-                Button(action: {
-                    wasCancelled = true
-                    chatManager.cancelConversation()
-                    onEndChat()
-                }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.title2)
-                        .foregroundColor(.secondary)
-                }
-            }
-            .padding()
-            .background(Color(.systemBackground))
-            
-            Divider()
-            
-            // Messages
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 12) {
-                        ForEach(chatManager.messages) { message in
-                            MessageBubble(message: message)
-                                .id(message.id)
-                        }
-                        
-                        if chatManager.isLoading {
-                            HStack {
-                                ProgressView()
-                                    .scaleEffect(0.8)
-                                Text("AI is thinking...")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                Spacer()
-                            }
-                            .padding(.horizontal)
-                            .padding(.vertical, 8)
-                        }
+            VStack(spacing: 10) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("AI Chat")
+                            .font(.headline)
+                        Text("Convince me you finished your tasks")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                     }
-                    .padding()
-                }
-                .onChange(of: chatManager.messages.count) { _ in
-                    if let lastMessage = chatManager.messages.last {
-                        withAnimation {
-                            proxy.scrollTo(lastMessage.id, anchor: .bottom)
-                        }
+                    Spacer()
+                    Button(action: {
+                        wasCancelled = true
+                        chatManager.cancelConversation()
+                        onEndChat()
+                    }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title2)
+                            .foregroundColor(.secondary)
                     }
                 }
-            }
-            
-            Divider()
-            
-            // Input area
-            VStack(spacing: 8) {
-                // Always show input field
-                    VStack(spacing: 8) {
-                        HStack(spacing: 12) {
-                            TextField("Type your message...", text: $messageText, axis: .vertical)
-                                .textFieldStyle(.roundedBorder)
-                                .lineLimit(1...5)
-                                .focused($isTextFieldFocused)
-                                .onSubmit {
-                                    sendMessage()
-                                }
-                            
-                            Button(action: sendMessage) {
-                                Image(systemName: "arrow.up.circle.fill")
-                                    .font(.title2)
-                                    .foregroundColor(messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .gray : .blue)
-                            }
-                            .disabled(messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || chatManager.isLoading)
-                        }
-                        .padding(.horizontal)
-                        
-                        // Character count (invisible unless approaching limit)
-                        if messageText.count > 2500 {
-                            HStack {
-                                Spacer()
-                                Text("\(messageText.count)/3000")
-                                    .font(.caption2)
-                                    .foregroundColor(messageText.count >= 3000 ? .red : .secondary)
-                            }
-                            .padding(.horizontal)
-                        }
-                    }
-                    .padding(.top, 8)
-                
-                // Always show End Conversation button
-                Button(action: {
-                    handleEndConversation()
-                }) {
+
+                Button(action: handleEndConversation) {
                     HStack {
                         Image(systemName: "checkmark.circle.fill")
                         Text("End Conversation & Evaluate")
@@ -126,7 +91,49 @@ struct ChatView: View {
                     .foregroundColor(.white)
                     .cornerRadius(12)
                 }
-                .padding(.horizontal)
+            }
+            .padding()
+            .background(Color(.systemBackground))
+
+            Divider()
+
+            // Messages — isolated subview so typing doesn't re-render the list
+            ChatMessageList(chatManager: chatManager)
+
+            Divider()
+
+            // Input area
+            VStack(spacing: 8) {
+                VStack(spacing: 8) {
+                    HStack(spacing: 12) {
+                        TextField("Type your message...", text: $messageText, axis: .vertical)
+                            .textFieldStyle(.roundedBorder)
+                            .lineLimit(1...5)
+                            .focused($isTextFieldFocused)
+                            .onSubmit {
+                                sendMessage()
+                            }
+
+                        Button(action: sendMessage) {
+                            Image(systemName: "arrow.up.circle.fill")
+                                .font(.title2)
+                                .foregroundColor(trimmedText.isEmpty ? .gray : .blue)
+                        }
+                        .disabled(trimmedText.isEmpty || chatManager.isLoading)
+                    }
+                    .padding(.horizontal)
+
+                    if messageText.count > 2500 {
+                        HStack {
+                            Spacer()
+                            Text("\(messageText.count)/3000")
+                                .font(.caption2)
+                                .foregroundColor(messageText.count >= 3000 ? .red : .secondary)
+                        }
+                        .padding(.horizontal)
+                    }
+                }
+                .padding(.top, 8)
                 .padding(.bottom, 8)
             }
             .background(Color(.systemBackground))
