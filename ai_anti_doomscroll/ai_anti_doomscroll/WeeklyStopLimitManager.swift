@@ -2,7 +2,7 @@
 //  WeeklyStopLimitManager.swift
 //  ai_anti_doomscroll
 //
-//  Tracks daily "stop weekly schedule" usage — max 10 per day.
+//  Tracks daily "stop weekly schedule" usage — max 1 per day.
 //  Stored in iCloud KV store; falls back to UserDefaults.
 //
 
@@ -11,7 +11,7 @@ import Foundation
 struct WeeklyStopLimitManager {
     static let shared = WeeklyStopLimitManager()
 
-    private let dailyLimit = 5
+    private let dailyLimit = 1
     private let countKey   = "weeklyStopUsedCount"
     private let dateKey    = "weeklyStopLastResetDate"
 

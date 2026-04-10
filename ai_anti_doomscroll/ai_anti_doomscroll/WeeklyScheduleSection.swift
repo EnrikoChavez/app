@@ -41,17 +41,30 @@ struct WeeklyScheduleSection: View {
         VStack(alignment: .leading, spacing: 20) {
 
             // ── Header ──────────────────────────────────────────────
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("(Hidden Bonus Feature, in beta)")
-                        .font(.caption)
-                    Text("Weekly Block Schedule")
-                        .font(.headline)
-                    Text("Block apps on specific days and times every week")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Weekly Block Schedule")
+                    .font(.headline)
+                Text("Block apps on specific days and times every week")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.orange)
+                        .font(.subheadline)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Strict lock-in — AI cannot help you bypass this")
+                            .font(.subheadline).bold()
+                            .foregroundColor(.orange)
+                        Text("Once active, these blocks run on a fixed schedule and cannot be stopped by the AI. Only the Stop button (with its daily limit) can end them early. Use only if you want hard, non-negotiable blocking.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
                 }
-                Spacer()
+                .padding(12)
+                .background(Color.orange.opacity(0.1))
+                .cornerRadius(10)
+                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.orange.opacity(0.3), lineWidth: 1))
             }
 
             #if canImport(FamilyControls)
@@ -185,8 +198,13 @@ struct WeeklyScheduleSection: View {
                             if starting { ProgressView().tint(.white) }
                             VStack(spacing: 2) {
                                 Text(isActive ? "Restart Schedule" : "Start Schedule").bold()
-                                Text(canStart ? timeRangeLabel : "select days & apps first")
-                                    .font(.caption2)
+                                if isActive {
+                                    Text("uses your 1 daily stop")
+                                        .font(.caption2)
+                                } else {
+                                    Text(canStart ? timeRangeLabel : "select days & apps first")
+                                        .font(.caption2)
+                                }
                             }
                         }
                         .foregroundColor(.white)
@@ -195,7 +213,7 @@ struct WeeklyScheduleSection: View {
                         .background(canStart ? Color.blue : Color.gray.opacity(0.4))
                         .cornerRadius(12)
                     }
-                    .disabled(starting || !canStart)
+                    .disabled(starting || !canStart || (isActive && !WeeklyStopLimitManager.shared.canStop))
                     if !isLoggedIn || !isPremium {
                         SubscriptionGateOverlay(cornerRadius: 12, isLoggedIn: isLoggedIn, onTap: onSubscribeTap)
                     }
@@ -360,6 +378,20 @@ struct WeeklyScheduleSection: View {
         starting = true
         await MainActor.run { statusMessage = ""; isStatusError = false }
         defer { Task { @MainActor in starting = false } }
+
+        // Restarting counts as a stop (stops the current schedule before re-applying)
+        let wasActive = isActive
+        if wasActive {
+            guard WeeklyStopLimitManager.shared.canStop else {
+                await MainActor.run {
+                    statusMessage = "❌ Daily stop limit reached — try again tomorrow"
+                    isStatusError = true
+                }
+                return
+            }
+            WeeklyStopLimitManager.shared.recordStop()
+            await MainActor.run { stopRemaining = WeeklyStopLimitManager.shared.remainingCount }
+        }
 
         saveDays()
         saveTimes()

@@ -6,19 +6,51 @@
 
 import SwiftUI
 
+// Custom environment key so the real system colorScheme is accessible
+// even inside views wrapped with .environment(\.colorScheme, .light)
+private struct SystemColorSchemeKey: EnvironmentKey {
+    static let defaultValue: ColorScheme = .light
+}
+extension EnvironmentValues {
+    var systemColorScheme: ColorScheme {
+        get { self[SystemColorSchemeKey.self] }
+        set { self[SystemColorSchemeKey.self] = newValue }
+    }
+}
+
 enum AppTheme {
+    // ── Dark mode custom palette ────────────────────────────────────────
+    // Using medium grays instead of near-black system defaults
+    static let darkBackground = Color(red: 0.32, green: 0.32, blue: 0.34)   // medium-dark gray
+    static let darkCard       = Color(red: 0.34, green: 0.34, blue: 0.36)   // lighter — cards pop
+    static let darkRow        = Color(red: 0.40, green: 0.40, blue: 0.42)   // lightest — rows inside cards
+
     // ── Background ─────────────────────────────────────────────────────
-    static let backgroundGradient = LinearGradient(
-        colors: [
-            Color(red: 0.93, green: 0.92, blue: 0.95),
-            Color(red: 0.86, green: 0.85, blue: 0.90)
-        ],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
+    static func backgroundGradient(for colorScheme: ColorScheme) -> LinearGradient {
+        if colorScheme == .dark {
+            return LinearGradient(
+                colors: [darkBackground, darkBackground],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        } else {
+            return LinearGradient(
+                colors: [
+                    Color(red: 0.93, green: 0.92, blue: 0.95),
+                    Color(red: 0.86, green: 0.85, blue: 0.90)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+    }
 
     // ── Cards ───────────────────────────────────────────────────────────
-    static let cardBackground   = Color.white
+    // Use cardBg(for:) with systemColorScheme env key — bypasses .colorScheme(.light) override
+    static func cardBg(for scheme: ColorScheme) -> Color {
+        scheme == .dark ? Color(white: 0.87) : Color.white
+    }
+    static let cardBackground = Color.white  // fallback for light-mode-only contexts
     static let cardShadowColor  = Color.black.opacity(0.07)
     static let cardShadowRadius: CGFloat = 14
     static let cardShadowY: CGFloat      = 6
@@ -31,16 +63,16 @@ enum AppTheme {
     }
 
     // ── Elevated rows (inside cards) ────────────────────────────────────
-    static let rowBackground = Color(white: 0.97)
+    static let rowBackground = Color(UIColor.tertiarySystemGroupedBackground)
 
     // ── Buttons ─────────────────────────────────────────────────────────
-    /// Primary dark action button (the "almost black" look from the reference)
     static let primaryButton       = Color(white: 0.10)
     static let primaryButtonShadow = Color.black.opacity(0.22)
 
     // ── Tab bar ─────────────────────────────────────────────────────────
-    static let tabActive   = Color(white: 0.10)
-    static let tabInactive = Color(white: 0.60)
+    // Color.primary adapts: near-black in light, near-white in dark
+    static let tabActive   = Color.primary
+    static let tabInactive = Color.secondary
 }
 
 // MARK: - ViewModifier helpers
@@ -58,10 +90,11 @@ struct PrimaryButtonStyle: ViewModifier {
 }
 
 struct CardStyle: ViewModifier {
+    @Environment(\.systemColorScheme) private var systemColorScheme
     var cornerRadius: CGFloat = 20
     func body(content: Content) -> some View {
         content
-            .background(AppTheme.cardBackground)
+            .background(AppTheme.cardBg(for: systemColorScheme))
             .cornerRadius(cornerRadius)
             .shadow(color: AppTheme.cardShadowColor, radius: AppTheme.cardShadowRadius, x: 0, y: AppTheme.cardShadowY)
     }
@@ -88,9 +121,9 @@ struct SubscriptionGateOverlay: View {
                     .font(.caption2).bold()
                     .multilineTextAlignment(.center)
             }
-            .foregroundColor(Color(white: 0.35))
+            .foregroundColor(.secondary)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color(white: 0.82).opacity(0.92))
+            .background(Color(.systemFill))
             .cornerRadius(cornerRadius)
         }
         .buttonStyle(.plain)

@@ -14,6 +14,7 @@ struct ai_anti_doomscrollApp: App {
     @AppStorage("isLoggedIn") private var isLoggedIn = false
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     @AppStorage("hasSkippedSignup") private var hasSkippedSignup = false
+    @AppStorage("isDarkMode") private var isDarkMode = false
     
     // SwiftData container for local storage
     let container: ModelContainer
@@ -75,7 +76,7 @@ struct ai_anti_doomscrollApp: App {
             } else {
                 ContentView()
                     .modelContainer(container)
-                    .preferredColorScheme(.light)
+                    .preferredColorScheme(isDarkMode ? .dark : .light)
             }
         }
     }

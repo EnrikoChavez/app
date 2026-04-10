@@ -34,6 +34,10 @@ enum Shared {
     static let isMonitoringActiveKey = "isMonitoringActive"
     static let monitoringMinutesKey  = "monitoringMinutes"
 
+    // Timed block: block apps for a fixed duration regardless of usage
+    static let isTimedBlockActiveKey  = "isTimedBlockActive"
+    static let timedBlockEndTimeKey   = "timedBlockEndTime"   // unix timestamp (Double)
+
     // Warning shield: true when the 5-min warning shield is active (dismissable)
     static let isWarningShieldKey = "isWarningShield"
     // Whether warning notifications are enabled for the current monitoring session

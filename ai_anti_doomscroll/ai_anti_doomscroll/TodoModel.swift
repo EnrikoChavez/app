@@ -24,6 +24,7 @@ final class LocalTodo {
     // Optional so SwiftData can migrate existing records (nil == false)
     var isTodaysFocus: Bool?
     var isCompleted: Bool?
+    var completedAt: Date?
 
     init(id: Int = Int.random(in: 1000000...9999999),
          task: String,
@@ -47,7 +48,9 @@ final class LocalTodo {
              phone: phone,
              appleId: appleId,
              isTodaysFocus: isTodaysFocus ?? false,
-             isCompleted: isCompleted ?? false)
+             isCompleted: isCompleted ?? false,
+             createdAt: createdAt,
+             completedAt: completedAt)
     }
 }
 
@@ -59,4 +62,6 @@ struct Todo: Identifiable, Codable {
     var appleId: String?
     var isTodaysFocus: Bool = false
     var isCompleted: Bool = false
+    var createdAt: Date = Date()
+    var completedAt: Date? = nil
 }

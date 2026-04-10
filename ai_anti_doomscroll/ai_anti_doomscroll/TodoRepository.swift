@@ -81,7 +81,7 @@ class TodoRepository: ObservableObject {
 
         do {
             try context.save()
-            let newTodo = Todo(id: localTodo.id, task: localTodo.task, phone: localTodo.phone, appleId: localTodo.appleId, isTodaysFocus: true, isCompleted: false)
+            let newTodo = Todo(id: localTodo.id, task: localTodo.task, phone: localTodo.phone, appleId: localTodo.appleId, isTodaysFocus: true, isCompleted: false, createdAt: localTodo.createdAt)
             todos.insert(newTodo, at: 0)
             syncTasksToShield()
             print("✅ Onboarding focus todo added: \(task)")
@@ -98,7 +98,7 @@ class TodoRepository: ObservableObject {
 
         do {
             try context.save()
-            let newTodo = Todo(id: localTodo.id, task: localTodo.task, phone: localTodo.phone, appleId: localTodo.appleId, isTodaysFocus: false, isCompleted: false)
+            let newTodo = Todo(id: localTodo.id, task: localTodo.task, phone: localTodo.phone, appleId: localTodo.appleId, isTodaysFocus: false, isCompleted: false, createdAt: localTodo.createdAt)
             todos.insert(newTodo, at: 0)
             syncTasksToShield()
             print("✅ Todo added: \(task)")
@@ -182,12 +182,15 @@ class TodoRepository: ObservableObject {
 
         do {
             if let localTodo = try context.fetch(descriptor).first {
+                let now = Date()
                 localTodo.isCompleted = true
                 localTodo.isTodaysFocus = false
+                localTodo.completedAt = now
                 try context.save()
                 if let index = todos.firstIndex(where: { $0.id == todo.id }) {
                     todos[index].isCompleted = true
                     todos[index].isTodaysFocus = false
+                    todos[index].completedAt = now
                 }
                 syncTasksToShield()
                 print("✅ Todo completed: \(todo.task)")

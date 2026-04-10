@@ -147,14 +147,23 @@ class ShieldConfigurationExtension: ShieldConfigurationDataSource {
         )
     }
 
+    private func blockSubtitle() -> String {
+        let base = "Open Anti-Doomscroll to talk to your AI companion and unlock this app."
+        let focusTasks = loadStringArray(forKey: "shieldFocusTasks")
+        if !focusTasks.isEmpty {
+            let bullet = focusTasks.map { "• \($0)" }.joined(separator: "\n")
+            return "\(base)\n\nToday's Focus:\n\(bullet)"
+        }
+        return base
+    }
+
     private func blockConfig() -> ShieldConfiguration {
         ShieldConfiguration(
             backgroundBlurStyle: .systemUltraThinMaterial,
-            backgroundColor: .systemBackground,
             icon: UIImage(systemName: "leaf"),
             title: ShieldConfiguration.Label(text: "Time to Pause", color: .label),
             subtitle: ShieldConfiguration.Label(
-                text: "Open Anti-Doomscroll to talk to your AI companion and unlock this app.",
+                text: blockSubtitle(),
                 color: .secondaryLabel
             ),
             primaryButtonLabel: ShieldConfiguration.Label(text: "Close App", color: .label)

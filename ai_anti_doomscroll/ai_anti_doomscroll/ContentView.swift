@@ -18,6 +18,7 @@ import ManagedSettings
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.colorScheme) private var colorScheme
     @StateObject private var todoRepository = TodoRepository()
     
     @State private var serverResponse: String = "Idle"
@@ -45,6 +46,7 @@ struct ContentView: View {
     
     // Settings Menu
     @State private var showingSettingsMenu = false
+    @State private var showingHowItWorks = false
     
     // Tab Selection
     @State private var selectedTab = 0
@@ -96,7 +98,7 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                AppTheme.backgroundGradient.ignoresSafeArea()
+                AppTheme.backgroundGradient(for: colorScheme).ignoresSafeArea()
 
                 VStack(spacing: 0) {
                     // Header at top (fixed)
@@ -106,30 +108,20 @@ struct ContentView: View {
                         .padding(.bottom, 12)
 
                     // Tab Content
-                    TabView(selection: $selectedTab) {
-                            // Tab 1: Calls & Chats
-                            callsChatsTab
-                                .tag(0)
-                            
-                            // Tab 2: Todos
-                            todosTab
-                                .tag(1)
-                            
-                            // Tab 3: Monitoring
-                            monitoringTab
-                                .tag(2)
-
-                            // Tab 4: Gallery
-                            galleryTab
-                                .tag(3)
-                        }
-                        .tabViewStyle(.page(indexDisplayMode: .never))
+                    ZStack {
+                        callsChatsTab.opacity(selectedTab == 0 ? 1 : 0)
+                        todosTab.opacity(selectedTab == 1 ? 1 : 0)
+                        galleryTab.opacity(selectedTab == 2 ? 1 : 0)
+                    }
+                    .environment(\.systemColorScheme, colorScheme)
+                    .environment(\.colorScheme, .light)
                     }
                     .overlay(alignment: .bottom) {
                         // Custom Tab Bar at bottom
                         customTabBar
-                            .background(Color.white)
+                            .background(AppTheme.cardBg(for: colorScheme))
                             .shadow(color: Color.black.opacity(0.10), radius: 8, y: -3)
+                            .environment(\.colorScheme, .light)
                     }
                 }
             .navigationBarHidden(true)
@@ -164,6 +156,9 @@ struct ContentView: View {
                 .sheet(isPresented: $showingSettingsMenu) {
                     SettingsMenuView(isPresented: $showingSettingsMenu, onLogout: logout)
                 }
+                .sheet(isPresented: $showingHowItWorks) {
+                    HowItWorksView()
+                }
             .alert(item: $activeAlert) { type in
                 switch type {
                 case .evaluation(let message):
@@ -181,10 +176,9 @@ struct ContentView: View {
         HStack(spacing: 0) {
             tabBarItem(icon: "door.right.hand.open", label: "Unblock",  tag: 0)
             tabBarItem(icon: "checklist",            label: "Tasks",    tag: 1)
-            tabBarItem(icon: "chart.bar",            label: "Set Timer",tag: 2)
-            tabBarItem(icon: "checkmark.seal",       label: "Gallery",  tag: 3)
+            tabBarItem(icon: "checkmark.seal",       label: "Gallery",  tag: 2)
         }
-        .background(Color.white)
+        .background(AppTheme.cardBg(for: colorScheme))
         .overlay(
             Rectangle()
                 .frame(height: 0.5)
@@ -196,7 +190,10 @@ struct ContentView: View {
     @ViewBuilder
     private func tabBarItem(icon: String, label: String, tag: Int) -> some View {
         let isSelected = selectedTab == tag
-        Button(action: { withAnimation(.easeInOut(duration: 0.0)) { selectedTab = tag } }) {
+        Button(action: {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            selectedTab = tag
+        }) {
             VStack(spacing: 5) {
                 Image(systemName: icon)
                     .font(.system(size: 19, weight: isSelected ? .semibold : .regular))
@@ -223,27 +220,27 @@ struct ContentView: View {
             Spacer()
             
             HStack(spacing: 12) {
-                // #if DEBUG
-                Button("Rewatch\nonboarding") {
-                    UserDefaults.standard.set(false, forKey: "hasSeenOnboarding")
-                    UserDefaults.standard.set(false, forKey: "hasSkippedSignup")
-                    UserDefaults.standard.removeObject(forKey: "onboardingPendingFocusTask")
+                Image(systemName: colorScheme == .dark ? "moon.fill" : "sun.max.fill")
+                    .font(.system(size: 14))
+                    .foregroundColor(colorScheme == .dark ? Color(white: 0.80) : .gray)
+
+                Button("How to\nuse app") {
+                    showingHowItWorks = true
                 }
                 .font(.system(size: 9, weight: .bold))
-                .foregroundColor(.gray)
+                .foregroundColor(colorScheme == .dark ? Color(white: 0.80) : .gray)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 5)
-                .overlay(RoundedRectangle(cornerRadius: 7).stroke(Color.gray, lineWidth: 1.5))
+                .overlay(RoundedRectangle(cornerRadius: 7).stroke(colorScheme == .dark ? Color(white: 0.80) : Color.gray, lineWidth: 1.5))
                 .cornerRadius(7)
-                // #endif
 
                 Button(action: {
                     showingSettingsMenu = true
                 }) {
                     Image(systemName: "gearshape.fill")
                         .font(.title2)
-                        .foregroundColor(.primary)
+                        .foregroundColor(colorScheme == .dark ? Color(white: 0.75) : .primary)
                 }
             }
         }
@@ -255,7 +252,7 @@ struct ContentView: View {
             HStack(spacing: 15) {
                 ZStack {
                     Circle()
-                        .fill(isBlocked ? Color.red.opacity(0.1) : Color.green.opacity(0.1))
+                        .fill(isBlocked ? Color.red.opacity(colorScheme == .dark ? 0.25 : 0.1) : Color.green.opacity(colorScheme == .dark ? 0.25 : 0.1))
                         .frame(width: 100, height: 60)
                     
                     Image(systemName: isBlocked ? "lock.fill" : "shield.checkered")
@@ -301,7 +298,7 @@ struct ContentView: View {
                     .foregroundColor(.primary)
                     .padding(.vertical, 8)
                     .padding(.horizontal, 12)
-                    .background(Color.white)
+                    .background(colorScheme == .dark ? Color(white: 0.94) : AppTheme.cardBg(for: colorScheme))
                     .cornerRadius(8)
                     .shadow(color: Color.black.opacity(0.06), radius: 4, x: 0, y: 2)
                 }
@@ -321,7 +318,7 @@ struct ContentView: View {
                     }
                     .padding(.vertical, 8)
                     .padding(.horizontal, 12)
-                    .background((limitInfo.canCall ? Color.blue : Color.orange).opacity(0.1))
+                    .background((limitInfo.canCall ? Color.blue : Color.orange).opacity(colorScheme == .dark ? 0.25 : 0.1))
                     .cornerRadius(8)
                 }
             }
@@ -374,11 +371,11 @@ struct ContentView: View {
                                 Image(systemName: "testtube.2")
                                 Text("Practice Call")
                             }
-                            .font(.footnote).bold()
+                            .font(.caption2).bold()
                             .foregroundColor((callLimitInfo?.canCall ?? true) ? .blue : .gray)
                             .padding(.vertical, 8)
                             .padding(.horizontal, 16)
-                            .background((callLimitInfo?.canCall ?? true) ? Color.blue.opacity(0.1) : Color.gray.opacity(0.1))
+                            .background((callLimitInfo?.canCall ?? true) ? Color.blue.opacity(colorScheme == .dark ? 0.25 : 0.1) : Color.gray.opacity(colorScheme == .dark ? 0.25 : 0.1))
                             .cornerRadius(10)
                         }
                         .disabled(!(callLimitInfo?.canCall ?? true))
@@ -388,48 +385,76 @@ struct ContentView: View {
                                 Image(systemName: "message")
                                 Text("Practice Chat")
                             }
-                            .font(.footnote).bold()
+                            .font(.caption2).bold()
                             .foregroundColor(.green)
                             .padding(.vertical, 8)
                             .padding(.horizontal, 16)
-                            .background(Color.green.opacity(0.1))
+                            .background(Color.green.opacity(colorScheme == .dark ? 0.25 : 0.1))
                             .cornerRadius(10)
                         }
+
+                        Button(action: {
+                            if let limitInfo = manualUnblockLimitInfo, !limitInfo.canUnblock {
+                                activeAlert = .error(message: "You've used all \(limitInfo.limitCount) manual unblocks for today. Please use AI voice call or text chat to unblock.")
+                            } else {
+                                unblockApps()
+                            }
+                        }) {
+                            HStack(spacing: 4) {
+                                if let limitInfo = manualUnblockLimitInfo {
+                                    Text("Decrease Daily Block Counter (\(limitInfo.remainingCount)/\(limitInfo.limitCount))")
+                                        .font(.caption2).bold()
+                                        .foregroundColor(limitInfo.canUnblock ? .secondary : .red)
+                                } else {
+                                    Text("Decrease Daily Block Counter")
+                                        .font(.caption2).bold()
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(colorScheme == .dark ? Color(white: 0.93) : Color(.systemGray5))
+                            .cornerRadius(10)
+                            .shadow(color: Color.black.opacity(0.10), radius: 4, x: 0, y: 2)
+                        }
+                        .disabled(manualUnblockLimitInfo?.canUnblock == false)
                     }
                     if !subscriptionManager.isLoading && (!isLoggedIn || !subscriptionManager.isPremium) {
                         SubscriptionGateOverlay(cornerRadius: 10, isLoggedIn: isLoggedIn) { handleGateTap() }
                     }
                 }
             }
-            
-            // Manual Unblock Fallback
-            Button(action: {
-                if let limitInfo = manualUnblockLimitInfo, !limitInfo.canUnblock {
-                    activeAlert = .error(message: "You've used all \(limitInfo.limitCount) manual unblocks for today. Please use AI voice call or text chat to unblock.")
-                } else {
-                    unblockApps()
-                }
-            }) {
-                HStack(spacing: 4) {
-                    if let limitInfo = manualUnblockLimitInfo {
-                        Text(isBlocked ? "Manual Daily Unblocks (\(limitInfo.remainingCount)/\(limitInfo.limitCount))" : "Decrease Daily Unblock Counter (\(limitInfo.remainingCount)/\(limitInfo.limitCount))")
-                            .font(.caption2).bold()
-                            .foregroundColor(limitInfo.canUnblock ? .secondary : .red)
+
+            // Manual Unblock Fallback (blocked state only)
+            if isBlocked {
+                Button(action: {
+                    if let limitInfo = manualUnblockLimitInfo, !limitInfo.canUnblock {
+                        activeAlert = .error(message: "You've used all \(limitInfo.limitCount) manual unblocks for today. Please use AI voice call or text chat to unblock.")
                     } else {
-                        Text(isBlocked ? "Manual Unblock (Emergency)" : "Reset Blocks")
-                            .font(.caption2).bold()
-                            .foregroundColor(.secondary)
+                        unblockApps()
                     }
+                }) {
+                    HStack(spacing: 4) {
+                        if let limitInfo = manualUnblockLimitInfo {
+                            Text("Manual Daily Unblocks (\(limitInfo.remainingCount)/\(limitInfo.limitCount))")
+                                .font(.caption2).bold()
+                                .foregroundColor(limitInfo.canUnblock ? .secondary : .red)
+                        } else {
+                            Text("Manual Unblock (Emergency)")
+                                .font(.caption2).bold()
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .background(Color(.systemGray5))
+                    .cornerRadius(8)
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 7)
-                .background(Color(.systemGray5))
-                .cornerRadius(8)
+                .disabled(manualUnblockLimitInfo?.canUnblock == false)
             }
-            .disabled(manualUnblockLimitInfo?.canUnblock == false && isBlocked)
         }
         .padding(24)
-        .background(AppTheme.cardBackground)
+        .background(AppTheme.cardBg(for: colorScheme))
         .cornerRadius(24)
         .shadow(color: AppTheme.cardShadowColor, radius: AppTheme.cardShadowRadius, x: 0, y: AppTheme.cardShadowY)
     }
@@ -442,37 +467,20 @@ struct ContentView: View {
                     .padding(.horizontal)
                     .padding(.top, 20)
 
-                // How to use instructions
-                VStack(alignment: .leading, spacing: 0) {
-                    Text("How it works")
-                        .font(.subheadline).bold()
-                        .padding(.bottom, 12)
-
-                    VStack(spacing: 10) {
-                        instructionRow(step: "1", icon: "checklist", color: .blue,
-                            title: "Add your tasks",
-                            detail: "Go to the Tasks tab and write everything you need to do. Move items to Today's Focus to tell the AI what to check.",
-                            action: { selectedTab = 1 })
-
-                        instructionRow(step: "2", icon: "chart.bar", color: .green,
-                            title: "Set a time limit",
-                            detail: "Go to the Set Timer tab, pick the apps you want to limit and choose a minute interval. Tap Start Session.",
-                            action: { selectedTab = 2 })
-
-                        instructionRow(step: "3", icon: "lock.fill", color: .orange,
-                            title: "Apps get blocked",
-                            detail: "Once you hit the time limit your selected apps are blocked automatically.")
-
-                        instructionRow(step: "4", icon: "phone", color: .purple,
-                            title: "Talk or text the AI to unblock",
-                            detail: "Use the voice call or text chat to convince the AI you've finished your tasks. If it believes you, your apps unlock.")
-                    }
-                }
-                .padding(20)
-                .background(AppTheme.cardBackground)
-                .cornerRadius(20)
-                .shadow(color: AppTheme.cardShadowColor, radius: AppTheme.cardShadowRadius, x: 0, y: AppTheme.cardShadowY)
+                ScreenTimeSection(
+                    authStatus: $authStatus,
+                    showPicker: $showPicker,
+                    minutesText: $minutesText,
+                    starting: $starting,
+                    store: store,
+                    updateAuthStatus: updateAuthStatus,
+                    onBlockStateChanged: { checkBlockStatus() },
+                    isPremium: subscriptionManager.isLoading || subscriptionManager.isPremium,
+                    isLoggedIn: subscriptionManager.isLoading || isLoggedIn,
+                    onSubscribeTap: handleGateTap
+                )
                 .padding(.horizontal)
+
             }
             .padding(.bottom, 100)
         }
@@ -542,7 +550,11 @@ struct ContentView: View {
     // Tab 4: Gallery (completed tasks)
     var galleryTab: some View {
         ScrollView {
-            VStack(spacing: 0) {
+            VStack(spacing: 16) {
+                TaskCompletionGraphView(completedTodos: todoRepository.completedTodos)
+                    .padding(.horizontal)
+                    .padding(.top, 20)
+
                 VStack(alignment: .leading, spacing: 14) {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
@@ -557,8 +569,8 @@ struct ContentView: View {
                             .font(.caption).bold()
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(Color.gray.opacity(0.1))
-                            .foregroundColor(.gray)
+                            .background(Color.green.opacity(0.1))
+                            .foregroundColor(.green)
                             .clipShape(Capsule())
                     }
 
@@ -575,58 +587,66 @@ struct ContentView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 40)
                     } else {
-                        VStack(spacing: 8) {
-                            ForEach(todoRepository.completedTodos) { todo in
-                                HStack(alignment: .top, spacing: 12) {
-                                    Text(todo.task)
-                                        .font(.body)
+                        let calendar = Calendar.current
+                        let grouped = Dictionary(grouping: todoRepository.completedTodos) { todo in
+                            calendar.startOfDay(for: todo.completedAt ?? todo.createdAt)
+                        }
+                        let sortedGroups = grouped.map { (day: $0.key, todos: $0.value) }
+                            .sorted { $0.day > $1.day }
+
+                        VStack(spacing: 16) {
+                            ForEach(sortedGroups, id: \.day) { group in
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text(galleryDayLabel(group.day))
+                                        .font(.caption).bold()
                                         .foregroundColor(.secondary)
-                                        .fixedSize(horizontal: false, vertical: true)
+                                        .padding(.horizontal, 2)
 
-                                    Spacer()
+                                    VStack(spacing: 8) {
+                                        ForEach(group.todos) { todo in
+                                            HStack(alignment: .top, spacing: 12) {
+                                                Image(systemName: "checkmark.circle.fill")
+                                                    .foregroundColor(.green.opacity(0.6))
+                                                    .font(.caption)
+                                                    .padding(.top, 3)
 
-                                    Button(action: { removeFromGallery(id: todo.id) }) {
-                                        Image(systemName: "xmark.circle.fill")
-                                            .foregroundColor(.gray.opacity(0.4))
+                                                Text(todo.task)
+                                                    .font(.body)
+                                                    .foregroundColor(.secondary)
+                                                    .fixedSize(horizontal: false, vertical: true)
+
+                                                Spacer()
+
+                                                Button(action: { removeFromGallery(id: todo.id) }) {
+                                                    Image(systemName: "xmark.circle.fill")
+                                                        .foregroundColor(.gray.opacity(0.4))
+                                                }
+                                            }
+                                            .padding(14)
+                                            .background(AppTheme.rowBackground)
+                                            .cornerRadius(12)
+                                        }
                                     }
                                 }
-                                .padding(14)
-                                .background(AppTheme.rowBackground)
-                                .cornerRadius(12)
                             }
                         }
                     }
                 }
                 .padding(16)
-                .background(AppTheme.cardBackground)
+                .background(AppTheme.cardBg(for: colorScheme))
                 .cornerRadius(20)
                 .shadow(color: AppTheme.cardShadowColor, radius: AppTheme.cardShadowRadius, x: 0, y: AppTheme.cardShadowY)
                 .padding(.horizontal)
-                .padding(.top, 20)
             }
             .padding(.bottom, 100)
         }
         .background(Color.clear.ignoresSafeArea())
     }
-    
-    // Tab 3: Monitoring Dashboard (includes Weekly Schedule at the bottom)
+
+    // Tab 3: Set Timer (Weekly Schedule)
     var monitoringTab: some View {
         ScrollView {
             VStack(spacing: 24) {
-                ScreenTimeSection(
-                    authStatus: $authStatus,
-                    showPicker: $showPicker,
-                    minutesText: $minutesText,
-                    starting: $starting,
-                    store: store,
-                    updateAuthStatus: updateAuthStatus,
-                    isPremium: subscriptionManager.isLoading || subscriptionManager.isPremium,
-                    isLoggedIn: subscriptionManager.isLoading || isLoggedIn,
-                    onSubscribeTap: handleGateTap
-                )
-                .padding(.horizontal)
-                .padding(.top, 20)
-
                 WeeklyScheduleSection(
                     isPremium: subscriptionManager.isLoading || subscriptionManager.isPremium,
                     isLoggedIn: subscriptionManager.isLoading || isLoggedIn,
@@ -727,6 +747,21 @@ struct ContentView: View {
         }
     }
 
+    func galleryDayLabel(_ date: Date) -> String {
+        let calendar = Calendar.current
+        if calendar.isDateInToday(date) { return "Today" }
+        if calendar.isDateInYesterday(date) { return "Yesterday" }
+        let formatter = DateFormatter()
+        if calendar.isDate(date, equalTo: Date(), toGranularity: .weekOfYear) {
+            formatter.dateFormat = "EEEE"
+        } else if calendar.isDate(date, equalTo: Date(), toGranularity: .year) {
+            formatter.dateFormat = "MMM d"
+        } else {
+            formatter.dateFormat = "MMM d, yyyy"
+        }
+        return formatter.string(from: date)
+    }
+
     func removeFromGallery(id: Int) {
         if let todo = todoRepository.todos.first(where: { $0.id == id }) {
             todoRepository.removeFromGallery(todo)
@@ -779,6 +814,8 @@ struct ContentView: View {
     
     // Core unblock — always updates the shield and UI, no limit checks
     private func performUnblock() {
+        let wasTimedBlock = UserDefaults(suiteName: Shared.appGroupId)?.bool(forKey: Shared.isTimedBlockActiveKey) ?? false
+
         #if canImport(ManagedSettings)
         if #available(iOS 16.0, *) { blockManager.unblockApps() }
         #endif
@@ -787,11 +824,16 @@ struct ContentView: View {
         if let defaults = UserDefaults(suiteName: Shared.appGroupId) {
             defaults.set(false, forKey: Shared.isBlockedKey)
             defaults.removeObject(forKey: Shared.blockedAtKey)
+            defaults.set(false, forKey: Shared.isTimedBlockActiveKey)
+            defaults.removeObject(forKey: Shared.timedBlockEndTimeKey)
         }
 
-        // Restart monitoring with a fresh schedule so thresholds reset from zero
+        // Restart monitoring with a fresh schedule so thresholds reset from zero.
+        // Skip for timed block mode — no DeviceActivity events were registered.
         #if canImport(FamilyControls)
-        store.restartMonitoring()
+        if !wasTimedBlock {
+            store.restartMonitoring()
+        }
         #endif
     }
 

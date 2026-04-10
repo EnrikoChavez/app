@@ -12,7 +12,7 @@ import Foundation
 struct StopMonitoringLimitManager {
     static let shared = StopMonitoringLimitManager()
 
-    private let dailyLimit = 15
+    private let dailyLimit = 1
     private let countKey   = "stopMonitoringUsedCount"
     private let dateKey    = "stopMonitoringLastResetDate"
 

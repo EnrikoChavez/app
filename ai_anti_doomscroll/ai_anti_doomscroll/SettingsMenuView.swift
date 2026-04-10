@@ -12,7 +12,10 @@ struct SettingsMenuView: View {
     var onLogout: () -> Void
     @AppStorage("isLoggedIn") private var isLoggedIn = false
     @AppStorage("hasSkippedSignup") private var hasSkippedSignup = false
+    @AppStorage("isDarkMode") private var isDarkMode = false
     @State private var showSignup = false
+    @State private var showHowItWorks = false
+    @State private var showWeeklySchedule = false
     @State private var showTerms = false
     @State private var showPrivacy = false
     @State private var showDeleteConfirmation = false
@@ -26,6 +29,48 @@ struct SettingsMenuView: View {
     var body: some View {
         NavigationView {
             List {
+                Section {
+                    Toggle(isOn: $isDarkMode) {
+                        HStack {
+                            Image(systemName: isDarkMode ? "moon.fill" : "sun.max.fill")
+                            Text(isDarkMode ? "Dark Mode" : "Light Mode")
+                        }
+                    }
+                }
+
+                Section {
+                    Button(action: { showHowItWorks = true }) {
+                        HStack {
+                            Image(systemName: "questionmark.circle")
+                            Text("How to Use App")
+                        }
+                    }
+
+                    Button(action: {
+                        UserDefaults.standard.set(false, forKey: "hasSeenOnboarding")
+                        UserDefaults.standard.set(false, forKey: "hasSkippedSignup")
+                        UserDefaults.standard.removeObject(forKey: "onboardingPendingFocusTask")
+                        isPresented = false
+                    }) {
+                        HStack {
+                            Image(systemName: "arrow.counterclockwise")
+                            Text("Rewatch Onboarding")
+                        }
+                    }
+
+                    Button(action: { showWeeklySchedule = true }) {
+                        HStack {
+                            Image(systemName: "calendar.badge.clock")
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Weekly Block Schedule")
+                                Text("⚠️ Cannot be stopped by AI — strict lock-in")
+                                    .font(.caption2)
+                                    .foregroundColor(.orange)
+                            }
+                        }
+                    }
+                }
+
                 Section {
                     Button(action: {
                         showTerms = true
@@ -106,6 +151,12 @@ struct SettingsMenuView: View {
                         isPresented = false
                     }
                 }
+            }
+            .sheet(isPresented: $showHowItWorks) {
+                HowItWorksView()
+            }
+            .sheet(isPresented: $showWeeklySchedule) {
+                WeeklyScheduleSheetView(isPremium: true, isLoggedIn: true, onSubscribeTap: {})
             }
             .sheet(isPresented: $showTerms) {
                 TermsOfServiceView()
@@ -355,6 +406,100 @@ struct MailComposeView: UIViewControllerRepresentable {
         func mailComposeController(_ controller: MFMailComposeViewController, didFinishWith result: MFMailComposeResult, error: Error?) {
             controller.dismiss(animated: true)
         }
+    }
+}
+
+struct WeeklyScheduleSheetView: View {
+    @Environment(\.dismiss) var dismiss
+    var isPremium: Bool
+    var isLoggedIn: Bool
+    var onSubscribeTap: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 12) {
+                    WeeklyScheduleSection(
+                        isPremium: isPremium,
+                        isLoggedIn: isLoggedIn,
+                        onSubscribeTap: onSubscribeTap
+                    )
+                }
+                .padding()
+            }
+            .navigationTitle("Weekly Block Schedule")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+    }
+}
+
+struct HowItWorksView: View {
+    @Environment(\.dismiss) var dismiss
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 10) {
+                    howItWorksRow(icon: "checklist", color: .blue,
+                        title: "Add your tasks",
+                        detail: "Add everything you need to do in the Tasks tab. Mark a few as Today's Focus — the AI will ask about those when you want to unblock.")
+
+                    howItWorksRow(icon: "hourglass", color: .pink,
+                        title: "Set a block",
+                        detail: "Usage Limit blocks apps after a set number of minutes of use. Timed Block locks apps immediately for a fixed duration. Both options are in the Unblock tab.")
+
+                    howItWorksRow(icon: "apps.iphone", color: .indigo,
+                        title: "Pick what to block",
+                        detail: "Select the apps you want to block. Your selection applies to both blocking modes.")
+
+                    howItWorksRow(icon: "phone", color: .purple,
+                        title: "Call or chat the AI to unblock",
+                        detail: "Tap Call or Text AI and tell it what you've been working on. If it's satisfied, your apps unlock.")
+
+                    howItWorksRow(icon: "hand.tap", color: .gray,
+                        title: "Manual unblock",
+                        detail: "Tap \"Decrease Counter\" to unblock without the AI. You get 20 per day.")
+                }
+                .padding(20)
+            }
+            .navigationTitle("How to Use App")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+    }
+
+    private func howItWorksRow(icon: String, color: Color, title: String, detail: String) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.12))
+                    .frame(width: 38, height: 38)
+                Image(systemName: icon)
+                    .font(.system(size: 16))
+                    .foregroundColor(color)
+            }
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.subheadline).bold()
+                Text(detail)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(12)
+        .background(colorScheme == .dark ? Color(white: 0.93) : Color(.systemGray6))
+        .cornerRadius(12)
     }
 }
 

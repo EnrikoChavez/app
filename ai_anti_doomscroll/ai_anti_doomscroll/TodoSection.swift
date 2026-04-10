@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct TodoSection: View {
+    @Environment(\.systemColorScheme) private var systemColorScheme
     var overallTodos: [Todo]
     var focusTodos: [Todo]
     @Binding var newTask: String
@@ -14,6 +15,30 @@ struct TodoSection: View {
     var moveToFocus: (Int) -> Void
     var moveToOverall: (Int) -> Void
     var completeTodo: (Int) -> Void
+
+    private var groupedOverallTodos: [(day: Date, todos: [Todo])] {
+        let calendar = Calendar.current
+        let grouped = Dictionary(grouping: overallTodos) { todo in
+            calendar.startOfDay(for: todo.createdAt)
+        }
+        return grouped.map { (day: $0.key, todos: $0.value) }
+            .sorted { $0.day > $1.day }
+    }
+
+    private func dayLabel(for date: Date) -> String {
+        let calendar = Calendar.current
+        if calendar.isDateInToday(date) { return "Today" }
+        if calendar.isDateInYesterday(date) { return "Yesterday" }
+        let formatter = DateFormatter()
+        if calendar.isDate(date, equalTo: Date(), toGranularity: .weekOfYear) {
+            formatter.dateFormat = "EEEE"          // "Monday"
+        } else if calendar.isDate(date, equalTo: Date(), toGranularity: .year) {
+            formatter.dateFormat = "MMM d"         // "Apr 7"
+        } else {
+            formatter.dateFormat = "MMM d, yyyy"   // "Apr 7, 2024"
+        }
+        return formatter.string(from: date)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -85,7 +110,7 @@ struct TodoSection: View {
                 }
             }
             .padding(16)
-            .background(AppTheme.cardBackground)
+            .background(AppTheme.cardBg(for: systemColorScheme))
             .cornerRadius(20)
             .shadow(color: AppTheme.cardShadowColor, radius: AppTheme.cardShadowRadius, x: 0, y: AppTheme.cardShadowY)
 
@@ -142,47 +167,58 @@ struct TodoSection: View {
                 if overallTodos.isEmpty {
                     emptyState(icon: "tray", message: "No tasks yet. Add one above!")
                 } else {
-                    VStack(spacing: 8) {
-                        ForEach(overallTodos) { todo in
-                            HStack(alignment: .top, spacing: 12) {
-                                Circle()
-                                    .stroke(Color.blue, lineWidth: 2)
-                                    .frame(width: 12, height: 12)
-                                    .padding(.top, 4)
+                    VStack(spacing: 16) {
+                        ForEach(groupedOverallTodos, id: \.day) { group in
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(dayLabel(for: group.day))
+                                    .font(.caption).bold()
+                                    .foregroundColor(.secondary)
+                                    .padding(.horizontal, 2)
 
-                                Text(todo.task)
-                                    .font(.body)
-                                    .fixedSize(horizontal: false, vertical: true)
+                                VStack(spacing: 8) {
+                                    ForEach(group.todos) { todo in
+                                        HStack(alignment: .top, spacing: 12) {
+                                            Circle()
+                                                .stroke(Color.blue, lineWidth: 2)
+                                                .frame(width: 12, height: 12)
+                                                .padding(.top, 4)
 
-                                Spacer()
+                                            Text(todo.task)
+                                                .font(.body)
+                                                .fixedSize(horizontal: false, vertical: true)
 
-                                Button(action: { moveToFocus(todo.id) }) {
-                                    HStack(spacing: 3) {
-                                        Image(systemName: "arrow.up.circle.fill")
-                                        Text("Today")
+                                            Spacer()
+
+                                            Button(action: { moveToFocus(todo.id) }) {
+                                                HStack(spacing: 3) {
+                                                    Image(systemName: "arrow.up.circle.fill")
+                                                    Text("Today")
+                                                }
+                                                .font(.caption2).bold()
+                                                .foregroundColor(.blue)
+                                                .padding(.horizontal, 8)
+                                                .padding(.vertical, 5)
+                                                .background(AppTheme.primaryButton.opacity(0.1))
+                                                .cornerRadius(8)
+                                            }
+
+                                            Button(action: { deleteTodo(todo.id) }) {
+                                                Image(systemName: "xmark.circle.fill")
+                                                    .foregroundColor(.gray.opacity(0.4))
+                                            }
+                                        }
+                                        .padding(14)
+                                        .background(AppTheme.rowBackground)
+                                        .cornerRadius(12)
                                     }
-                                    .font(.caption2).bold()
-                                    .foregroundColor(.blue)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 5)
-                                    .background(AppTheme.primaryButton.opacity(0.1))
-                                    .cornerRadius(8)
-                                }
-
-                                Button(action: { deleteTodo(todo.id) }) {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .foregroundColor(.gray.opacity(0.4))
                                 }
                             }
-                            .padding(14)
-                            .background(AppTheme.rowBackground)
-                            .cornerRadius(12)
                         }
                     }
                 }
             }
             .padding(16)
-            .background(AppTheme.cardBackground)
+            .background(AppTheme.cardBg(for: systemColorScheme))
             .cornerRadius(20)
             .shadow(color: AppTheme.cardShadowColor, radius: AppTheme.cardShadowRadius, x: 0, y: AppTheme.cardShadowY)
         }

@@ -23,7 +23,13 @@ class UsageMonitorExtension: DeviceActivityMonitor {
         logger.log("🔴 intervalDidEnd triggered for \(activity.rawValue, privacy: .public)")
         if activity.rawValue.hasPrefix("weeklyBlock_") {
             logger.log("📅 Weekly block window ending — removing shield")
-            UserDefaults(suiteName: Shared.appGroupId)?.set(false, forKey: Shared.isWeeklyShieldKey)
+            let defaults = UserDefaults(suiteName: Shared.appGroupId)
+            defaults?.set(false, forKey: Shared.isWeeklyShieldKey)
+            // Only clear the global isBlocked flag if timed block isn't concurrently active
+            let isTimedActive = defaults?.bool(forKey: Shared.isTimedBlockActiveKey) ?? false
+            if !isTimedActive {
+                defaults?.set(false, forKey: Shared.isBlockedKey)
+            }
             let store = ManagedSettingsStore()
             store.shield.applications = nil
             store.shield.applicationCategories = nil
