@@ -57,6 +57,8 @@ struct ScreenTimeSection: View {
     var isPremium: Bool = true
     var isLoggedIn: Bool = true
     var onSubscribeTap: () -> Void = {}
+    var onCallForExtraStop: () -> Void = {}
+    var onChatForExtraStop: () -> Void = {}
 
     private var isAuthorized: Bool { authorized }
 
@@ -212,6 +214,9 @@ struct ScreenTimeSection: View {
         .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { _ in
             if isTimedBlockActive { checkAndUpdateTimedBlock() }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .stopLimitGranted)) { _ in
+            stopRemaining = StopMonitoringLimitManager.shared.remainingCount
+        }
 
         if selectedDashboardTab == 0 {
             VStack(alignment: .leading, spacing: 0) {
@@ -350,6 +355,53 @@ struct ScreenTimeSection: View {
                 .foregroundColor(isStatusError ? .red : .green)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.vertical, 4)
+        }
+
+        // Extra stop via AI — only shown when monitoring is active and limit is reached
+        if isMonitoringActive && stopRemaining == 0 {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 6) {
+                    Image(systemName: "sparkles")
+                        .font(.caption2)
+                        .foregroundColor(.purple)
+                    Text("Convince AI for 1 extra stop monitoring")
+                        .font(.caption).bold()
+                        .foregroundColor(.purple)
+                }
+                Text("Convince the AI that you've completed your Today's to-dos and it'll grant you one more stop.")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                HStack(spacing: 8) {
+                    Button(action: onCallForExtraStop) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "mic.fill")
+                            Text("Call AI")
+                        }
+                        .font(.caption).bold()
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .background(Color.purple)
+                        .cornerRadius(10)
+                    }
+                    Button(action: onChatForExtraStop) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "message.fill")
+                            Text("Chat AI")
+                        }
+                        .font(.caption).bold()
+                        .foregroundColor(.purple)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .background(Color.purple.opacity(0.12))
+                        .cornerRadius(10)
+                    }
+                }
+            }
+            .padding(12)
+            .background(Color.purple.opacity(0.07))
+            .cornerRadius(12)
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.purple.opacity(0.2), lineWidth: 1))
         }
 
         // Selected apps & categories list
@@ -703,8 +755,15 @@ struct ScreenTimeSection: View {
         }
         defer { starting = false }
 
-        // Restarting counts against the stop limit
-        if isMonitoringActive && StopMonitoringLimitManager.shared.canStop {
+        // Restarting counts against the stop limit — block entirely if limit reached
+        if isMonitoringActive {
+            guard StopMonitoringLimitManager.shared.canStop else {
+                await MainActor.run {
+                    statusMessage = "Daily restart limit reached. Try again tomorrow."
+                    isStatusError = true
+                }
+                return
+            }
             StopMonitoringLimitManager.shared.recordStop()
             await MainActor.run { stopRemaining = StopMonitoringLimitManager.shared.remainingCount }
         }

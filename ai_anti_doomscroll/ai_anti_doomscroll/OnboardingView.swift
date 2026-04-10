@@ -9,6 +9,73 @@ import SwiftUI
 import FamilyControls
 #endif
 
+// MARK: - Permission Dialog Preview
+
+struct PermissionDialogPreview: View {
+    @State private var arrowBounce = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Mock iOS alert dialog
+            VStack(spacing: 0) {
+                VStack(spacing: 6) {
+                    Text("\"Anti-Doomscroll\" Would Like\nto Use Screen Time")
+                        .font(.system(size: 13, weight: .semibold))
+                        .multilineTextAlignment(.center)
+                    Text("This will allow the app to monitor\nand limit app usage.")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
+                .padding(.bottom, 14)
+
+                Divider()
+
+                HStack(spacing: 0) {
+                    Text("Continue")
+                        .font(.system(size: 14))
+                        .foregroundColor(.gray)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 11)
+
+                    Divider().frame(width: 0.5)
+
+                    Text("Don't Allow")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.blue)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 11)
+                }
+                .frame(height: 44)
+            }
+            .background(Color(white: 0.97))
+            .cornerRadius(14)
+            .shadow(color: Color.black.opacity(0.18), radius: 20, x: 0, y: 8)
+            .padding(.horizontal, 40)
+
+            // Bouncing arrow pointing to "Continue" (left half)
+            HStack {
+                VStack(spacing: 2) {
+                    Image(systemName: "arrow.up")
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundColor(.orange)
+                        .offset(y: arrowBounce ? -5 : 0)
+                        .animation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true), value: arrowBounce)
+                    Text("Tap here")
+                        .font(.caption2).bold()
+                        .foregroundColor(.orange)
+                }
+                .padding(.leading, 95)
+                Spacer()
+            }
+            .padding(.top, 6)
+        }
+        .onAppear { arrowBounce = true }
+    }
+}
+
 private enum OnboardingStep: Int, CaseIterable, Hashable {
     case hook       = 0
     case attention  = 1
@@ -261,24 +328,15 @@ struct OnboardingView: View {
     }
 
     private var permissionSlide: some View {
-        VStack(spacing: 32) {
+        VStack(spacing: 24) {
             Spacer()
-
-            ZStack {
-                Circle()
-                    .fill(Color.blue.opacity(0.12))
-                    .frame(width: 120, height: 120)
-                Image(systemName: "lock.shield.fill")
-                    .font(.system(size: 52, weight: .semibold))
-                    .foregroundColor(.blue)
-            }
 
             VStack(spacing: 16) {
                 Text("One last thing")
                     .font(.title).bold()
                     .multilineTextAlignment(.center)
 
-                Text("To block distracting apps, we need access to Screen Time.\n\nYour usage data stays on your device and is never shared with anyone.")
+                Text("To block distracting apps, we need Screen Time access. Tap the button below, then tap **Allow** on the dialog that appears.")
                     .font(.body)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -286,7 +344,8 @@ struct OnboardingView: View {
                     .padding(.horizontal, 20)
             }
 
-            Spacer()
+            PermissionDialogPreview()
+
             Spacer()
         }
         .padding(.horizontal, 12)
@@ -321,6 +380,8 @@ struct OnboardingView: View {
         Analytics.onboardingCompleted()
         hasSeenOnboarding = true
     }
+
+    // MARK: - Permission Dialog Preview
 
     private func requestPermission() {
         isRequestingPermission = true

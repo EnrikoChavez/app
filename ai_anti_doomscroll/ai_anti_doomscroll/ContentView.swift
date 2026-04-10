@@ -72,6 +72,7 @@ struct ContentView: View {
     @State private var showPaywall = false
     @State private var showSignup = false
     @State private var isEvaluating = false
+    @State private var pendingExtraStop = false
     @State private var isStartingCall = false
     @State private var callLimitInfo: CallLimitInfo? = nil
     @State private var isCheckingLimit = false
@@ -174,7 +175,7 @@ struct ContentView: View {
     
     var customTabBar: some View {
         HStack(spacing: 0) {
-            tabBarItem(icon: "door.right.hand.open", label: "Unblock",  tag: 0)
+            tabBarItem(icon: "door.right.hand.open", label: "Free Up Time",  tag: 0)
             tabBarItem(icon: "checklist",            label: "Tasks",    tag: 1)
             tabBarItem(icon: "checkmark.seal",       label: "Gallery",  tag: 2)
         }
@@ -477,7 +478,15 @@ struct ContentView: View {
                     onBlockStateChanged: { checkBlockStatus() },
                     isPremium: subscriptionManager.isLoading || subscriptionManager.isPremium,
                     isLoggedIn: subscriptionManager.isLoading || isLoggedIn,
-                    onSubscribeTap: handleGateTap
+                    onSubscribeTap: handleGateTap,
+                    onCallForExtraStop: {
+                        pendingExtraStop = true
+                        startVoiceCall(companion: selectedCompanion)
+                    },
+                    onChatForExtraStop: {
+                        pendingExtraStop = true
+                        startTextChat()
+                    }
                 )
                 .padding(.horizontal)
 
@@ -971,10 +980,12 @@ struct ContentView: View {
     func handleCallEnd() {
         let finalTranscript = callManager.transcript
         let callDuration = callManager.callDuration
-        print("📱 iOS: Call ended. Duration calculated: \(callDuration)s")
-        
+        let wasExtraStop = pendingExtraStop
+        pendingExtraStop = false
+        print("📱 iOS: Call ended. Duration calculated: \(callDuration)s, extraStop=\(wasExtraStop)")
+
         callManager.stopCall()
-        
+
         // Tell the server the call ended; duration is measured server-side.
         networkManager.endHumeSession { result in
             switch result {
@@ -987,10 +998,10 @@ struct ContentView: View {
                 print("❌ iOS: Failed to end call session: \(error.localizedDescription)")
             }
         }
-        
+
         if !finalTranscript.isEmpty {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                self.evaluateCall(transcript: finalTranscript)
+                self.evaluateCall(transcript: finalTranscript, grantExtraStop: wasExtraStop)
             }
         }
     }
@@ -1005,9 +1016,13 @@ struct ContentView: View {
         // Skip evaluation if conversation was cancelled
         if chatManager.wasCancelled {
             print("📱 Chat was cancelled, skipping evaluation")
+            pendingExtraStop = false
             return
         }
-        
+
+        let wasExtraStop = pendingExtraStop
+        pendingExtraStop = false
+
         // Get transcript from chat manager (conversation already ended in ChatView)
         chatManager.endConversation { [self] result in
             DispatchQueue.main.async {
@@ -1016,7 +1031,7 @@ struct ContentView: View {
                     print("📱 Chat transcript received: \(transcript.prefix(100))...")
                     if !transcript.isEmpty {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                            self.evaluateCall(transcript: transcript, isChat: true)
+                            self.evaluateCall(transcript: transcript, isChat: true, grantExtraStop: wasExtraStop)
                         }
                     } else {
                         // If transcript is empty, user might have cancelled
@@ -1033,7 +1048,7 @@ struct ContentView: View {
         }
     }
     
-    func evaluateCall(transcript: String, isChat: Bool = false) {
+    func evaluateCall(transcript: String, isChat: Bool = false, grantExtraStop: Bool = false) {
         isEvaluating = true
         networkManager.evaluateTranscript(transcript: transcript) { result in
             DispatchQueue.main.async {
@@ -1047,7 +1062,11 @@ struct ContentView: View {
                     } else {
                         Analytics.voiceCallEnded(durationSeconds: self.callManager.callDuration, unblocked: unblock)
                     }
-                    if unblock { self.performUnblock() }
+                    if grantExtraStop {
+                        if unblock { StopMonitoringLimitManager.shared.grantExtraStop() }
+                    } else {
+                        if unblock { self.performUnblock() }
+                    }
                     self.activeAlert = .evaluation(message: message)
                 case .failure(let error):
                     self.activeAlert = .error(message: "Evaluation failed: \(error.localizedDescription)")

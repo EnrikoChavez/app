@@ -40,6 +40,16 @@ struct StopMonitoringLimitManager {
         print("🛑 StopMonitoringLimitManager: recorded stop. Used: \(current + 1)/\(dailyLimit)")
     }
 
+    func grantExtraStop() {
+        resetIfNewDay()
+        let current = readInt(countKey)
+        if current > 0 {
+            write(current - 1, forKey: countKey)
+            print("✅ StopMonitoringLimitManager: extra stop granted. Used: \(current - 1)/\(dailyLimit)")
+        }
+        NotificationCenter.default.post(name: .stopLimitGranted, object: nil)
+    }
+
     // MARK: - Day reset
 
     private func resetIfNewDay() {

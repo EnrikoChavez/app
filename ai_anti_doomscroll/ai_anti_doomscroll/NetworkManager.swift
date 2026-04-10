@@ -3,6 +3,7 @@ import Foundation
 
 extension Notification.Name {
     static let sessionExpired = Notification.Name("sessionExpired")
+    static let stopLimitGranted = Notification.Name("stopLimitGranted")
 }
 
 final class NetworkManager {
