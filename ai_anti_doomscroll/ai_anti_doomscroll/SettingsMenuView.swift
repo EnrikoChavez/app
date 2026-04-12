@@ -463,7 +463,7 @@ struct HowItWorksView: View {
 
                     howItWorksRow(icon: "phone", color: .purple,
                         title: "Call or chat the AI to unblock",
-                        detail: "Tap Call or Text AI and tell it what you've been working on. If you manage to be convincing, your apps unlock.")
+                        detail: "Tap Call or Text AI and tell it what you've been working on. If you manage to be, your apps unlock.")
 
                     howItWorksRow(icon: "hand.tap", color: .gray,
                         title: "Manual unblock",

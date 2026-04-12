@@ -27,6 +27,7 @@ struct ScreenTimeSection: View {
     @State private var activeMinutes = 0
     @State private var activeMode = ""
     @State private var stopRemaining = StopMonitoringLimitManager.shared.remainingCount
+    @State private var currentStreak = StreakManager.shared.currentStreak
 
     // Timed block state
     @State private var isTimedBlockActive = false
@@ -143,9 +144,9 @@ struct ScreenTimeSection: View {
                     // ── Mode Tabs ──────────────────────────────────
                     VStack(spacing: 6) {
                         HStack(spacing: 10) {
-                            ForEach([(0, "Usage Limit"), (1, "Timed Block")], id: \.0) { tag, label in
+                            ForEach([(0, "Timed Block"), (1, "Usage Limit")], id: \.0) { tag, label in
                                 let isSelected = selectedDashboardTab == tag
-                                let isDisabled = (tag == 0 && isTimedBlockActive) || (tag == 1 && isMonitoringActive)
+                                let isDisabled = (tag == 1 && isTimedBlockActive)
                                 Button {
                                     guard !isDisabled else { return }
                                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -176,12 +177,12 @@ struct ScreenTimeSection: View {
                                 .transaction { $0.disablesAnimations = true }
                             }
                         }
-                        if isMonitoringActive && selectedDashboardTab == 0 {
-                            Text("Stop monitoring to switch modes.")
+                        if isTimedBlockActive && selectedDashboardTab == 1 {
+                            Text("Unblock apps to switch modes.")
                                 .font(.caption2)
                                 .foregroundColor(.secondary)
-                        } else if isTimedBlockActive && selectedDashboardTab == 1 {
-                            Text("Unblock apps to switch modes.")
+                        } else if isMonitoringActive && selectedDashboardTab == 0 {
+                            Text("Starting a timed block will stop monitoring.")
                                 .font(.caption2)
                                 .foregroundColor(.secondary)
                         }
@@ -189,9 +190,9 @@ struct ScreenTimeSection: View {
 
                     Group {
                         if selectedDashboardTab == 0 {
-                            usageLimitTab
-                        } else {
                             timedBlockTab
+                        } else {
+                            usageLimitTab
                         }
                     }
                     .animation(nil, value: selectedDashboardTab)
@@ -237,8 +238,29 @@ struct ScreenTimeSection: View {
 
     // MARK: - Usage Limit Tab
 
-    @ViewBuilder
-    private var usageLimitTab: some View {
+    @ViewBuilder private var usageLimitTab: some View {
+        // Streak Card
+        HStack(spacing: 12) {
+            Text("🔥")
+                .font(.system(size: 28))
+            VStack(alignment: .leading, spacing: 2) {
+                Text("\(currentStreak) day streak")
+                    .font(.headline).bold()
+                Text(currentStreak == 0
+                     ? "Complete a full day without stopping monitoring to start your streak."
+                     : "Keep it up — don't stop monitoring today to extend your streak!")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer()
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(systemColorScheme == .dark ? Color(white: 0.93) : AppTheme.cardBg(for: .light))
+        .cornerRadius(12)
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.orange.opacity(0.35), lineWidth: 1))
+
         // Config Grid
         HStack(spacing: 12) {
             // App Selection
@@ -312,7 +334,7 @@ struct ScreenTimeSection: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
-                    .background(isSelectionEmpty ? Color.gray.opacity(0.2) : Color.pink)
+                    .background(isSelectionEmpty ? Color.gray.opacity(0.2) : Color.green.opacity(0.9))
                     .foregroundColor(.white)
                     .cornerRadius(12)
                     .overlay(
@@ -637,6 +659,7 @@ struct ScreenTimeSection: View {
         activeMinutes = Shared.defaults.integer(forKey: Shared.monitoringMinutesKey)
         activeMode = Shared.defaults.string(forKey: Shared.monitoringModeKey) ?? ""
         stopRemaining = StopMonitoringLimitManager.shared.remainingCount
+        currentStreak = StreakManager.shared.checkAndUpdate()
 
         // Restore timed block state
         let endTimestamp = Shared.defaults.double(forKey: Shared.timedBlockEndTimeKey)
@@ -681,6 +704,28 @@ struct ScreenTimeSection: View {
     private func startTimedBlock() async {
         await MainActor.run { timedStarting = true }
         defer { Task { @MainActor in timedStarting = false } }
+
+        // If usage-limit monitoring is active, stop it and consume a stop count
+        if await MainActor.run(body: { isMonitoringActive }) {
+            StopMonitoringLimitManager.shared.recordStop()
+            StreakManager.shared.markStopUsed()
+            let center = DeviceActivityCenter()
+            center.stopMonitoring([DeviceActivityName("dailyMonitor")])
+            #if canImport(ManagedSettings)
+            if #available(iOS 16.0, *) {
+                ManagedSettingsStore().shield.applications = nil
+            }
+            #endif
+            Shared.defaults.set(false, forKey: Shared.isMonitoringActiveKey)
+            Shared.defaults.set(0, forKey: Shared.monitoringMinutesKey)
+            Analytics.monitoringStopped()
+            await MainActor.run {
+                isMonitoringActive = false
+                activeMinutes = 0
+                activeMode = ""
+                stopRemaining = StopMonitoringLimitManager.shared.remainingCount
+            }
+        }
 
         let minutes = timedBlockMinutes
         let endTime = Date().addingTimeInterval(TimeInterval(minutes * 60))
@@ -876,8 +921,8 @@ struct ScreenTimeSection: View {
         defer { Task { @MainActor in stopping = false } }
 
         StopMonitoringLimitManager.shared.recordStop()
+        StreakManager.shared.markStopUsed()
         await MainActor.run { stopRemaining = StopMonitoringLimitManager.shared.remainingCount }
-
         Analytics.monitoringStopped()
         let center = DeviceActivityCenter()
         center.stopMonitoring([DeviceActivityName("dailyMonitor")])

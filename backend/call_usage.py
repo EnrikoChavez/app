@@ -13,7 +13,7 @@ EASTERN = ZoneInfo("America/New_York")
 
 router = APIRouter(prefix="/call-usage", tags=["call-usage"])
 
-DAILY_LIMIT_SECONDS = 600.0
+DAILY_LIMIT_SECONDS = 240.0
 
 
 class CallLimitResponse(BaseModel):
