@@ -62,7 +62,7 @@ struct VoiceCloneView: View {
     @State private var showDeleteConfirm = false
     @State private var showFilePicker = false
     @State private var pickedFileURL: URL? = nil
-    @AppStorage("useClonedVoice") private var useClonedVoice = false
+    @AppStorage("userHasClonedVoice") private var userHasClonedVoice = false
 
     var activeFileURL: URL? { pickedFileURL ?? recorder.recordedFileURL }
 
@@ -128,9 +128,6 @@ struct VoiceCloneView: View {
                     Spacer()
                 }
 
-                Toggle("Use my cloned voice in calls", isOn: $useClonedVoice)
-                    .font(.subheadline)
-
                 HStack(spacing: 12) {
                     Button("Re-clone") {
                         networkManager.showReclone = true
@@ -148,7 +145,7 @@ struct VoiceCloneView: View {
                 .confirmationDialog("Delete your cloned voice?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
                     Button("Delete", role: .destructive) {
                         networkManager.deleteVoice {
-                            useClonedVoice = false
+                            userHasClonedVoice = false
                         }
                     }
                     Button("Cancel", role: .cancel) {}
@@ -329,7 +326,7 @@ struct VoiceCloneView: View {
                 isUploading = false
                 switch result {
                 case .success:
-                    useClonedVoice = true
+                    userHasClonedVoice = true
                     networkManager.showReclone = false
                     recorder.recordedFileURL = nil
                     pickedFileURL = nil

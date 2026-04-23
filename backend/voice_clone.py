@@ -22,7 +22,15 @@ async def clone_voice(
     if not ELEVENLABS_API_KEY:
         raise HTTPException(status_code=500, detail="ElevenLabs API key not configured")
 
+    if audio.size and audio.size > 50 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File too large (max 50MB)")
+
     phone = get_user_identifier(user_id, db)
+
+    profile = db.query(Profile).filter(Profile.phone == phone).first()
+    if not profile or not profile.is_premium:
+        raise HTTPException(status_code=403, detail="Premium subscription required to clone a voice")
+
     audio_data = await audio.read()
 
     async with httpx.AsyncClient() as client:
@@ -39,8 +47,6 @@ async def clone_voice(
         eleven_voice_id = response.json().get("voice_id")
         if not eleven_voice_id:
             raise HTTPException(status_code=500, detail="No voice_id returned from ElevenLabs")
-
-    profile = db.query(Profile).filter(Profile.phone == phone).first()
 
     # Delete previous clone from ElevenLabs if one exists
     if profile and profile.eleven_voice_id:

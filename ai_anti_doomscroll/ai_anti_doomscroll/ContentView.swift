@@ -43,7 +43,6 @@ struct ContentView: View {
     // ElevenLabs Call State (cloned voice)
     @StateObject private var elevenLabsCallManager = ElevenLabsCallManager()
     @State private var showingElevenLabsCallView = false
-    @AppStorage("useClonedVoice") private var useClonedVoice = false
     
     // Chat State
     @StateObject private var chatManager = ChatManager()
@@ -83,13 +82,15 @@ struct ContentView: View {
     @State private var isCheckingLimit = false
     @State private var manualUnblockLimitInfo: ManualUnblockLimitInfo? = nil
     @State private var selectedCompanion = "1"
+    @AppStorage("userHasClonedVoice") private var userHasClonedVoice = false
     private let companionNames = [
         "1": "Voice 1",
         "2": "Voice 2",
         "3": "Voice 3",
         "4": "Voice 4",
         "5": "Voice 5",
-        "6": "Voice 6"
+        "6": "Voice 6",
+        "my_voice": "My Voice"
     ]
 
     let networkManager = NetworkManager()
@@ -322,6 +323,16 @@ struct ContentView: View {
                                 Label(companionNames[key] ?? key, systemImage: "checkmark")
                             } else {
                                 Text(companionNames[key] ?? key)
+                            }
+                        }
+                    }
+                    if userHasClonedVoice {
+                        Divider()
+                        Button(action: { selectedCompanion = "my_voice" }) {
+                            if selectedCompanion == "my_voice" {
+                                Label("My Voice", systemImage: "checkmark")
+                            } else {
+                                Label("My Voice", systemImage: "waveform.circle.fill")
                             }
                         }
                     }
@@ -962,7 +973,7 @@ struct ContentView: View {
     }
     
     func startVoiceCall(companion: String = "1") {
-        if useClonedVoice {
+        if companion == "my_voice" {
             startElevenLabsCall()
             return
         }
