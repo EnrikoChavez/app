@@ -39,6 +39,11 @@ struct ContentView: View {
     @State private var showingCallView = false
     @State private var websocketURL: String? = nil
     @State private var apiKey: String? = nil
+
+    // ElevenLabs Call State (cloned voice)
+    @StateObject private var elevenLabsCallManager = ElevenLabsCallManager()
+    @State private var showingElevenLabsCallView = false
+    @AppStorage("useClonedVoice") private var useClonedVoice = false
     
     // Chat State
     @StateObject private var chatManager = ChatManager()
@@ -113,6 +118,7 @@ struct ContentView: View {
                         callsChatsTab.opacity(selectedTab == 0 ? 1 : 0)
                         todosTab.opacity(selectedTab == 1 ? 1 : 0)
                         galleryTab.opacity(selectedTab == 2 ? 1 : 0)
+                        voiceTab.opacity(selectedTab == 3 ? 1 : 0)
                     }
                     .environment(\.systemColorScheme, colorScheme)
                     .environment(\.colorScheme, .light)
@@ -165,9 +171,15 @@ struct ContentView: View {
                 SignupPromptView()
             }
                 .sheet(isPresented: $showingCallView) {
-                    VoiceCallView(callManager: callManager, accessToken: nil) {
+                    VoiceCallView(callManager: callManager) {
                         handleCallEnd()
                         showingCallView = false
+                    }
+                }
+                .sheet(isPresented: $showingElevenLabsCallView) {
+                    VoiceCallView(callManager: elevenLabsCallManager) {
+                        handleElevenLabsCallEnd()
+                        showingElevenLabsCallView = false
                     }
                 }
                 .sheet(isPresented: $showingChatView) {
@@ -198,9 +210,10 @@ struct ContentView: View {
     
     var customTabBar: some View {
         HStack(spacing: 0) {
-            tabBarItem(icon: "door.right.hand.open", label: "Free Up Time",  tag: 0)
-            tabBarItem(icon: "checklist",            label: "Tasks",    tag: 1)
-            tabBarItem(icon: "checkmark.seal",       label: "Gallery",  tag: 2)
+            tabBarItem(icon: "door.right.hand.open", label: "Free Up Time", tag: 0)
+            tabBarItem(icon: "checklist",            label: "Tasks",        tag: 1)
+            tabBarItem(icon: "checkmark.seal",       label: "Gallery",      tag: 2)
+            tabBarItem(icon: "waveform.circle",      label: "Voice",        tag: 3)
         }
         .background(AppTheme.cardBg(for: colorScheme))
         .overlay(
@@ -675,7 +688,12 @@ struct ContentView: View {
         .background(Color.clear.ignoresSafeArea())
     }
 
-    // Tab 3: Set Timer (Weekly Schedule)
+    // Tab 3: Voice Clone
+    var voiceTab: some View {
+        VoiceCloneView()
+    }
+
+    // Tab 4: Set Timer (Weekly Schedule)
     var monitoringTab: some View {
         ScrollView {
             VStack(spacing: 24) {
@@ -728,6 +746,7 @@ struct ContentView: View {
 
         // Pre-activate audio session so the first call works reliably
         callManager.activateAudioSession()
+        elevenLabsCallManager.activateAudioSession()
 
         // Show cached call limit instantly, then refresh from server
         loadCachedCallLimit()
@@ -943,6 +962,10 @@ struct ContentView: View {
     }
     
     func startVoiceCall(companion: String = "1") {
+        if useClonedVoice {
+            startElevenLabsCall()
+            return
+        }
         isCheckingLimit = true
         networkManager.checkCallLimit { [self] result in
             DispatchQueue.main.async {
@@ -1000,6 +1023,57 @@ struct ContentView: View {
         }
     }
     
+    func startElevenLabsCall() {
+        isStartingCall = true
+        networkManager.createElevenLabsSession(todos: todoRepository.focusTodos, minutes: Int(minutesText) ?? 15) { result in
+            DispatchQueue.main.async {
+                self.isStartingCall = false
+                switch result {
+                case .success(let data):
+                    guard let wsURL = data["websocket_url"] else {
+                        self.activeAlert = .error(message: "No WebSocket URL returned")
+                        return
+                    }
+                    let voiceId = data["voice_id"]
+                    let maxDuration = self.callLimitInfo?.remainingSeconds ?? 0
+                    var variables: [String: String]?
+                    if let varsString = data["initial_variables"],
+                       let varsData = varsString.data(using: .utf8),
+                       let varsDict = try? JSONSerialization.jsonObject(with: varsData) as? [String: String] {
+                        variables = varsDict
+                    }
+                    self.elevenLabsCallManager.onCallEnded = {
+                        DispatchQueue.main.async {
+                            self.handleElevenLabsCallEnd()
+                            self.showingElevenLabsCallView = false
+                        }
+                    }
+                    self.elevenLabsCallManager.startCall(
+                        websocketURL: wsURL,
+                        voiceId: voiceId,
+                        initialVariables: variables,
+                        maxDurationSeconds: maxDuration
+                    )
+                    self.showingElevenLabsCallView = true
+                case .failure(let error):
+                    self.activeAlert = .error(message: "Connection failed: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+
+    func handleElevenLabsCallEnd() {
+        let finalTranscript = elevenLabsCallManager.transcript
+        let wasExtraStop = pendingExtraStop
+        pendingExtraStop = false
+        elevenLabsCallManager.stopCall()
+        if !finalTranscript.isEmpty {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                self.evaluateCall(transcript: finalTranscript, grantExtraStop: wasExtraStop)
+            }
+        }
+    }
+
     func handleCallEnd() {
         let finalTranscript = callManager.transcript
         let callDuration = callManager.callDuration

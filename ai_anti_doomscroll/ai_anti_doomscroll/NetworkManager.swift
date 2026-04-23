@@ -279,6 +279,32 @@ final class NetworkManager {
         }.resume()
     }
     
+    func createElevenLabsSession(todos: [Todo], minutes: Int, completion: @escaping (Result<[String: String], Error>) -> Void) {
+        let todoData = todos.map { ["task": $0.task, "id": $0.id] }
+        guard let req = makeRequest(path: "/elevenlabs/create-session", method: "POST", jsonBody: ["todos": todoData, "minutes": minutes]) else {
+            completion(.failure(NSError(domain: "NetworkManager", code: 400, userInfo: [NSLocalizedDescriptionKey: "Request build failed"])))
+            return
+        }
+        session.dataTask(with: req) { data, response, error in
+            if let error = error { completion(.failure(error)); return }
+            if self.checkUnauthorized(response) { return }
+            guard let data = data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                completion(.failure(NSError(domain: "NetworkManager", code: 500, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])))
+                return
+            }
+            var result: [String: String] = [:]
+            if let wsURL = json["websocket_url"] as? String { result["websocket_url"] = wsURL }
+            if let voiceId = json["voice_id"] as? String { result["voice_id"] = voiceId }
+            if let vars = json["initial_variables"] as? [String: Any],
+               let varsData = try? JSONSerialization.data(withJSONObject: vars),
+               let varsString = String(data: varsData, encoding: .utf8) {
+                result["initial_variables"] = varsString
+            }
+            completion(.success(result))
+        }.resume()
+    }
+
     func endHumeSession(completion: @escaping (Result<Void, Error>) -> Void) {
         guard let req = makeRequest(path: "/hume/end-session", method: "POST") else {
             completion(.failure(NSError(domain: "NetworkManager", code: 400, userInfo: [NSLocalizedDescriptionKey: "Request build failed"])))

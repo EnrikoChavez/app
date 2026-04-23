@@ -1,33 +1,36 @@
-//
-//  VoiceCallView.swift
-//  ai_anti_doomscroll
-//
-
 import SwiftUI
 
-struct VoiceCallView: View {
-    @ObservedObject var callManager: HumeCallManager
-    var accessToken: String?  // Kept for compatibility but not used with Hume
+protocol AnyCallManager: ObservableObject {
+    var isCalling: Bool { get }
+    var callStatus: String { get }
+    var transcript: String { get }
+    var isMuted: Bool { get set }
+    var remainingTime: TimeInterval { get }
+    var callDuration: TimeInterval { get }
+    func stopCall()
+}
+
+struct VoiceCallView<Manager: AnyCallManager>: View {
+    @ObservedObject var callManager: Manager
     var onHangUp: () -> Void
-    
+
     @State private var isPulsing = false
-    
+
     var body: some View {
         VStack(spacing: 40) {
             Spacer()
-            
-            // AI Avatar / Pulsing Circle
+
             ZStack {
                 Circle()
                     .fill(Color.blue.opacity(0.2))
                     .frame(width: 120, height: 120)
                     .scaleEffect(isPulsing ? 1.4 : 1.0)
                     .opacity(isPulsing ? 0.0 : 1.0)
-                
+
                 Circle()
                     .fill(Color.blue)
                     .frame(width: 100, height: 100)
-                
+
                 Image(systemName: "phone")
                     .resizable()
                     .scaledToFit()
@@ -39,14 +42,13 @@ struct VoiceCallView: View {
                     isPulsing = true
                 }
             }
-            
+
             VStack(spacing: 8) {
                 Text("AI Companion Session")
                     .font(.title2).bold()
                 Text(callManager.callStatus)
                     .foregroundColor(.secondary)
-                
-                // Show remaining time if call is active
+
                 if callManager.isCalling && callManager.remainingTime > 0 {
                     Text("\(Int(callManager.remainingTime))s remaining")
                         .font(.caption)
@@ -54,8 +56,7 @@ struct VoiceCallView: View {
                         .padding(.top, 4)
                 }
             }
-            
-            // Real-time Transcript
+
             ScrollView {
                 Text(callManager.transcript.isEmpty ? "AI is listening..." : callManager.transcript)
                     .font(.body)
@@ -65,7 +66,6 @@ struct VoiceCallView: View {
             }
             .frame(maxHeight: 250)
 
-            // Speaker tip
             HStack(alignment: .top, spacing: 4) {
                 Image(systemName: "speaker.wave.2")
                     .font(.caption2)
@@ -78,12 +78,9 @@ struct VoiceCallView: View {
             .padding(.horizontal, 24)
 
             Spacer()
-            
-            // Controls
+
             HStack(spacing: 60) {
-                Button(action: {
-                    callManager.isMuted.toggle()
-                }) {
+                Button(action: { callManager.isMuted.toggle() }) {
                     VStack {
                         Image(systemName: callManager.isMuted ? "mic.slash.fill" : "mic.fill")
                             .font(.title)
@@ -93,11 +90,8 @@ struct VoiceCallView: View {
                         Text(callManager.isMuted ? "Unmute" : "Mute").font(.caption)
                     }
                 }
-                
+
                 Button(action: {
-                    // Get call duration BEFORE stopCall() resets it
-                    let duration = callManager.callDuration
-                    print("📱 VoiceCallView: Call duration before stop: \(duration)s")
                     callManager.stopCall()
                     onHangUp()
                 }) {

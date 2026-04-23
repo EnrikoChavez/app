@@ -16,6 +16,7 @@ from chat import router as chat_router
 from account import router as account_router
 from manual_unblock import router as manual_unblock_router
 from apple_auth import router as apple_auth_router
+from voice_clone import router as voice_clone_router
 from db import init_db, get_db
 from models import Base, User, Profile, CallSession, CallUsage
 
@@ -50,10 +51,26 @@ def migrate_existing_phone_users():
     finally:
         db.close()
 
+def migrate_add_eleven_voice_id():
+    """Add eleven_voice_id column to profiles if it doesn't exist."""
+    from sqlalchemy import text
+    db_gen = get_db()
+    db = next(db_gen)
+    try:
+        db.execute(text("ALTER TABLE profiles ADD COLUMN eleven_voice_id VARCHAR"))
+        db.commit()
+        print("✅ Added eleven_voice_id column to profiles")
+    except Exception:
+        db.rollback()  # Column already exists — non-fatal
+    finally:
+        db.close()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db(Base)
     migrate_existing_phone_users()
+    migrate_add_eleven_voice_id()
     yield
 
 app = FastAPI(lifespan=lifespan)
@@ -65,6 +82,7 @@ app.include_router(chat_router)
 app.include_router(account_router)
 app.include_router(manual_unblock_router)
 app.include_router(apple_auth_router)
+app.include_router(voice_clone_router)
 
 app.add_middleware(
     CORSMiddleware,

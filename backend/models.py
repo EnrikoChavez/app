@@ -36,6 +36,7 @@ class Profile(Base):
     id = Column(Integer, primary_key=True, index=True)
     phone = Column(String, unique=True, index=True, nullable=False)
     is_premium = Column(Boolean, default=False, nullable=False)
+    eleven_voice_id = Column(String, nullable=True)
     last_active = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

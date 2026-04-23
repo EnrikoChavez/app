@@ -7,7 +7,7 @@ import Foundation
 import AVFoundation
 import Combine
 
-class HumeCallManager: NSObject, ObservableObject, URLSessionWebSocketDelegate {
+class HumeCallManager: NSObject, ObservableObject, URLSessionWebSocketDelegate, AnyCallManager {
     @Published var isCalling = false
     @Published var callStatus = "Disconnected"
     @Published var transcript = ""
