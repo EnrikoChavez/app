@@ -1,9 +1,10 @@
 import os
 import httpx
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
 from sqlalchemy.orm import Session
 from db import get_db
-from models import Profile
+from models import Profile, CallSession
 from otp import verify_token, get_user_identifier
 
 router = APIRouter(tags=["voice"])
@@ -94,11 +95,28 @@ async def create_elevenlabs_session(
     if not ELEVENLABS_API_KEY or not ELEVENLABS_AGENT_ID:
         raise HTTPException(status_code=500, detail="ElevenLabs not configured")
 
+    from call_usage import _check_limit_by_phone
+    from main import _close_open_session
+
+    now = datetime.now(timezone.utc)
     phone = get_user_identifier(user_id, db)
     profile = db.query(Profile).filter(Profile.phone == phone).first()
 
     if not profile or not profile.eleven_voice_id:
         raise HTTPException(status_code=404, detail="No cloned voice found")
+
+    _close_open_session(db, phone, now)
+
+    limit_info = _check_limit_by_phone(db, phone)
+    if not limit_info.can_call:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Daily call limit reached. You've used {limit_info.used_seconds:.1f}s of {limit_info.limit_seconds:.0f}s today."
+        )
+
+    session_row = CallSession(phone=phone, started_at=now)
+    db.add(session_row)
+    db.commit()
 
     async with httpx.AsyncClient() as client:
         response = await client.get(
@@ -121,6 +139,7 @@ async def create_elevenlabs_session(
     return {
         "websocket_url": signed_url,
         "voice_id": profile.eleven_voice_id,
+        "remaining_seconds": limit_info.remaining_seconds,
         "initial_variables": {"todos": task_list_str, "minutes": str(minutes)},
     }
 

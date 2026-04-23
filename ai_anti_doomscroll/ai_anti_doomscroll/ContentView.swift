@@ -1046,7 +1046,7 @@ struct ContentView: View {
                         return
                     }
                     let voiceId = data["voice_id"]
-                    let maxDuration = self.callLimitInfo?.remainingSeconds ?? 0
+                    let maxDuration = Double(data["remaining_seconds"] ?? "") ?? self.callLimitInfo?.remainingSeconds ?? 0
                     var variables: [String: String]?
                     if let varsString = data["initial_variables"],
                        let varsData = varsString.data(using: .utf8),
@@ -1078,6 +1078,17 @@ struct ContentView: View {
         let wasExtraStop = pendingExtraStop
         pendingExtraStop = false
         elevenLabsCallManager.stopCall()
+
+        networkManager.endHumeSession { result in
+            switch result {
+            case .success:
+                print("✅ iOS: ElevenLabs call session ended on server")
+                DispatchQueue.main.async { self.checkCallLimit() }
+            case .failure(let error):
+                print("❌ iOS: Failed to end ElevenLabs session: \(error.localizedDescription)")
+            }
+        }
+
         if !finalTranscript.isEmpty {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                 self.evaluateCall(transcript: finalTranscript, grantExtraStop: wasExtraStop)

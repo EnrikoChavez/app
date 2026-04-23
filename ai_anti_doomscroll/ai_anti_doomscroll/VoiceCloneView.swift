@@ -60,11 +60,13 @@ struct VoiceCloneView: View {
     @State private var isUploading = false
     @State private var uploadError: String? = nil
     @State private var showDeleteConfirm = false
-    @State private var showFilePicker = false
-    @State private var pickedFileURL: URL? = nil
     @AppStorage("userHasClonedVoice") private var userHasClonedVoice = false
 
-    var activeFileURL: URL? { pickedFileURL ?? recorder.recordedFileURL }
+    private let sampleText = """
+        There's something really nice about a slow morning walk. The trees are doing their thing, the birds are being a little dramatic about it — honestly, one of them was way too excited about a worm — and somewhere nearby a river is just quietly minding its own business. Good for the river! I think we could all learn something from that. Just flowing along, not making a big deal out of anything, maybe stopping to enjoy a flower or two along the way. The air smells different in the morning, kind of fresh and a little earthy, like the whole world just woke up and hasn't checked its phone yet. That's the best part, really — just being outside, no rush, nowhere specific to be, just walking and noticing things. A good leaf here, a nice cloud there. Simple stuff. The best stuff.
+        """
+
+    var activeFileURL: URL? { recorder.recordedFileURL }
 
     var body: some View {
         ScrollView {
@@ -97,12 +99,6 @@ struct VoiceCloneView: View {
         }
         .background(Color.clear.ignoresSafeArea())
         .onAppear { networkManager.loadStatus() }
-        .sheet(isPresented: $showFilePicker) {
-            AudioFilePicker { url in
-                pickedFileURL = url
-                recorder.recordedFileURL = nil
-            }
-        }
     }
 
     // MARK: - Status Card
@@ -132,7 +128,6 @@ struct VoiceCloneView: View {
                     Button("Re-clone") {
                         networkManager.showReclone = true
                         recorder.recordedFileURL = nil
-                        pickedFileURL = nil
                         consentGiven = false
                     }
                     .font(.caption).bold()
@@ -188,10 +183,35 @@ struct VoiceCloneView: View {
                 if recorder.isRecording {
                     HStack {
                         Circle().fill(Color.red).frame(width: 8, height: 8)
+                            .opacity(recorder.duration.truncatingRemainder(dividingBy: 1) < 0.5 ? 1 : 0.3)
                         Text("Recording... \(recorder.durationString)")
-                            .font(.subheadline).foregroundColor(.red)
+                            .font(.subheadline).bold().foregroundColor(.red)
                         Spacer()
+                        if recorder.duration >= 30 {
+                            Text("✓ Enough!")
+                                .font(.caption).bold()
+                                .foregroundColor(.green)
+                        }
                     }
+
+                    // Sample text to read aloud
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "text.quote")
+                                .font(.caption).foregroundColor(.blue)
+                            Text("Read this aloud:")
+                                .font(.caption).bold().foregroundColor(.blue)
+                        }
+                        Text(sampleText)
+                            .font(.body)
+                            .foregroundColor(.primary)
+                            .lineSpacing(6)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(14)
+                    .background(Color.blue.opacity(0.08))
+                    .cornerRadius(12)
+                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.blue.opacity(0.2), lineWidth: 1))
 
                     if recorder.duration > 180 {
                         Text("Max 3 minutes — stop recording now")
@@ -200,7 +220,6 @@ struct VoiceCloneView: View {
 
                     Button(action: {
                         recorder.stopRecording()
-                        pickedFileURL = nil
                     }) {
                         Label("Stop Recording", systemImage: "stop.circle.fill")
                             .frame(maxWidth: .infinity)
@@ -214,7 +233,6 @@ struct VoiceCloneView: View {
                         AVAudioSession.sharedInstance().requestRecordPermission { granted in
                             DispatchQueue.main.async {
                                 if granted {
-                                    pickedFileURL = nil
                                     recorder.startRecording()
                                 } else {
                                     uploadError = "Microphone permission denied. Enable in Settings."
@@ -230,26 +248,32 @@ struct VoiceCloneView: View {
                             .cornerRadius(12)
                     }
 
-                    Button(action: { showFilePicker = true }) {
-                        Label("Upload Audio File", systemImage: "doc.badge.plus")
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color(.systemGray5))
-                            .foregroundColor(.primary)
-                            .cornerRadius(12)
+                    // Sample text preview so user can read it before hitting record
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "text.quote")
+                                .font(.caption).foregroundColor(.secondary)
+                            Text("You'll read this when recording:")
+                                .font(.caption).foregroundColor(.secondary)
+                        }
+                        Text(sampleText)
+                            .font(.callout)
+                            .foregroundColor(.secondary)
+                            .lineSpacing(5)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
+                    .padding(12)
+                    .background(Color(.systemGray6))
+                    .cornerRadius(10)
                 }
 
-                if let url = activeFileURL {
+                if activeFileURL != nil {
                     HStack {
                         Image(systemName: "checkmark.circle.fill").foregroundColor(.green)
-                        Text(url == pickedFileURL ? "File selected: \(url.lastPathComponent)" : "Recorded: \(recorder.durationString)")
+                        Text("Recorded: \(recorder.durationString)")
                             .font(.caption)
                         Spacer()
-                        Button(action: {
-                            recorder.recordedFileURL = nil
-                            pickedFileURL = nil
-                        }) {
+                        Button(action: { recorder.recordedFileURL = nil }) {
                             Image(systemName: "xmark.circle.fill").foregroundColor(.secondary)
                         }
                     }
@@ -298,9 +322,24 @@ struct VoiceCloneView: View {
             Text("Voice Consent")
                 .font(.subheadline).bold()
 
-            Text("By uploading this audio sample, you confirm that:\n• You are the speaker, or have explicit consent from the speaker to clone this voice\n• You agree to ElevenLabs' Terms of Service and usage policies\n• This voice will only be used within this app")
-                .font(.caption)
-                .foregroundColor(.secondary)
+            VStack(alignment: .leading, spacing: 6) {
+                Text("By recording this sample, you confirm that:")
+                    .font(.caption).foregroundColor(.secondary)
+                Text("• You are the speaker and consent to cloning your own voice")
+                    .font(.caption).foregroundColor(.secondary)
+                Text("• This voice will only be used within this app")
+                    .font(.caption).foregroundColor(.secondary)
+                HStack(spacing: 0) {
+                    Text("• You agree to ElevenLabs' ")
+                        .font(.caption).foregroundColor(.secondary)
+                    Link("Terms of Service", destination: URL(string: "https://elevenlabs.io/terms")!)
+                        .font(.caption).bold()
+                    Text(" and ")
+                        .font(.caption).foregroundColor(.secondary)
+                    Link("Usage Policy", destination: URL(string: "https://elevenlabs.io/usage-policy")!)
+                        .font(.caption).bold()
+                }
+            }
 
             Toggle(isOn: $consentGiven) {
                 Text("I confirm I have the right to clone this voice")
@@ -329,7 +368,6 @@ struct VoiceCloneView: View {
                     userHasClonedVoice = true
                     networkManager.showReclone = false
                     recorder.recordedFileURL = nil
-                    pickedFileURL = nil
                     consentGiven = false
                 case .failure(let error):
                     uploadError = "Clone failed: \(error.localizedDescription)"
@@ -440,36 +478,3 @@ class VoiceCloneNetworkManager: ObservableObject {
     }
 }
 
-// MARK: - Audio File Picker
-
-struct AudioFilePicker: UIViewControllerRepresentable {
-    var onPick: (URL) -> Void
-
-    func makeCoordinator() -> Coordinator { Coordinator(onPick: onPick) }
-
-    func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
-        let types: [UTType] = [.audio, .mp3, .wav, UTType("public.aiff-audio")!, UTType("com.apple.m4a-audio")!].compactMap { $0 }
-        let picker = UIDocumentPickerViewController(forOpeningContentTypes: types)
-        picker.delegate = context.coordinator
-        picker.allowsMultipleSelection = false
-        return picker
-    }
-
-    func updateUIViewController(_ uiViewController: UIDocumentPickerViewController, context: Context) {}
-
-    class Coordinator: NSObject, UIDocumentPickerDelegate {
-        let onPick: (URL) -> Void
-        init(onPick: @escaping (URL) -> Void) { self.onPick = onPick }
-
-        func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-            guard let url = urls.first else { return }
-            _ = url.startAccessingSecurityScopedResource()
-            let tmp = FileManager.default.temporaryDirectory.appendingPathComponent(url.lastPathComponent)
-            try? FileManager.default.copyItem(at: url, to: tmp)
-            url.stopAccessingSecurityScopedResource()
-            onPick(tmp)
-        }
-    }
-}
-
-import UniformTypeIdentifiers

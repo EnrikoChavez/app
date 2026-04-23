@@ -296,6 +296,7 @@ final class NetworkManager {
             var result: [String: String] = [:]
             if let wsURL = json["websocket_url"] as? String { result["websocket_url"] = wsURL }
             if let voiceId = json["voice_id"] as? String { result["voice_id"] = voiceId }
+            if let remaining = json["remaining_seconds"] as? Double { result["remaining_seconds"] = String(remaining) }
             if let vars = json["initial_variables"] as? [String: Any],
                let varsData = try? JSONSerialization.data(withJSONObject: vars),
                let varsString = String(data: varsData, encoding: .utf8) {
