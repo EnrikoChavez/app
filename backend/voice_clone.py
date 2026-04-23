@@ -27,10 +27,7 @@ async def clone_voice(
         raise HTTPException(status_code=413, detail="File too large (max 50MB)")
 
     phone = get_user_identifier(user_id, db)
-
     profile = db.query(Profile).filter(Profile.phone == phone).first()
-    if not profile or not profile.is_premium:
-        raise HTTPException(status_code=403, detail="Premium subscription required to clone a voice")
 
     audio_data = await audio.read()
 
