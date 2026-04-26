@@ -117,13 +117,13 @@ struct SubscriptionGateOverlay: View {
             VStack(spacing: 6) {
                 Image(systemName: "lock.fill")
                     .font(.caption)
-                Text(isLoggedIn ? "Subscription feature" : "Sign in required")
+                Text(isLoggedIn ? "Tap to activate subscription" : "Sign in required")
                     .font(.caption2).bold()
                     .multilineTextAlignment(.center)
             }
-            .foregroundColor(.secondary)
+            .foregroundColor(.primary.opacity(0.7))
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color(.systemFill))
+            .background(.ultraThinMaterial)
             .cornerRadius(cornerRadius)
         }
         .buttonStyle(.plain)

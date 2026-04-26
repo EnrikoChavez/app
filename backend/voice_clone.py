@@ -99,7 +99,10 @@ async def create_elevenlabs_session(
     phone = get_user_identifier(user_id, db)
     profile = db.query(Profile).filter(Profile.phone == phone).first()
 
-    if not profile or not profile.eleven_voice_id:
+    if not profile or not profile.is_premium:
+        raise HTTPException(status_code=403, detail="Premium subscription required to use AI calls.")
+
+    if not profile.eleven_voice_id:
         raise HTTPException(status_code=404, detail="No cloned voice found")
 
     _close_open_session(db, phone, now)

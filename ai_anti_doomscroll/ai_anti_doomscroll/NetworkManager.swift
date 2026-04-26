@@ -169,13 +169,20 @@ final class NetworkManager {
         session.dataTask(with: req) { data, response, error in
             if let error = error { print("❌ iOS Network Error: \(error.localizedDescription)"); completion(.failure(error)); return }
             if self.checkUnauthorized(response) { return }
-            
+
+            if let http = response as? HTTPURLResponse, http.statusCode != 200 {
+                let detail = data.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }.flatMap { $0["detail"] as? String } ?? "Server error \(http.statusCode)"
+                print("❌ iOS Hume session error \(http.statusCode): \(detail)")
+                completion(.failure(NSError(domain: "NetworkManager", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: detail])))
+                return
+            }
+
             guard let data = data else {
                 print("❌ iOS Error: No data returned from server")
                 completion(.failure(NSError(domain: "NetworkManager", code: 500, userInfo: [NSLocalizedDescriptionKey: "No data returned"])))
                 return
             }
-            
+
             do {
                 if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
                     var result: [String: String] = [:]
@@ -288,6 +295,13 @@ final class NetworkManager {
         session.dataTask(with: req) { data, response, error in
             if let error = error { completion(.failure(error)); return }
             if self.checkUnauthorized(response) { return }
+
+            if let http = response as? HTTPURLResponse, http.statusCode != 200 {
+                let detail = data.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }.flatMap { $0["detail"] as? String } ?? "Server error \(http.statusCode)"
+                completion(.failure(NSError(domain: "NetworkManager", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: detail])))
+                return
+            }
+
             guard let data = data,
                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
                 completion(.failure(NSError(domain: "NetworkManager", code: 500, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])))

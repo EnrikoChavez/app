@@ -332,11 +332,7 @@ struct VoiceCloneView: View {
                 HStack(spacing: 0) {
                     Text("• You agree to ElevenLabs' ")
                         .font(.caption).foregroundColor(.secondary)
-                    Link("Terms of Service", destination: URL(string: "https://elevenlabs.io/terms")!)
-                        .font(.caption).bold()
-                    Text(" and ")
-                        .font(.caption).foregroundColor(.secondary)
-                    Link("Usage Policy", destination: URL(string: "https://elevenlabs.io/usage-policy")!)
+                    Link("Terms of Service & Usage Policy", destination: URL(string: "https://elevenlabs.io/terms-of-use")!)
                         .font(.caption).bold()
                 }
             }
